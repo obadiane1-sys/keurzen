@@ -31,7 +31,25 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
 .env*.local
+.env.local
+
+# build output
+build/
+
+# logs
+*.log
+
+# Supabase
+supabase/.branches
+supabase/.temp/
+
+# Secrets — never commit
+google-services.json
+GoogleService-Info.plist
+eas.json
 
 # typescript
 *.tsbuildinfo

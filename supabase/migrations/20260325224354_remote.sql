@@ -1,0 +1,2 @@
+-- Migration appliquée directement sur la base distante (hors workflow local).
+-- Fichier placeholder créé pour aligner l'historique local avec le remote.
