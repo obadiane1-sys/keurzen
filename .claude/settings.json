@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.local)",
+      "Read(.env.*)",
+      "Write(.env)",
+      "Write(.env.local)",
+      "Write(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*)",
+      "Read(**/credentials*)",
+      "Read(**/secrets*)",
+      "Write(**/credentials*)",
+      "Write(**/secrets*)"
+    ],
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run test)",
+      "Bash(npm run format)",
+      "Bash(npx expo start --tunnel)",
+      "Bash(npx expo install --fix)",
+      "Bash(npx supabase db push)",
+      "Bash(npx supabase functions deploy*)",
+      "Bash(npx supabase secrets list)",
+      "Bash(npx supabase link*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git log*)",
+      "Bash(git branch*)"
+    ]
+  },
+  "env": {
+    "ESLINT_USE_FLAT_CONFIG": "false"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 60,
+            "statusMessage": "Lint en cours…",
+            "command": "/Users/ouss/Keurzen/.claude/lint-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
