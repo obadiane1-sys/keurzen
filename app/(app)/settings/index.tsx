@@ -1,245 +1,224 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { Ionicons } from '@expo/vector-icons';
 import { signOut } from '../../../src/lib/supabase/auth';
+import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useAuthStore } from '../../../src/stores/auth.store';
 import { useHouseholdStore } from '../../../src/stores/household.store';
+import { useUiStore } from '../../../src/stores/ui.store';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
-import { Card } from '../../../src/components/ui/Card';
 import { Avatar } from '../../../src/components/ui/Avatar';
-import { Divider } from '../../../src/components/ui/Divider';
-import { Ionicons } from '@expo/vector-icons';
+import { Card } from '../../../src/components/ui/Card';
 
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
-  iconBg?: string;
+  color?: string;
   danger?: boolean;
-  badge?: string;
 }
 
-function SettingsRow({ icon, label, onPress, iconBg = Colors.gray100, danger = false, badge }: SettingsRowProps) {
+function SettingsRow({ icon, label, onPress, color, danger }: SettingsRowProps) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
-        <Ionicons
-          name={icon}
-          size={18}
-          color={danger ? Colors.error : Colors.textSecondary}
-        />
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.rowIcon, { backgroundColor: (color ?? Colors.mint) + '18' }]}>
+        <Ionicons name={icon} size={18} color={color ?? Colors.mint} />
       </View>
       <Text
-        variant="label"
-        style={[styles.rowLabel, danger && { color: Colors.error }]}
+        variant="body"
+        style={[styles.rowLabel, danger ? { color: Colors.error } : undefined]}
       >
         {label}
       </Text>
-      {badge && (
-        <View style={styles.badge}>
-          <Text variant="caption" style={{ color: Colors.textInverse, fontSize: 10 }}>{badge}</Text>
-        </View>
-      )}
-      {!danger && (
-        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-      )}
+      <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
     </TouchableOpacity>
   );
 }
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { profile, reset: resetAuth } = useAuthStore();
-  const { reset: resetHousehold, currentHousehold } = useHouseholdStore();
+  const { profile, user } = useCurrentUser();
+  const resetAuth = useAuthStore((s) => s.reset);
+  const resetHousehold = useHouseholdStore((s) => s.reset);
+  const { showToast, setPendingInviteToken, setPendingInviteCode } = useUiStore();
+
+  const displayName =
+    profile?.full_name?.trim() ||
+    (user?.user_metadata as Record<string, string> | undefined)?.full_name?.trim() ||
+    'Utilisateur';
+
+  const doSignOut = async () => {
+    // Reset local state first — supabase.auth.signOut() can hang on web
+    setPendingInviteToken(null);
+    setPendingInviteCode(null);
+    resetHousehold();
+    resetAuth();
+    router.replace('/(auth)/login');
+
+    // Fire-and-forget server sign out
+    try {
+      await signOut();
+    } catch {
+      // Ignore — local state already cleared
+    }
+  };
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Déconnexion',
-      'Voulez-vous vraiment vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Déconnexion',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut();
-            queryClient.clear();
-            resetAuth();
-            resetHousehold();
-          },
-        },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      if (window.confirm('Tu vas etre deconnecte·e. Continuer ?')) {
+        doSignOut();
+      }
+      return;
+    }
+    Alert.alert('Se deconnecter', 'Tu vas etre deconnecte·e. Continuer ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Se deconnecter',
+        style: 'destructive',
+        onPress: doSignOut,
+      },
+    ]);
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text variant="h3" style={styles.pageTitle}>Paramètres</Text>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <Text variant="h2" style={styles.title}>Profil</Text>
 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Profile card */}
-        <Card style={styles.profileCard} onPress={() => router.push('/(app)/settings/profile')}>
+        <Card style={styles.profileCard}>
           <Avatar
             name={profile?.full_name}
             avatarUrl={profile?.avatar_url}
             size="lg"
           />
           <View style={styles.profileInfo}>
-            <Text variant="h4">{profile?.full_name ?? 'Mon profil'}</Text>
-            <Text variant="bodySmall" color="secondary">{profile?.email}</Text>
+            <Text variant="h3">{displayName}</Text>
+            <Text variant="bodySmall" color="secondary">
+              {profile?.email ?? ''}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
         </Card>
 
-        {/* Foyer */}
-        <Card style={styles.section}>
-          <Text variant="overline" color="muted" style={styles.sectionTitle}>Foyer</Text>
+        {/* Menu */}
+        <View style={styles.section}>
+          <SettingsRow
+            icon="person-outline"
+            label="Modifier le profil"
+            onPress={() => router.push('/(app)/settings/profile')}
+          />
           <SettingsRow
             icon="home-outline"
             label="Mon foyer"
-            iconBg={Colors.mint + '25'}
             onPress={() => router.push('/(app)/settings/household')}
-            badge={currentHousehold?.name}
           />
-          <Divider />
           <SettingsRow
-            icon="people-outline"
-            label="Membres"
-            iconBg={Colors.blue + '25'}
-            onPress={() => router.push('/(app)/settings/household')}
+            icon="mail-outline"
+            label="Invitations"
+            onPress={() => router.push('/(app)/settings/invite')}
+            color={Colors.blue}
           />
-        </Card>
-
-        {/* App */}
-        <Card style={styles.section}>
-          <Text variant="overline" color="muted" style={styles.sectionTitle}>Application</Text>
+          <SettingsRow
+            icon="lock-closed-outline"
+            label="Securite"
+            onPress={() => router.push('/(app)/settings/security')}
+            color={Colors.lavender}
+          />
           <SettingsRow
             icon="notifications-outline"
             label="Notifications"
-            iconBg={Colors.coral + '25'}
             onPress={() => router.push('/(app)/settings/notifications')}
+            color={Colors.coral}
           />
-          <Divider />
-          <SettingsRow
-            icon="shield-outline"
-            label="Sécurité"
-            iconBg={Colors.lavender + '25'}
-            onPress={() => router.push('/(app)/settings/security')}
-          />
-        </Card>
+        </View>
 
-        {/* Help & Legal */}
-        <Card style={styles.section}>
-          <Text variant="overline" color="muted" style={styles.sectionTitle}>Aide & Légal</Text>
+        <View style={styles.section}>
           <SettingsRow
             icon="help-circle-outline"
-            label="Centre d'aide"
-            iconBg={Colors.mint + '25'}
+            label="Aide"
             onPress={() => router.push('/(app)/settings/help')}
+            color={Colors.textSecondary}
           />
-          <Divider />
-          <SettingsRow
-            icon="mail-outline"
-            label="Nous contacter"
-            iconBg={Colors.blue + '25'}
-            onPress={() => router.push('/(app)/settings/contact')}
-          />
-          <Divider />
           <SettingsRow
             icon="document-text-outline"
             label="Conditions d'utilisation"
-            iconBg={Colors.gray100}
-            onPress={() => router.push('/(app)/settings/terms')}
+            onPress={() => router.push('/(app)/settings/cgu')}
+            color={Colors.textSecondary}
           />
-          <Divider />
           <SettingsRow
-            icon="lock-closed-outline"
+            icon="shield-checkmark-outline"
             label="Politique de confidentialité"
-            iconBg={Colors.gray100}
             onPress={() => router.push('/(app)/settings/privacy')}
+            color={Colors.textSecondary}
           />
-        </Card>
-
-        {/* Logout */}
-        <Card style={styles.section}>
           <SettingsRow
             icon="log-out-outline"
-            label="Se déconnecter"
+            label="Se deconnecter"
             onPress={handleSignOut}
+            color={Colors.error}
             danger
           />
-        </Card>
-
-        <Text variant="caption" color="muted" style={styles.version}>
-          Keurzen v1.0.0
-        </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: {
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing['4xl'],
-    gap: Spacing.base,
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.xl,
   },
-  pageTitle: {
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
+  title: {
+    paddingVertical: Spacing.base,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.base,
+    padding: Spacing.base,
+    marginBottom: Spacing.xl,
   },
-  profileInfo: { flex: 1, gap: 2 },
+  profileInfo: {
+    flex: 1,
+    gap: Spacing.xs,
+  },
   section: {
-    gap: 0,
-    padding: 0,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.xl,
+    ...Shadows.card,
+    marginBottom: Spacing.base,
     overflow: 'hidden',
-  },
-  sectionTitle: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
-    gap: Spacing.base,
-    minHeight: 52,
+    paddingHorizontal: Spacing.base,
+    gap: Spacing.md,
   },
   rowIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: BorderRadius.md,
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowLabel: { flex: 1 },
-  badge: {
-    backgroundColor: Colors.textMuted,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.full,
-    maxWidth: 120,
-  },
-  version: {
-    textAlign: 'center',
-    paddingVertical: Spacing.sm,
+  rowLabel: {
+    flex: 1,
   },
 });

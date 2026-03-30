@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 // ─── localStorage helpers (web only) ─────────────────────────────────────────
 
 const INVITE_TOKEN_KEY = 'keurzen_pending_invite_token';
+const INVITE_CODE_KEY = 'keurzen_pending_invite_code';
 
 function readTokenFromStorage(): string | null {
   if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
@@ -16,6 +17,20 @@ function writeTokenToStorage(token: string | null): void {
   if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
     if (token) localStorage.setItem(INVITE_TOKEN_KEY, token);
     else localStorage.removeItem(INVITE_TOKEN_KEY);
+  }
+}
+
+function readCodeFromStorage(): string | null {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    return localStorage.getItem(INVITE_CODE_KEY);
+  }
+  return null;
+}
+
+function writeCodeToStorage(code: string | null): void {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    if (code) localStorage.setItem(INVITE_CODE_KEY, code);
+    else localStorage.removeItem(INVITE_CODE_KEY);
   }
 }
 
@@ -36,6 +51,9 @@ interface UiState {
   // de page (ex : clic sur le lien de confirmation email de Supabase).
   pendingInviteToken: string | null;
   setPendingInviteToken: (token: string | null) => void;
+  // Code d'invitation 6 chiffres en attente (entré avant d'avoir un compte).
+  pendingInviteCode: string | null;
+  setPendingInviteCode: (code: string | null) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -58,5 +76,11 @@ export const useUiStore = create<UiState>((set) => ({
   setPendingInviteToken: (pendingInviteToken) => {
     writeTokenToStorage(pendingInviteToken);
     set({ pendingInviteToken });
+  },
+
+  pendingInviteCode: readCodeFromStorage(),
+  setPendingInviteCode: (pendingInviteCode) => {
+    writeCodeToStorage(pendingInviteCode);
+    set({ pendingInviteCode });
   },
 }));

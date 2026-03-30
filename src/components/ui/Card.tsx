@@ -37,7 +37,7 @@ export function Card({
       borderColor: border ? Colors.border : undefined,
     },
     elevated ? Shadows.lg : Shadows.card,
-    ...(Array.isArray(style) ? style : [style]),
+    ...(Array.isArray(style) ? style : style ? [style] : []),
   ];
 
   if (onPress) {
@@ -46,6 +46,7 @@ export function Card({
         onPress={onPress}
         activeOpacity={0.85}
         style={containerStyle}
+        accessibilityRole="button"
       >
         {children}
       </TouchableOpacity>

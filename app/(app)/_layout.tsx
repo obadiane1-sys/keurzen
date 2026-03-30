@@ -1,12 +1,13 @@
-import { Tabs, Redirect } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { Tabs, Redirect, useRouter } from 'expo-router';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { Colors, Spacing, Shadows, BorderRadius, Typography } from '../../src/constants/tokens';
 import { Ionicons } from '@expo/vector-icons';
 import { Loader } from '../../src/components/ui/Loader';
+import { Text } from '../../src/components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUnreadCount } from '../../src/lib/queries/notifications';
 
-// Icône centrée dans un fond arrondi quand active
 function TabIcon({
   name,
   focused,
@@ -24,12 +25,36 @@ function TabIcon({
   );
 }
 
+function NotificationBell() {
+  const router = useRouter();
+  const { data: unreadCount = 0 } = useUnreadCount();
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push('/(app)/notifications')}
+      style={styles.bellContainer}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityLabel={`Notifications${unreadCount > 0 ? `, ${unreadCount} non lues` : ''}`}
+      accessibilityRole="button"
+    >
+      <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
+      {unreadCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 const TAB_CONFIG = [
-  { name: 'dashboard', label: 'Tableau',    icon: 'grid'             as const, color: Colors.coral },
-  { name: 'tasks',     label: 'Tâches',     icon: 'checkmark-circle' as const, color: Colors.mint },
-  { name: 'calendar',  label: 'Agenda',     icon: 'calendar'         as const, color: Colors.lavender },
-  { name: 'budget',    label: 'Budget',     icon: 'wallet'           as const, color: Colors.blue },
-  { name: 'settings',  label: 'Profil',     icon: 'person'           as const, color: Colors.textSecondary },
+  { name: 'dashboard', label: 'Tableau', icon: 'grid' as const, color: Colors.coral },
+  { name: 'tasks', label: 'Taches', icon: 'checkmark-circle' as const, color: Colors.mint },
+  { name: 'calendar', label: 'Agenda', icon: 'calendar' as const, color: Colors.lavender },
+  { name: 'budget', label: 'Budget', icon: 'wallet' as const, color: Colors.blue },
+  { name: 'settings', label: 'Profil', icon: 'person' as const, color: Colors.textSecondary },
 ] as const;
 
 export default function AppLayout() {
@@ -37,6 +62,7 @@ export default function AppLayout() {
   const insets = useSafeAreaInsets();
 
   if (!isInitialized) return <Loader fullScreen />;
+
   if (!session) return <Redirect href="/(auth)/login" />;
 
   const tabBarHeight = 56 + (insets.bottom > 0 ? insets.bottom : 8);
@@ -46,7 +72,10 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: insets.bottom > 0 ? insets.bottom : 6 }],
+        tabBarStyle: [
+          styles.tabBar,
+          { height: tabBarHeight, paddingBottom: insets.bottom > 0 ? insets.bottom : 6 },
+        ],
         tabBarLabelStyle: styles.label,
         tabBarItemStyle: styles.tabItem,
       }}
@@ -62,10 +91,24 @@ export default function AppLayout() {
             tabBarIcon: ({ focused }) => (
               <TabIcon name={icon} focused={focused} activeColor={color} />
             ),
+            ...(name === 'dashboard' && {
+              headerShown: true,
+              headerTitle: '',
+              headerStyle: { backgroundColor: Colors.background, elevation: 0, shadowOpacity: 0 },
+              headerRight: () => <NotificationBell />,
+              headerRightContainerStyle: { paddingRight: Spacing.base },
+            }),
           }}
         />
       ))}
-      <Tabs.Screen name="security" options={{ href: null }} />
+      {/* Hidden from tabs — accessible via bell icon */}
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }
@@ -95,5 +138,29 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '500',
     marginTop: 0,
+  },
+  bellContainer: {
+    position: 'relative',
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.coral,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '700' as const,
+    color: Colors.textInverse,
   },
 });

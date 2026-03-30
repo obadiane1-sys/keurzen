@@ -11,8 +11,8 @@ import { Input } from '../../src/components/ui/Input';
 type PageState =
   | { kind: 'loading' }
   | { kind: 'no-session' }
-  | { kind: 'ready'; userId: string }
-  | { kind: 'submitting' }
+  | { kind: 'ready'; userId: string; email: string }
+  | { kind: 'submitting'; email: string }
   | { kind: 'error'; message: string };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -23,13 +23,7 @@ export default function JoinWebScreen() {
 
   const [pageState, setPageState] = useState<PageState>({ kind: 'loading' });
   const [firstName, setFirstName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{
-    firstName?: string;
-    password?: string;
-    confirm?: string;
-  }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ firstName?: string }>({});
   const [submitError, setSubmitError] = useState('');
 
   // ── Étape 1 : extraire le hash et établir la session ──────────────────────
@@ -40,7 +34,7 @@ export default function JoinWebScreen() {
       return;
     }
 
-    const hash = window.location.hash.slice(1); // retire '#'
+    const hash = window.location.hash.slice(1);
     if (!hash) {
       setPageState({ kind: 'no-session' });
       return;
@@ -55,7 +49,6 @@ export default function JoinWebScreen() {
       return;
     }
 
-    // Nettoyer le hash de l'URL sans recharger la page
     window.history.replaceState(
       null,
       '',
@@ -72,7 +65,7 @@ export default function JoinWebScreen() {
           });
           return;
         }
-        setPageState({ kind: 'ready', userId: data.user.id });
+        setPageState({ kind: 'ready', userId: data.user.id, email: data.user.email ?? '' });
       })
       .catch((err: unknown) => {
         setPageState({
@@ -85,17 +78,11 @@ export default function JoinWebScreen() {
 
   // ── Validation ────────────────────────────────────────────────────────────
 
-  const isFormValid =
-    firstName.trim().length > 0 &&
-    password.length >= 6 &&
-    password === confirmPassword;
+  const isFormValid = firstName.trim().length > 0;
 
   const validate = (): boolean => {
     const errors: typeof fieldErrors = {};
     if (!firstName.trim()) errors.firstName = 'Le prénom est obligatoire';
-    if (password.length < 6) errors.password = 'Minimum 6 caractères';
-    if (password !== confirmPassword)
-      errors.confirm = 'Les mots de passe ne correspondent pas';
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -106,21 +93,18 @@ export default function JoinWebScreen() {
     if (!token || !validate() || pageState.kind !== 'ready') return;
 
     const userId = pageState.userId;
-    setPageState({ kind: 'submitting' });
+    const email = pageState.email;
+    setPageState({ kind: 'submitting', email });
 
     try {
-      // 1. Définir le mot de passe
-      const { error: pwError } = await supabase.auth.updateUser({ password });
-      if (pwError) throw new Error(pwError.message);
-
-      // 2. Mettre à jour le prénom dans le profil
+      // 1. Mettre à jour le prénom dans le profil
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ first_name: firstName.trim() })
+        .update({ full_name: firstName.trim() })
         .eq('id', userId);
       if (profileError) throw new Error(profileError.message);
 
-      // 3. Rejoindre le foyer via RPC
+      // 2. Rejoindre le foyer via RPC
       const { data, error: rpcError } = await supabase.rpc(
         'join_household_by_token',
         { p_token: token }
@@ -136,28 +120,22 @@ export default function JoinWebScreen() {
       if (!result) throw new Error('Réponse vide du serveur.');
       if (result.error) throw new Error(result.error);
 
-      // 4. Rediriger vers le dashboard
+      // 3. Rediriger vers le dashboard
       router.replace('/(app)/dashboard');
     } catch (err) {
       setFieldErrors({});
-      setPageState({
-        kind: 'ready',
-        userId,
-      });
-      // On affiche l'erreur dans le composant
+      setPageState({ kind: 'ready', userId, email });
       setSubmitError((err as Error).message);
     }
   };
 
-  // Réinitialiser l'erreur quand l'utilisateur retape
   useEffect(() => {
     if (submitError) setSubmitError('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firstName, password, confirmPassword]);
+  }, [firstName]);
 
   // ── Rendu ─────────────────────────────────────────────────────────────────
 
-  // État : chargement
   if (pageState.kind === 'loading') {
     return (
       <View style={styles.page}>
@@ -166,7 +144,6 @@ export default function JoinWebScreen() {
     );
   }
 
-  // État : pas de session (lien sans fragment)
   if (pageState.kind === 'no-session') {
     return (
       <View style={styles.page}>
@@ -181,7 +158,6 @@ export default function JoinWebScreen() {
     );
   }
 
-  // État : erreur d'initialisation
   if (pageState.kind === 'error') {
     return (
       <View style={styles.page}>
@@ -198,8 +174,8 @@ export default function JoinWebScreen() {
   }
 
   const isSubmitting = pageState.kind === 'submitting';
+  const email = pageState.kind === 'ready' || pageState.kind === 'submitting' ? pageState.email : '';
 
-  // État : formulaire (ready ou submitting)
   return (
     <View style={styles.page}>
       <View style={styles.card}>
@@ -207,18 +183,23 @@ export default function JoinWebScreen() {
 
         <Text variant="h2" style={styles.title}>Rejoindre le foyer</Text>
         <Text variant="body" color="secondary" style={styles.subtitle}>
-          Créez votre compte pour accéder à votre espace partagé.
+          Finalisez votre profil pour accéder à votre espace partagé.
         </Text>
 
-        {/* Erreur de soumission */}
         {submitError ? (
           <View style={styles.errorBox}>
             <Text variant="bodySmall" style={styles.errorText}>{submitError}</Text>
           </View>
         ) : null}
 
-        {/* Formulaire */}
         <View style={styles.form}>
+          {/* Email — lecture seule */}
+          <View>
+            <Text variant="label" style={styles.inputLabel}>Email</Text>
+            <View style={styles.emailField}>
+              <Text variant="body" style={styles.emailText}>{email}</Text>
+            </View>
+          </View>
           <Input
             label="Prénom"
             placeholder="Votre prénom"
@@ -229,29 +210,8 @@ export default function JoinWebScreen() {
             leftIcon="person-outline"
             editable={!isSubmitting}
           />
-          <Input
-            label="Mot de passe"
-            placeholder="Minimum 6 caractères"
-            value={password}
-            onChangeText={setPassword}
-            error={fieldErrors.password}
-            isPassword
-            leftIcon="lock-closed-outline"
-            editable={!isSubmitting}
-          />
-          <Input
-            label="Confirmer le mot de passe"
-            placeholder="Répétez le mot de passe"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            error={fieldErrors.confirm}
-            isPassword
-            leftIcon="lock-closed-outline"
-            editable={!isSubmitting}
-          />
         </View>
 
-        {/* Bouton */}
         <Pressable
           style={({ pressed }) => [
             styles.btn,
@@ -279,8 +239,6 @@ export default function JoinWebScreen() {
   );
 }
 
-// ─── Brand header sous-composant ──────────────────────────────────────────────
-
 function BrandHeader() {
   return (
     <View style={styles.brand}>
@@ -289,8 +247,6 @@ function BrandHeader() {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   page: {
@@ -345,6 +301,22 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.base,
     marginTop: Spacing.xs,
+  },
+  inputLabel: {
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  emailField: {
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.backgroundSubtle,
+    paddingHorizontal: Spacing.base,
+    justifyContent: 'center',
+  },
+  emailText: {
+    color: Colors.textSecondary,
   },
   btn: {
     height: 52,

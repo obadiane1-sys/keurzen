@@ -11,21 +11,20 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signIn } from '../../src/lib/supabase/auth';
+import { sendOtp } from '../../src/lib/supabase/auth';
 import { signInSchema } from '../../src/utils/validation';
 import { useUiStore } from '../../src/stores/ui.store';
-import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
-import { Divider } from '../../src/components/ui/Divider';
-import { Mascot } from '../../src/components/ui/Mascot';
+import KeurzenMascot from '../../src/components/ui/KeurzenMascot';
 import type { SignInFormValues } from '../../src/types';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { showToast, pendingInviteToken } = useUiStore();
+  const { showToast } = useUiStore();
 
   const {
     control,
@@ -33,15 +32,19 @@ export default function LoginScreen() {
     formState: { errors, isSubmitting },
   } = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '' },
   });
 
   const onSubmit = async (values: SignInFormValues) => {
-    const { error } = await signIn(values.email, values.password);
+    const { error } = await sendOtp(values.email);
     if (error) {
       showToast(error, 'error');
+      return;
     }
-    // Auth state change will handle redirect via _layout
+    router.replace({
+      pathname: '/(auth)/verify-email',
+      params: { email: values.email },
+    });
   };
 
   return (
@@ -55,24 +58,14 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Bannière d'invitation */}
-          {pendingInviteToken && (
-            <View style={styles.inviteBanner}>
-              <Ionicons name="mail-unread-outline" size={16} color={Colors.mint} />
-              <Text variant="bodySmall" style={styles.inviteBannerText}>
-                Vous avez été invité(e) à rejoindre un foyer Keurzen. Connectez-vous pour accepter.
-              </Text>
-            </View>
-          )}
-
           {/* Header */}
           <View style={styles.header}>
-            <Mascot size={72} expression="calm" />
+            <KeurzenMascot size={100} expression="happy" animated />
             <Text variant="h2" style={styles.title}>
-              Bonjour 👋
+              Bon retour !
             </Text>
             <Text variant="body" color="secondary" style={styles.subtitle}>
-              Connectez-vous pour retrouver votre foyer Keurzen.
+              Entrez votre email pour recevoir un code de connexion.
             </Text>
           </View>
 
@@ -97,57 +90,41 @@ export default function LoginScreen() {
               )}
             />
 
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Mot de passe"
-                  placeholder="••••••••••••"
-                  isPassword
-                  leftIcon="lock-closed-outline"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.password?.message}
-                />
-              )}
-            />
-
-            {/* Forgot password */}
-            <TouchableOpacity
-              onPress={() => router.push('/(auth)/forgot-password')}
-              style={styles.forgotLink}
-            >
-              <Text variant="bodySmall" color="mint" weight="semibold">
-                Mot de passe oublié ?
-              </Text>
-            </TouchableOpacity>
-
             <Button
-              label="Se connecter"
+              label="Continuer"
               onPress={handleSubmit(onSubmit)}
               isLoading={isSubmitting}
               fullWidth
               size="lg"
+              style={{ marginTop: Spacing.sm }}
             />
           </View>
 
+          {/* Join code */}
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/join-code')}
+            style={styles.joinCodeLink}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="key-outline" size={14} color={Colors.mint} />
+            <Text variant="bodySmall" color="mint" weight="semibold">
+              J'ai un code d'invitation
+            </Text>
+          </TouchableOpacity>
+
           {/* Footer */}
-          <View style={styles.footer}>
-            <Divider label="Nouveau sur Keurzen ?" />
-            <Button
-              label="Créer un compte"
-              onPress={() =>
-                pendingInviteToken
-                  ? router.push(`/(auth)/signup?invite=${pendingInviteToken}`)
-                  : router.push('/(auth)/signup')
-              }
-              variant="outline"
-              fullWidth
-              size="lg"
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/signup')}
+            style={styles.signupLink}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text variant="body" color="muted">
+              {'Pas encore de compte ? '}
+              <Text variant="body" color="mint">
+                Creer un compte
+              </Text>
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -159,17 +136,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  flex: {
-    flex: 1,
-  },
+  flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing['3xl'],
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    paddingTop: Spacing['3xl'],
     paddingBottom: Spacing['2xl'],
     gap: Spacing.sm,
   },
@@ -184,26 +159,17 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.base,
   },
-  forgotLink: {
-    alignSelf: 'flex-end',
-    paddingVertical: Spacing.xs,
-  },
-  footer: {
-    marginTop: Spacing['2xl'],
-    gap: Spacing.base,
-  },
-  inviteBanner: {
+  joinCodeLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.mint + '18',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginTop: Spacing.base,
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.sm,
   },
-  inviteBannerText: {
-    flex: 1,
-    color: Colors.textPrimary,
-    lineHeight: 20,
+  signupLink: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
 });

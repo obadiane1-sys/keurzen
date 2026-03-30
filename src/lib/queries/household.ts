@@ -184,7 +184,7 @@ export function usePendingInvitations(householdId?: string) {
         .from('invitations')
         .select('*')
         .eq('household_id', householdId!)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'sent'])
         .order('created_at', { ascending: false });
 
       if (error) throw new Error(error.message);
@@ -204,7 +204,7 @@ export function useSendEmailInvitation() {
   const { currentHousehold } = useHouseholdStore();
 
   return useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
+    mutationFn: async ({ email, firstName }: { email: string; firstName?: string }) => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + INVITATION_EXPIRY_DAYS);
 
@@ -215,6 +215,7 @@ export function useSendEmailInvitation() {
           household_id: currentHousehold!.id,
           invited_by: user!.id,
           email,
+          first_name: firstName ?? null,
           channel: 'email' as const,
           expires_at: expiresAt.toISOString(),
         })
@@ -372,11 +373,9 @@ export function useRevokeInvitation() {
 
   return useMutation({
     mutationFn: async (invitationId: string) => {
-      const { error } = await supabase
-        .from('invitations')
-        .delete()
-        .eq('id', invitationId);
-
+      const { error } = await supabase.functions.invoke('revoke-invitation', {
+        body: { invitation_id: invitationId },
+      });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {

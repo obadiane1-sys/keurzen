@@ -19,23 +19,23 @@ interface BadgeProps {
 }
 
 const statusConfig: Record<TaskStatus, { bg: string; text: string; label: string }> = {
-  todo: { bg: Colors.blue + '30', text: '#3B82F6', label: 'À faire' },
+  todo: { bg: Colors.blue + '30', text: Colors.blueStrong, label: 'À faire' },
   in_progress: { bg: Colors.lavender + '30', text: Colors.lavender, label: 'En cours' },
-  done: { bg: Colors.mint + '30', text: '#059669', label: 'Terminé' },
-  overdue: { bg: Colors.coral + '30', text: '#DC2626', label: 'En retard' },
+  done: { bg: Colors.mint + '30', text: Colors.greenStrong, label: 'Terminé' },
+  overdue: { bg: Colors.coral + '30', text: Colors.redStrong, label: 'En retard' },
 };
 
 const priorityConfig: Record<TaskPriority, { bg: string; text: string }> = {
   low: { bg: Colors.gray100, text: Colors.gray500 },
-  medium: { bg: Colors.blue + '25', text: '#3B82F6' },
-  high: { bg: Colors.coral + '25', text: '#EA580C' },
-  urgent: { bg: '#FEE2E2', text: '#DC2626' },
+  medium: { bg: Colors.blue + '25', text: Colors.blueStrong },
+  high: { bg: Colors.coral + '25', text: Colors.orangeStrong },
+  urgent: { bg: Colors.redBgLight, text: Colors.redStrong },
 };
 
 const alertConfig: Record<AlertLevel, { bg: string; text: string; label: string }> = {
-  balanced: { bg: Colors.mint + '30', text: '#059669', label: 'Équilibré' },
-  watch: { bg: Colors.blue + '30', text: '#2563EB', label: 'À surveiller' },
-  unbalanced: { bg: Colors.coral + '30', text: '#DC2626', label: 'Déséquilibré' },
+  balanced: { bg: Colors.mint + '30', text: Colors.greenStrong, label: 'Équilibré' },
+  watch: { bg: Colors.blue + '30', text: Colors.blueDeep, label: 'À surveiller' },
+  unbalanced: { bg: Colors.coral + '30', text: Colors.redStrong, label: 'Déséquilibré' },
 };
 
 export function Badge({

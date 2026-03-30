@@ -1,381 +1,286 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../../src/stores/auth.store';
-import { useHouseholdStore } from '../../../src/stores/household.store';
-import { useUiStore } from '../../../src/stores/ui.store';
-import { useTasks, useOverdueTasks, useTodayTasks } from '../../../src/lib/queries/tasks';
-import { useCurrentTlx, useTlxDelta } from '../../../src/lib/queries/tlx';
-import { useCurrentWeekStats, useAlerts } from '../../../src/lib/queries/weekly-stats';
+import { Ionicons } from '@expo/vector-icons';
+import dayjs from 'dayjs';
+
+import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
-import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
+import { useTasks, useOverdueTasks, useTodayTasks } from '../../../src/lib/queries/tasks';
+import { useWeeklyBalance } from '../../../src/lib/queries/weekly-stats';
+import { useCurrentTlx, useTlxDelta } from '../../../src/lib/queries/tlx';
+import { useUnreadCount } from '../../../src/lib/queries/notifications';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Card } from '../../../src/components/ui/Card';
 import { Badge } from '../../../src/components/ui/Badge';
 import { Avatar } from '../../../src/components/ui/Avatar';
-import { Button } from '../../../src/components/ui/Button';
+import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { CreateTaskModal } from '../../../src/components/tasks/CreateTaskModal';
-import { Ionicons } from '@expo/vector-icons';
-import dayjs from 'dayjs';
-import 'dayjs/locale/fr';
-import type { Task, WeeklyStat } from '../../../src/types';
-
-dayjs.locale('fr');
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function DashboardHeader() {
-  const { profile } = useAuthStore();
-  const firstName = profile?.full_name?.split(' ')[0] ?? 'toi';
-  const hour = dayjs().hour();
-  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
-
-  return (
-    <View style={styles.header}>
-      <View>
-        <Text variant="overline" color="muted">
-          {dayjs().format('dddd D MMMM')}
-        </Text>
-        <Text variant="h3">
-          {greeting}, {firstName} 👋
-        </Text>
-      </View>
-      <Avatar
-        name={profile?.full_name}
-        avatarUrl={profile?.avatar_url}
-        size="md"
-      />
-    </View>
-  );
-}
-
-function KpiRow() {
-  const todayTasks = useTodayTasks();
-  const overdue = useOverdueTasks();
-  const { data: tasks = [] } = useTasks();
-  const doneTasks = tasks.filter((t) => t.status === 'done');
-
-  return (
-    <View style={styles.kpiRow}>
-      <Card style={styles.kpiCard} padding="sm">
-        <Text variant="h2" color="mint">{todayTasks.length}</Text>
-        <Text variant="caption" color="secondary">{"Aujourd'hui"}</Text>
-      </Card>
-      <Card style={styles.kpiCard} padding="sm">
-        <Text variant="h2" color="coral">{overdue.length}</Text>
-        <Text variant="caption" color="secondary">En retard</Text>
-      </Card>
-      <Card style={styles.kpiCard} padding="sm">
-        <Text variant="h2" style={{ color: Colors.lavender }}>{doneTasks.length}</Text>
-        <Text variant="caption" color="secondary">Terminées</Text>
-      </Card>
-    </View>
-  );
-}
-
-function TlxCard() {
-  const { data: currentTlx } = useCurrentTlx();
-  const { data: delta } = useTlxDelta();
-  const router = useRouter();
-
-  const scoreColor =
-    !currentTlx ? Colors.textMuted
-    : currentTlx.score <= 30 ? Colors.mint
-    : currentTlx.score <= 60 ? Colors.blue
-    : currentTlx.score <= 80 ? Colors.coral
-    : Colors.error;
-
-  return (
-    <Card style={styles.tlxCard} onPress={() => router.push('/(app)/dashboard/tlx')}>
-      <View style={styles.tlxHeader}>
-        <Text variant="h4">Charge mentale</Text>
-        <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-      </View>
-
-      {!currentTlx ? (
-        <View style={styles.tlxEmpty}>
-          <Text variant="bodySmall" color="muted">
-            Pas de bilan cette semaine
-          </Text>
-          <Button
-            label="Faire mon bilan"
-            variant="secondary"
-            size="sm"
-            onPress={() => router.push('/(app)/dashboard/tlx')}
-          />
-        </View>
-      ) : (
-        <View style={styles.tlxContent}>
-          <View style={styles.tlxScore}>
-            <Text
-              variant="display"
-              style={{ color: scoreColor, fontSize: 48, fontWeight: '800' }}
-            >
-              {currentTlx.score}
-            </Text>
-            <Text variant="body" color="muted">/100</Text>
-          </View>
-
-          {delta?.hasComparison && delta.delta !== null && (
-            <View style={styles.tlxDelta}>
-              <Ionicons
-                name={delta.delta > 0 ? 'trending-up' : delta.delta < 0 ? 'trending-down' : 'remove'}
-                size={16}
-                color={delta.delta > 0 ? Colors.coral : delta.delta < 0 ? Colors.mint : Colors.textMuted}
-              />
-              <Text
-                variant="caption"
-                style={{
-                  color: delta.delta > 0 ? Colors.coral : delta.delta < 0 ? Colors.mint : Colors.textMuted,
-                  fontWeight: '600',
-                }}
-              >
-                {delta.delta > 0 ? '+' : ''}{delta.delta} pts vs semaine dernière
-              </Text>
-            </View>
-          )}
-
-          {delta && !delta.hasComparison && (
-            <Text variant="caption" color="muted">
-              Première saisie de la semaine
-            </Text>
-          )}
-        </View>
-      )}
-    </Card>
-  );
-}
-
-function TaskListItem({ task }: { task: Task }) {
-  const router = useRouter();
-  const isOverdue = task.status === 'overdue' ||
-    (task.status !== 'done' && task.due_date && dayjs(task.due_date).isBefore(dayjs(), 'day'));
-
-  return (
-    <TouchableOpacity
-      style={styles.taskItem}
-      onPress={() => router.push(`/(app)/tasks/${task.id}`)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.taskLeft}>
-        <Text variant="label" numberOfLines={1} style={styles.taskTitle}>
-          {task.title}
-        </Text>
-        {task.due_date && (
-          <Text variant="caption" color={isOverdue ? 'error' : 'muted'}>
-            {isOverdue ? '⚠ ' : ''}{dayjs(task.due_date).format('D MMM')}
-          </Text>
-        )}
-      </View>
-      <View style={styles.taskRight}>
-        {isOverdue && <Badge label="En retard" status="overdue" size="sm" />}
-        {task.assigned_profile && (
-          <Avatar
-            name={task.assigned_profile.full_name}
-            avatarUrl={task.assigned_profile.avatar_url}
-            size="xs"
-          />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-function WeeklyBalanceCard() {
-  const { data: stats = [], isLoading } = useCurrentWeekStats();
-  const { members } = useHouseholdStore();
-
-  if (isLoading) return <Loader size="small" />;
-  if (stats.length === 0) return null;
-
-  return (
-    <Card>
-      <Text variant="h4" style={styles.sectionTitle}>
-        Équilibre de la semaine
-      </Text>
-      <View style={styles.balanceList}>
-        {stats.map((stat) => {
-          const member = members.find((m) => m.user_id === stat.user_id);
-          const color = member?.color ?? Colors.mint;
-          const share = Math.round(stat.tasks_share * 100);
-          const expected = Math.round(stat.expected_share * 100);
-          const delta = share - expected;
-
-          return (
-            <View key={stat.id} style={styles.balanceRow}>
-              <Avatar
-                name={stat.profile?.full_name}
-                avatarUrl={stat.profile?.avatar_url}
-                color={color}
-                size="sm"
-              />
-              <Text variant="label" style={styles.balanceName} numberOfLines={1}>
-                {stat.profile?.full_name?.split(' ')[0] ?? 'Membre'}
-              </Text>
-              <View style={styles.balanceBar}>
-                <View
-                  style={[
-                    styles.balanceFill,
-                    {
-                      width: `${share}%`,
-                      backgroundColor: delta > 20 ? Colors.coral : delta < -20 ? Colors.blue : Colors.mint,
-                    },
-                  ]}
-                />
-              </View>
-              <Text
-                variant="caption"
-                style={{
-                  color: delta > 20 ? Colors.coral : delta < -20 ? Colors.blue : Colors.textSecondary,
-                  minWidth: 36,
-                  textAlign: 'right',
-                  fontWeight: '600',
-                }}
-              >
-                {share}%
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    </Card>
-  );
-}
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { taskModalOpen, setTaskModalOpen } = useUiStore();
-  const { currentHousehold } = useHouseholdStore();
-  const { data: tasks = [], isLoading, refetch } = useTasks();
-  const { data: alerts = [] } = useAlerts();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { profile } = useCurrentUser();
+  const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
+  const { data: allTasks = [] } = useTasks();
+  const overdueTasks = useOverdueTasks();
+  const todayTasks = useTodayTasks();
+  const { members: balanceMembers, isLoading: balanceLoading } = useWeeklyBalance();
+  const { data: currentTlx } = useCurrentTlx();
+  const { data: tlxDelta } = useTlxDelta();
 
-  const { isLoading: isHouseholdLoading } = useMyHousehold();
+  const activeTasks = allTasks.filter((t) => t.status !== 'done');
+  const doneTasks = allTasks.filter((t) => t.status === 'done');
 
-  const upcomingTasks = tasks
-    .filter((t) => t.status !== 'done' && t.status !== 'overdue')
-    .slice(0, 5);
+  const greeting = profile?.full_name
+    ? `Bonjour, ${profile.full_name.split(' ')[0]}`
+    : 'Bonjour';
 
-  const recentDone = tasks
-    .filter((t) => t.status === 'done' && t.completed_at)
-    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
-    .slice(0, 3);
+  if (isLoading) {
+    return <Loader fullScreen />;
+  }
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
-
-  if (!currentHousehold && !isHouseholdLoading) {
+  if (!household) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <Text variant="h2">{greeting}</Text>
+          <Mascot size={44} expression="calm" />
+        </View>
         <EmptyState
           variant="household"
-          onCta={() => router.push('/(app)/settings/household')}
+          expression="normal"
+          title="Votre foyer vous attend"
+          subtitle="Creez un foyer ou rejoignez-en un avec un code d'invitation."
+          action={{ label: 'Creer un foyer', onPress: () => router.navigate('/(app)/settings/household') }}
         />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.mint} />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={Colors.mint}
+            colors={[Colors.mint]}
+          />
         }
       >
-        <DashboardHeader />
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text variant="h2">{greeting}</Text>
+            <Text variant="bodySmall" color="secondary">
+              {household.name}
+            </Text>
+          </View>
+          <Mascot size={44} expression="happy" />
+        </View>
 
-        {/* Alerts */}
-        {alerts.length > 0 && (
-          <Card style={[styles.alertCard, { backgroundColor: Colors.coral + '15', borderColor: Colors.coral + '40', borderWidth: 1 }]}>
-            <View style={styles.alertRow}>
-              <Ionicons name="alert-circle" size={18} color={Colors.coral} />
-              <Text variant="bodySmall" style={{ flex: 1 }}>
-                {alerts[0].message}
-              </Text>
-            </View>
-          </Card>
-        )}
-
-        <KpiRow />
-
-        {/* Quick actions */}
-        <View style={styles.quickActions}>
-          <Button
-            label="+ Tâche"
-            variant="primary"
-            size="md"
-            onPress={() => setTaskModalOpen(true)}
-            style={{ flex: 1 }}
+        {/* Quick stats row */}
+        <View style={styles.statsRow}>
+          <StatCard
+            label="Aujourd'hui"
+            value={todayTasks.length.toString()}
+            icon="today-outline"
+            color={Colors.mint}
+            onPress={() => router.push('/(app)/tasks')}
           />
-          <Button
-            label="Calendrier"
-            variant="secondary"
-            size="md"
-            onPress={() => router.push('/(app)/calendar')}
-            style={{ flex: 1 }}
-            leftIcon={<Ionicons name="calendar-outline" size={16} color={Colors.navy} />}
+          <StatCard
+            label="En retard"
+            value={overdueTasks.length.toString()}
+            icon="warning-outline"
+            color={overdueTasks.length > 0 ? Colors.coral : Colors.gray300}
+            onPress={() => router.push('/(app)/tasks')}
+          />
+          <StatCard
+            label="Total actif"
+            value={activeTasks.length.toString()}
+            icon="list-outline"
+            color={Colors.blue}
+            onPress={() => router.push('/(app)/tasks')}
           />
         </View>
 
-        <TlxCard />
-
-        <WeeklyBalanceCard />
-
-        {/* Upcoming tasks */}
-        {upcomingTasks.length > 0 && (
-          <Card>
-            <View style={styles.sectionHeader}>
-              <Text variant="h4">À venir</Text>
-              <TouchableOpacity onPress={() => router.push('/(app)/tasks')}>
-                <Text variant="caption" color="mint">Voir tout</Text>
-              </TouchableOpacity>
+        {/* Overdue alert */}
+        {overdueTasks.length > 0 && (
+          <Card
+            onPress={() => router.push('/(app)/tasks')}
+            style={styles.alertCard}
+          >
+            <View style={styles.alertRow}>
+              <View style={styles.alertIcon}>
+                <Ionicons name="warning" size={20} color={Colors.coral} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text variant="label">
+                  {overdueTasks.length} tache{overdueTasks.length > 1 ? 's' : ''} en retard
+                </Text>
+                <Text variant="caption" color="muted">
+                  {overdueTasks.slice(0, 2).map((t) => t.title).join(', ')}
+                  {overdueTasks.length > 2 ? '...' : ''}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
             </View>
-            {upcomingTasks.map((task) => (
-              <TaskListItem key={task.id} task={task} />
-            ))}
           </Card>
         )}
 
-        {/* Recently done */}
-        {recentDone.length > 0 && (
-          <Card>
-            <Text variant="h4" style={styles.sectionTitle}>Récemment terminées</Text>
-            {recentDone.map((task) => (
-              <TaskListItem key={task.id} task={task} />
+        {/* Weekly balance */}
+        <Text variant="overline" color="muted" style={styles.sectionLabel}>
+          Repartition cette semaine
+        </Text>
+        {balanceMembers.length > 0 ? (
+          <Card padding="md">
+            {balanceMembers.map((m, i) => (
+              <View key={m.userId}>
+                <View style={styles.memberRow}>
+                  <Avatar name={m.name} avatarUrl={m.avatarUrl} size="sm" color={m.color} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodySmall" weight="medium">{m.name}</Text>
+                    <View style={styles.barContainer}>
+                      <View
+                        style={[
+                          styles.bar,
+                          {
+                            width: `${Math.round(m.tasksShare * 100)}%`,
+                            backgroundColor: m.color,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.shareInfo}>
+                    <Text variant="label">{Math.round(m.tasksShare * 100)}%</Text>
+                    <Badge label="" alertLevel={m.level} size="sm" dot />
+                  </View>
+                </View>
+                {i < balanceMembers.length - 1 && <View style={styles.divider} />}
+              </View>
             ))}
+          </Card>
+        ) : (
+          <Card padding="md">
+            <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+              Pas encore de donnees cette semaine
+            </Text>
           </Card>
         )}
 
-        {tasks.length === 0 && !isLoading && (
-          <EmptyState
-            variant="dashboard"
-            onCta={() => setTaskModalOpen(true)}
-          />
-        )}
+        {/* TLX score */}
+        <Text variant="overline" color="muted" style={styles.sectionLabel}>
+          Charge mentale
+        </Text>
+        <Card
+          padding="md"
+          onPress={() => router.push('/(app)/dashboard/tlx')}
+        >
+          {currentTlx ? (
+            <View style={styles.tlxRow}>
+              <View style={[styles.tlxCircle, { borderColor: tlxColor(currentTlx.score) }]}>
+                <Text variant="h3" style={{ color: tlxColor(currentTlx.score) }}>
+                  {currentTlx.score}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text variant="label">Score TLX</Text>
+                {tlxDelta?.hasComparison && tlxDelta.delta !== null && (
+                  <Text
+                    variant="bodySmall"
+                    color={tlxDelta.delta > 0 ? 'coral' : 'mint'}
+                  >
+                    {tlxDelta.delta > 0 ? '+' : ''}{tlxDelta.delta} vs semaine derniere
+                  </Text>
+                )}
+                {!currentTlx && (
+                  <Text variant="bodySmall" color="muted">
+                    Bilan non rempli cette semaine
+                  </Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+            </View>
+          ) : (
+            <View style={styles.tlxRow}>
+              <Ionicons name="pulse-outline" size={28} color={Colors.lavender} />
+              <View style={{ flex: 1 }}>
+                <Text variant="label">Evaluez votre charge mentale</Text>
+                <Text variant="bodySmall" color="muted">
+                  Remplissez le questionnaire TLX cette semaine
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+            </View>
+          )}
+        </Card>
 
-        {isLoading && <Loader label="Chargement..." />}
+        {/* Completed this week */}
+        <Text variant="overline" color="muted" style={styles.sectionLabel}>
+          Termine recemment
+        </Text>
+        <Card padding="md">
+          {doneTasks.length > 0 ? (
+            <View style={styles.doneList}>
+              {doneTasks.slice(0, 5).map((t) => (
+                <View key={t.id} style={styles.doneItem}>
+                  <Ionicons name="checkmark-circle" size={18} color={Colors.mint} />
+                  <Text variant="bodySmall" color="secondary" numberOfLines={1} style={{ flex: 1 }}>
+                    {t.title}
+                  </Text>
+                  {t.completed_at && (
+                    <Text variant="caption" color="muted">
+                      {dayjs(t.completed_at).format('DD/MM')}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+              Aucune tache terminee cette semaine
+            </Text>
+          )}
+        </Card>
       </ScrollView>
-      <CreateTaskModal
-        visible={taskModalOpen}
-        onClose={() => setTaskModalOpen(false)}
-      />
     </SafeAreaView>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function tlxColor(score: number): string {
+  if (score <= 33) return Colors.mint;
+  if (score <= 66) return Colors.lavender;
+  return Colors.coral;
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  onPress: () => void;
+}) {
+  return (
+    <Card onPress={onPress} padding="sm" style={styles.statCard}>
+      <Ionicons name={icon} size={20} color={color} />
+      <Text variant="h3" style={{ color }}>{value}</Text>
+      <Text variant="caption" color="muted" numberOfLines={1}>{label}</Text>
+    </Card>
   );
 }
 
@@ -384,113 +289,94 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scroll: {
-    paddingHorizontal: Spacing.base,
+  scrollContent: {
     paddingBottom: Spacing['4xl'],
-    gap: Spacing.base,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.base,
   },
-  kpiRow: {
+  statsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
-  kpiCard: {
+  statCard: {
     flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  tlxCard: {
-    gap: Spacing.sm,
-  },
-  tlxHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  tlxEmpty: {
-    gap: Spacing.sm,
-  },
-  tlxContent: {
-    gap: Spacing.xs,
-  },
-  tlxScore: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
-  },
-  tlxDelta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  taskItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    gap: Spacing.sm,
-  },
-  taskLeft: {
-    flex: 1,
-    gap: 2,
-  },
-  taskTitle: {
-    flex: 1,
-  },
-  taskRight: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
   },
   alertCard: {
-    borderRadius: BorderRadius.lg,
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.coral + '08',
   },
   alertRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
+  },
+  alertIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.coral + '18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionLabel: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  barContainer: {
+    height: 6,
+    backgroundColor: Colors.gray100,
+    borderRadius: 3,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  bar: {
+    height: 6,
+    borderRadius: 3,
+  },
+  shareInfo: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.border,
+  },
+  tlxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  tlxCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneList: {
     gap: Spacing.sm,
   },
-  balanceList: {
-    gap: Spacing.sm,
-  },
-  balanceRow: {
+  doneItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-  },
-  balanceName: {
-    width: 60,
-  },
-  balanceBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.gray100,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  balanceFill: {
-    height: '100%',
-    borderRadius: BorderRadius.full,
   },
 });

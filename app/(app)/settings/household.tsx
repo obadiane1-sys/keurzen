@@ -1,148 +1,298 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useMyHousehold, useHouseholdMembers, useCreateHousehold, useJoinHousehold } from '../../../src/lib/queries/household';
+import { useRecentCodes, useGenerateInviteCode } from '../../../src/lib/queries/invitation-codes';
 import { useHouseholdStore } from '../../../src/stores/household.store';
-import { useCreateHousehold, useHouseholdMembers } from '../../../src/lib/queries/household';
 import { useUiStore } from '../../../src/stores/ui.store';
-import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
+import type { InvitationCode } from '../../../src/types';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
-import { Card } from '../../../src/components/ui/Card';
 import { Input } from '../../../src/components/ui/Input';
 import { Button } from '../../../src/components/ui/Button';
+import { Card } from '../../../src/components/ui/Card';
 import { Avatar } from '../../../src/components/ui/Avatar';
-import { Divider } from '../../../src/components/ui/Divider';
-import { Ionicons } from '@expo/vector-icons';
+import { Loader } from '../../../src/components/ui/Loader';
 
 export default function HouseholdScreen() {
   const router = useRouter();
   const { showToast } = useUiStore();
+  const { data: household, isLoading } = useMyHousehold();
   const { currentHousehold } = useHouseholdStore();
-  const { data: members = [] } = useHouseholdMembers(currentHousehold?.id);
+  const { data: members } = useHouseholdMembers(currentHousehold?.id);
+  const { data: recentCodes } = useRecentCodes(currentHousehold?.id);
   const createHousehold = useCreateHousehold();
+  const joinHousehold = useJoinHousehold();
+  const generateCode = useGenerateInviteCode();
 
-  const [householdName, setHouseholdName] = useState('');
-  const [mode, setMode] = useState<'menu' | 'create'>('menu');
+  const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
-  const handleCreate = async () => {
-    if (!householdName.trim()) {
-      showToast('Entrez un nom de foyer', 'error');
-      return;
-    }
+  // Filter pending invitations (not used, not expired)
+  const pendingInvites = (recentCodes ?? []).filter(
+    (c) => !c.used && new Date(c.expires_at) > new Date(),
+  );
+
+  const handleResend = async (invite: InvitationCode) => {
+    if (!invite.email) return;
+    setResendingId(invite.id);
     try {
-      await createHousehold.mutateAsync(householdName.trim());
-      showToast('Foyer créé !', 'success');
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erreur', 'error');
+      await generateCode.mutateAsync({
+        email: invite.email,
+        firstName: invite.invited_name ?? undefined,
+      });
+      showToast('Invitation renvoyée !', 'success');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setResendingId(null);
     }
   };
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    try {
+      await createHousehold.mutateAsync(name.trim());
+      showToast('Foyer créé !', 'success');
+      setMode('none');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    }
+  };
+
+  const handleJoin = async () => {
+    if (!code.trim()) return;
+    try {
+      await joinHousehold.mutateAsync(code.trim());
+      showToast('Vous avez rejoint le foyer !', 'success');
+      setMode('none');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    }
+  };
+
+  if (isLoading) return <Loader fullScreen />;
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.backBtn}
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.navy} />
           </TouchableOpacity>
-          <Text variant="h3">Mon foyer</Text>
-          <View style={{ width: 44 }} />
+          <Text variant="h2" style={styles.title}>Mon foyer</Text>
         </View>
 
-        {currentHousehold ? (
+        {household ? (
           <>
-            {/* Household info */}
-            <Card>
-              <View style={styles.householdHeader}>
-                <View style={[styles.householdIcon, { backgroundColor: Colors.mint + '25' }]}>
-                  <Ionicons name="home" size={24} color={Colors.mint} />
+            {/* Foyer info card */}
+            <Card style={styles.householdCard}>
+              <View style={styles.householdInfo}>
+                <View style={styles.householdIcon}>
+                  <Ionicons name="home" size={22} color={Colors.mint} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text variant="h4">{currentHousehold.name}</Text>
+                  <Text variant="h3">{household.name}</Text>
+                  <Text variant="caption" color="muted">
+                    Code : {household.invite_code}
+                  </Text>
                 </View>
               </View>
-
-              <Button
-                label="Inviter un membre"
-                variant="secondary"
-                size="md"
-                fullWidth
-                leftIcon={<Ionicons name="person-add-outline" size={16} color={Colors.navy} />}
-                onPress={() => router.push('/(app)/settings/invite')}
-                style={{ marginTop: Spacing.base }}
-              />
             </Card>
 
-            {/* Members list */}
-            <Card>
-              <Text variant="h4" style={{ marginBottom: Spacing.base }}>
-                Membres ({members.length})
+            {/* Members section */}
+            <View style={styles.sectionHeader}>
+              <Text variant="label" color="secondary">
+                Membres ({members?.length ?? 0})
               </Text>
-              {members.map((member, index) => (
-                <View key={member.id}>
-                  {index > 0 && <Divider />}
-                  <View style={styles.memberRow}>
-                    <Avatar
-                      name={member.profile?.full_name}
-                      avatarUrl={member.profile?.avatar_url}
-                      color={member.color}
-                      size="md"
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text variant="label">{member.profile?.full_name ?? 'Membre'}</Text>
-                      <Text variant="caption" color="muted">{member.profile?.email}</Text>
-                    </View>
-                    <View style={[styles.roleBadge, { backgroundColor: member.color + '25' }]}>
-                      <Text variant="caption" style={{ color: member.color, fontWeight: '600' }}>
-                        {member.role === 'owner' ? 'Admin' : 'Membre'}
-                      </Text>
-                    </View>
+            </View>
+
+            <Card style={styles.membersCard}>
+              {members?.map((m, index) => (
+                <View
+                  key={m.id}
+                  style={[
+                    styles.memberRow,
+                    index < (members.length - 1) && styles.memberRowBorder,
+                  ]}
+                >
+                  <Avatar
+                    name={m.profile?.full_name}
+                    avatarUrl={m.profile?.avatar_url}
+                    color={m.color}
+                    size="md"
+                  />
+                  <View style={styles.memberInfo}>
+                    <Text variant="body">{m.profile?.full_name ?? 'Membre'}</Text>
+                    <Text variant="caption" color="muted">
+                      {m.role === 'owner' ? 'Administrateur' : 'Membre'}
+                    </Text>
                   </View>
+                  {m.role === 'owner' && (
+                    <View style={styles.ownerBadge}>
+                      <Text style={styles.ownerBadgeText}>Admin</Text>
+                    </View>
+                  )}
                 </View>
               ))}
             </Card>
+
+            {/* Pending invitations */}
+            {pendingInvites.length > 0 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Text variant="label" color="secondary">
+                    Invitations en attente ({pendingInvites.length})
+                  </Text>
+                </View>
+
+                <Card style={styles.membersCard}>
+                  {pendingInvites.map((invite, index) => {
+                    const daysLeft = Math.ceil(
+                      (new Date(invite.expires_at).getTime() - Date.now()) / 86_400_000,
+                    );
+                    return (
+                      <View
+                        key={invite.id}
+                        style={[
+                          styles.memberRow,
+                          index < pendingInvites.length - 1 && styles.memberRowBorder,
+                        ]}
+                      >
+                        <View style={styles.pendingIconCircle}>
+                          <Ionicons name="mail-outline" size={18} color={Colors.coral} />
+                        </View>
+                        <View style={styles.memberInfo}>
+                          <Text variant="body">
+                            {invite.invited_name ?? invite.email ?? 'Invité'}
+                          </Text>
+                          <Text variant="caption" color="muted">
+                            {invite.email ? invite.email : ''}
+                            {invite.email && daysLeft > 0 ? '  ·  ' : ''}
+                            {daysLeft > 0
+                              ? `Expire dans ${daysLeft}j`
+                              : "Expire aujourd'hui"}
+                          </Text>
+                        </View>
+                        {invite.email && (
+                          <TouchableOpacity
+                            style={styles.resendBtn}
+                            onPress={() => handleResend(invite)}
+                            disabled={resendingId === invite.id}
+                            activeOpacity={0.7}
+                          >
+                            {resendingId === invite.id ? (
+                              <Loader size="small" />
+                            ) : (
+                              <Ionicons name="refresh" size={16} color={Colors.mint} />
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    );
+                  })}
+                </Card>
+              </>
+            )}
+
+            {/* Invite CTA */}
+            <TouchableOpacity
+              style={styles.inviteBtn}
+              onPress={() => router.push('/(app)/settings/invite')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.inviteBtnLeft}>
+                <View style={styles.inviteIconCircle}>
+                  <Ionicons name="person-add" size={18} color={Colors.mint} />
+                </View>
+                <Text variant="body" style={styles.inviteBtnText}>Inviter un membre</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
           </>
         ) : (
-          <>
-            {/* No household — create or join */}
-            {mode === 'menu' && (
-              <View style={styles.setupOptions}>
-                <Text variant="h4" style={styles.setupTitle}>
-                  Commencez par créer un foyer
-                </Text>
+          <View style={styles.noHousehold}>
+            {mode === 'none' && (
+              <View style={styles.actions}>
                 <Button
                   label="Créer un foyer"
-                  variant="primary"
-                  size="lg"
-                  fullWidth
                   onPress={() => setMode('create')}
+                  fullWidth
+                  size="lg"
+                />
+                <Button
+                  label="Rejoindre avec un code"
+                  variant="outline"
+                  onPress={() => setMode('join')}
+                  fullWidth
+                  size="lg"
                 />
               </View>
             )}
 
             {mode === 'create' && (
-              <Card>
-                <Text variant="h4" style={{ marginBottom: Spacing.base }}>Créer un foyer</Text>
+              <View style={styles.formSection}>
                 <Input
                   label="Nom du foyer"
-                  placeholder="Famille Dupont"
-                  value={householdName}
-                  onChangeText={setHouseholdName}
+                  placeholder="Ex: Famille Dupont"
+                  value={name}
+                  onChangeText={setName}
                   leftIcon="home-outline"
                 />
-                <View style={styles.btnRow}>
-                  <Button label="Annuler" variant="ghost" onPress={() => setMode('menu')} style={{ flex: 1 }} />
-                  <Button
-                    label="Créer"
-                    variant="primary"
-                    isLoading={createHousehold.isPending}
-                    onPress={handleCreate}
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </Card>
+                <Button
+                  label="Créer"
+                  onPress={handleCreate}
+                  isLoading={createHousehold.isPending}
+                  fullWidth
+                  size="lg"
+                />
+                <TouchableOpacity onPress={() => setMode('none')}>
+                  <Text variant="bodySmall" color="mint" style={{ textAlign: 'center' }}>
+                    Annuler
+                  </Text>
+                </TouchableOpacity>
+              </View>
             )}
 
-          </>
+            {mode === 'join' && (
+              <View style={styles.formSection}>
+                <Input
+                  label="Code d'invitation"
+                  placeholder="Entrez le code"
+                  value={code}
+                  onChangeText={setCode}
+                  leftIcon="key-outline"
+                  autoCapitalize="none"
+                />
+                <Button
+                  label="Rejoindre"
+                  onPress={handleJoin}
+                  isLoading={joinHousehold.isPending}
+                  fullWidth
+                  size="lg"
+                />
+                <TouchableOpacity onPress={() => setMode('none')}>
+                  <Text variant="bodySmall" color="mint" style={{ textAlign: 'center' }}>
+                    Annuler
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -151,25 +301,118 @@ export default function HouseholdScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { paddingHorizontal: Spacing.base, paddingBottom: Spacing['4xl'], gap: Spacing.base },
+  scroll: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing['3xl'],
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.sm,
     paddingTop: Spacing.base,
+    paddingBottom: Spacing.xl,
   },
-  backBtn: { minWidth: 44, minHeight: 44, justifyContent: 'center' },
-  householdHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.base },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.backgroundCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.sm,
+  },
+  title: { flex: 1 },
+  householdCard: {
+    marginBottom: Spacing.xl,
+    padding: Spacing.base,
+  },
+  householdInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
   householdIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.base,
+    backgroundColor: Colors.mint + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.base, paddingVertical: Spacing.sm },
-  roleBadge: { paddingHorizontal: Spacing.sm, paddingVertical: 4, borderRadius: BorderRadius.full },
-  setupOptions: { gap: Spacing.base, paddingTop: Spacing.xl },
-  setupTitle: { textAlign: 'center', marginBottom: Spacing.sm },
-  btnRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.base },
+  sectionHeader: {
+    marginBottom: Spacing.sm,
+  },
+  membersCard: {
+    padding: 0,
+    overflow: 'hidden',
+    marginBottom: Spacing.base,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.base,
+  },
+  memberRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  memberInfo: { flex: 1, gap: 2 },
+  ownerBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.xs,
+    backgroundColor: Colors.mint + '20',
+  },
+  ownerBadgeText: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.greenStrong,
+    fontWeight: '600',
+  },
+  pendingIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.coral + '18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.mint + '18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.base,
+    padding: Spacing.base,
+    ...Shadows.sm,
+  },
+  inviteBtnLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  inviteIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.mint + '18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteBtnText: {
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  noHousehold: { gap: Spacing.xl },
+  actions: { gap: Spacing.base },
+  formSection: { gap: Spacing.base },
 });

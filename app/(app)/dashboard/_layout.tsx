@@ -7,7 +7,6 @@ export default function DashboardLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: Colors.background },
-        animation: 'slide_from_right',
       }}
     />
   );

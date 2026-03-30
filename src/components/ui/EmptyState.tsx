@@ -1,108 +1,158 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import KeurzenMascot, { type MascotExpression } from './KeurzenMascot';
 import { Colors, Spacing, Typography } from '../../constants/tokens';
 import { Text } from './Text';
-import { Button } from './Button';
-import { Mascot } from './Mascot';
 
 type EmptyStateVariant = 'tasks' | 'calendar' | 'tlx' | 'budget' | 'dashboard' | 'household' | 'generic';
 
 interface EmptyStateProps {
   variant?: EmptyStateVariant;
+  expression?: MascotExpression;
   title?: string;
   subtitle?: string;
   ctaLabel?: string;
   onCta?: () => void;
+  action?: {
+    label: string;
+    onPress: () => void;
+  };
   style?: ViewStyle;
 }
 
-const variantDefaults: Record<EmptyStateVariant, { title: string; subtitle: string; ctaLabel?: string }> = {
+const variantDefaults: Record<EmptyStateVariant, { title: string; subtitle: string; ctaLabel?: string; expression: MascotExpression }> = {
   tasks: {
-    title: 'Aucune tâche pour l\'instant',
-    subtitle: 'Commencez à organiser votre foyer en ajoutant votre première tâche.',
-    ctaLabel: 'Ajouter une tâche',
+    title: 'Tout est calme ici',
+    subtitle: 'Ajoutez une premiere tache a votre foyer.',
+    ctaLabel: 'Ajouter une tache',
+    expression: 'normal',
   },
   calendar: {
-    title: 'Pas d\'événements cette semaine',
-    subtitle: 'Votre calendrier est libre. Profitez-en !',
+    title: 'Aucune tache ce jour',
+    subtitle: 'Les taches avec une echeance ce jour apparaitront ici.',
+    expression: 'normal',
   },
   tlx: {
     title: 'Pas encore de bilan',
-    subtitle: 'Enregistrez votre charge mentale chaque semaine pour suivre votre équilibre.',
+    subtitle: 'Enregistrez votre charge mentale chaque semaine pour suivre votre equilibre.',
     ctaLabel: 'Faire mon bilan',
+    expression: 'tired',
   },
   budget: {
-    title: 'Aucune dépense enregistrée',
-    subtitle: 'Commencez à suivre vos dépenses pour voir la répartition budgétaire.',
-    ctaLabel: 'Ajouter une dépense',
+    title: 'Aucune depense enregistree',
+    subtitle: 'Commencez a suivre vos depenses pour voir la repartition budgetaire.',
+    ctaLabel: 'Ajouter une depense',
+    expression: 'normal',
   },
   dashboard: {
     title: 'Bienvenue dans Keurzen !',
-    subtitle: 'Votre tableau de bord se remplira au fil de vos activités.',
-    ctaLabel: 'Ajouter une tâche',
+    subtitle: 'Votre tableau de bord se remplira au fil de vos activites.',
+    ctaLabel: 'Ajouter une tache',
+    expression: 'happy',
   },
   household: {
-    title: 'Aucun foyer',
-    subtitle: 'Créez votre foyer ou rejoignez celui d\'un proche pour commencer.',
-    ctaLabel: 'Créer un foyer',
+    title: 'Votre foyer vous attend',
+    subtitle: 'Creez ou rejoignez un foyer pour commencer.',
+    ctaLabel: 'Creer un foyer',
+    expression: 'normal',
   },
   generic: {
     title: 'Rien ici pour l\'instant',
-    subtitle: 'Les données apparaîtront bientôt.',
+    subtitle: 'Les donnees apparaitront bientot.',
+    expression: 'normal',
   },
 };
 
 export function EmptyState({
   variant = 'generic',
+  expression,
   title,
   subtitle,
   ctaLabel,
   onCta,
+  action,
   style,
 }: EmptyStateProps) {
   const defaults = variantDefaults[variant];
   const displayTitle = title ?? defaults.title;
   const displaySubtitle = subtitle ?? defaults.subtitle;
-  const displayCta = ctaLabel ?? defaults.ctaLabel;
+  const displayExpression = expression ?? defaults.expression;
+
+  // Support both old (ctaLabel+onCta) and new (action) API
+  const actionLabel = action?.label ?? ctaLabel ?? defaults.ctaLabel;
+  const actionOnPress = action?.onPress ?? onCta;
 
   return (
     <View style={[styles.container, style]}>
-      <Mascot size={120} expression="calm" />
-      <Text variant="h4" style={styles.title}>
-        {displayTitle}
-      </Text>
-      <Text variant="body" color="secondary" style={styles.subtitle}>
-        {displaySubtitle}
-      </Text>
-      {displayCta && onCta && (
-        <Button
-          label={displayCta}
-          onPress={onCta}
-          variant="secondary"
-          style={styles.cta}
+      <Animated.View entering={ZoomIn.duration(350)}>
+        <KeurzenMascot
+          expression={displayExpression}
+          size={140}
+          animated
         />
-      )}
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.delay(200).duration(300)} style={styles.textWrap}>
+        <Text style={styles.title}>{displayTitle}</Text>
+        {displaySubtitle ? (
+          <Text style={styles.subtitle}>{displaySubtitle}</Text>
+        ) : null}
+      </Animated.View>
+
+      {actionLabel && actionOnPress ? (
+        <Animated.View entering={FadeIn.delay(400).duration(300)}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={actionOnPress}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.actionLabel}>{actionLabel}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
 
+export default EmptyState;
+
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing['4xl'],
     paddingHorizontal: Spacing['2xl'],
-    gap: Spacing.base,
+  },
+  textWrap: {
+    alignItems: 'center',
   },
   title: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: '600',
+    color: Colors.navy,
     textAlign: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
   },
   subtitle: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.navy + '99',
     textAlign: 'center',
+    marginTop: Spacing.sm,
+    maxWidth: 280,
     lineHeight: 22,
   },
-  cta: {
-    marginTop: Spacing.sm,
+  actionBtn: {
+    marginTop: Spacing['2xl'],
+    backgroundColor: Colors.coral,
+    borderRadius: 24,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+  },
+  actionLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: '600',
+    color: Colors.textInverse,
   },
 });

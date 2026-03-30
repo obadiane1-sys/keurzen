@@ -85,8 +85,9 @@ export interface Database {
           household_id: string;
           invited_by: string;
           email: string | null;
+          channel: 'link' | 'email' | 'contacts' | 'code';
           token: string;
-          status: 'pending' | 'accepted' | 'revoked' | 'expired';
+          status: 'pending' | 'sent' | 'accepted' | 'revoked' | 'expired';
           expires_at: string;
           created_at: string;
         };
@@ -95,13 +96,15 @@ export interface Database {
           household_id: string;
           invited_by: string;
           email?: string | null;
+          channel?: 'link' | 'email' | 'contacts' | 'code';
           token?: string;
-          status?: 'pending' | 'accepted' | 'revoked' | 'expired';
+          status?: 'pending' | 'sent' | 'accepted' | 'revoked' | 'expired';
           expires_at?: string;
           created_at?: string;
         };
         Update: {
-          status?: 'pending' | 'accepted' | 'revoked' | 'expired';
+          status?: 'pending' | 'sent' | 'accepted' | 'revoked' | 'expired';
+          channel?: 'link' | 'email' | 'contacts' | 'code';
         };
       };
       tasks: {
@@ -445,6 +448,33 @@ export interface Database {
           imbalance_alert?: boolean;
           digest_hour?: number;
           updated_at?: string;
+        };
+      };
+      in_app_notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          household_id: string;
+          type: string;
+          title: string;
+          body: string;
+          data: Json;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          household_id: string;
+          type: string;
+          title: string;
+          body: string;
+          data?: Json;
+          read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          read?: boolean;
         };
       };
     };

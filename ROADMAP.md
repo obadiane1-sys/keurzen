@@ -1,194 +1,154 @@
 # ROADMAP — Keurzen
 
-## Product
-Keurzen — premium household management app focused on fairness, time visibility, and mental load reduction.
-
----
-
 ## Principe directeur
-Lancer petit, lancer propre.
-Un palier doit être entièrement finalisé avant de passer au suivant.
-Aucun refactor global, aucun élargissement de scope sans décision explicite.
-Chaque fonctionnalité est implémentée simultanément sur mobile ET web.
+**Lancer petit, lancer propre.**
+Mieux vaut une app avec 4 fonctions qui marchent parfaitement qu'une app avec 8 fonctions bancales.
+
+Un palier doit être **entièrement finalisé** avant de passer au suivant.
+Aucun élargissement de scope sans décision explicite.
 
 ---
 
-## Phase 1 — Foundation ✅
-- Project setup
-- Design system (tokens, components)
-- Auth (login, signup, forgot password)
-- Routing (Expo Router, protected shell)
-- Base data model
-- Supabase setup (RLS, migrations 001–005)
-- Seed data
-- Protected app shell
-
-## Phase 2 — Core household workflows ✅
-- Household create / join by code / join by invite link / join by email
-- Member colors
-- Member roles (owner / member)
-- Privacy model (RLS per household)
-- Household settings screen
-- Invite screen (link / email / code)
-- Email invitation via Resend Edge Function
-
-## Phase 3 — Tasks ✅
-- Create / edit / delete task
-- Statuses (todo / in_progress / done / overdue)
-- Overdue logic (Edge Function mark-overdue-tasks)
-- Filters
-- List view
-- Detail view
-
-## Phase 4 — Calendar ✅
-- Day / week / month
-- Navigation
-- Filters
-- Empty states
-- Task quick access
-
-## Phase 5 — Time tracking ✅
-- Manual logs
-- Totals by task
-- Totals by member
-- Charts
-
-## Phase 6 — TLX ✅
-- Weekly raw TLX entry
-- One entry per week
-- Score calculation
-- TLX info sheet
-- Delta vs previous week
-
-## Phase 7 — Dashboard & imbalance ✅
-- KPI cards
-- Weekly balance card
-- Member distribution
-- Alerts
-- Weekly stats computation (Edge Function compute-weekly-stats)
-
-## Phase 8 — Budget ✅
-- Expenses
-- Categories
-- Split modes (equal / percentage / fixed)
-- Summaries
-- Charts
-
----
-
-## Phase 9 — Invitation flow 🔧 EN COURS
-
-### Bugs connus à corriger
-- [ ] `_layout.tsx` écrase la redirection vers la page sécurité post-invitation
-- [ ] Utilisateur invité atterrit sur le dashboard au lieu de la page sécurité
-- [ ] Suppression d'invitation en attente échoue (logique de révocation Auth à supprimer)
-
-### Règles impératives à respecter
-- Magic Link → deep link `keurzen://` → ouvre l'app directement (pas de page web)
-- `join/[token].tsx` : après `accept-invitation` → `setNeedsPasswordSetup(true)` → redirect sécurité
-- `_layout.tsx` : évalue `needsPasswordSetup` AVANT la redirection dashboard
-- Page sécurité : après changement mot de passe → `setNeedsPasswordSetup(false)` → dashboard
-- Suppression invitation : `DELETE FROM invitations WHERE id = $1` uniquement, zéro révocation Auth
-
-### Checklist
-- [x] Push token registration
-- [x] Morning digest (Edge Function morning-digest)
-- [x] Overdue notifications (Edge Function mark-overdue-tasks)
-- [x] Magic Link génération et envoi
-- [x] Utilisateur ajouté au foyer après Magic Link
-- [x] Email pré-rempli verrouillé sur le signup invitation
-- [x] Protection email existant au signup
-- [ ] Deep link ouvre l'app directement (pas de page web intermédiaire)
-- [ ] Redirection post-invitation → page sécurité (pas dashboard)
-- [ ] Définition mot de passe post-invitation → redirection dashboard
-- [ ] Suppression invitation en attente sans erreur
-- [ ] 30 min reminder before due tasks
-- [ ] In-app notification center
-
-**Condition de sortie :**
-Le scénario suivant fonctionne de bout en bout sur mobile ET web :
-invitation envoyée → Magic Link reçu → clic → app ouverte → ajouté au foyer → page sécurité → mot de passe défini → dashboard.
-
----
-
-## Phase 10 — Polish 🔲
-- Help center
-- Legal pages (CGU, privacy)
-- Settings complets (profil, sécurité, préférences notifications)
-- États vides soignés sur tous les écrans
-- QA hardening (mobile ET web)
-- Accessibilité audit
-- Analytics hooks si nécessaire
-- Revue design globale (cohérence palette Keurzen)
-- Test de bout en bout iOS, Android et web
-
-**Condition de sortie :**
-L'app est soumise aux stores et fonctionnelle de bout en bout sur toutes les plateformes.
-
----
-
-## Known bugs — à corriger avant Phase 10
-- [ ] `join/[token].tsx` → redirige vers dashboard au lieu de la page sécurité
-- [ ] Suppression invitation en attente → erreur 500 (révocation Auth à supprimer)
-- [ ] Deep link → ouvre encore la page web au lieu de l'app
-
----
-
-## Post-launch — V2
-
-### Rééquilibrage actif
-- [ ] Détection du déséquilibre : calcul ratio tâches / temps par membre (déjà en Phase 7)
-- [ ] Suggestions de réassignation de tâches récurrentes (proposé, jamais automatique)
-- [ ] L'utilisateur accepte ou ignore chaque suggestion
-
-### Premium
-- [ ] Rapport hebdomadaire automatique du foyer
-- [ ] Mode sombre
-- [ ] Widget iOS / Android (tâches du jour en accueil)
-- [ ] Freemium paywall
-
-### Web
-- [ ] Surface web minimale si deep link insuffisant sur certains appareils
-
----
-
-## Palette de design
-
-| Rôle | Nom | Hex |
-|---|---|---|
-| CTA principale | Mint | #88D4A9 |
-| Sélection / info | Blue | #AFCBFF |
-| Alerte douce | Coral | #FFA69E |
-| TLX / charge mentale | Lavender | #BCA7FF |
-| Header / nav | Navy | #212E44 |
-| Texte principal | Text | #1E293B |
-| Bordures | Light Gray | #E2E8F0 |
-| Fond global | Background | #F7F9FC |
-
-All tokens in `src/constants/tokens.ts` — never hardcode values.
-
----
-
-## Estimation de timing
-
-| Phase | Statut | Durée estimée |
-|---|---|---|
-| 1 à 8 | ✅ Terminées | — |
-| 9 — Invitation flow | 🔧 En cours | 1 semaine |
-| 10 — Polish | 🔲 À faire | 1 semaine |
-| **Lancement** | | **~2 semaines** |
-
----
-
-## Règles de travail avec Claude Code
+## Règle de travail avec Claude Code
 
 1. Explorer
 2. Planifier → attendre validation avant d'implémenter
 3. Implémenter
 4. Self-check
 5. Vérification technique (lint, build)
-6. Test manuel (mobile ET web)
+6. Test manuel
 7. Verdict
 
-Ne jamais passer à l'étape suivante sans avoir bouclé la précédente.
-Ne jamais élargir le scope sans décision explicite.
+---
+
+## Palier 1 — Fondations 🔴
+*Bloquant absolu avant tout le reste*
+
+- Auth / création de compte
+- Création de foyer
+- Flux d'invitation bout en bout
+- Onboarding post-invitation de l'invité
+
+**Sortie :** deux personnes peuvent créer et rejoindre un foyer depuis zéro.
+
+---
+
+## Palier 2 — Tâches 🟠
+*Cœur du produit — doit être irréprochable*
+
+### Gestion des tâches
+- Créer / modifier / supprimer une tâche
+- Assigner à un membre du foyer
+- Marquer comme faite
+- Récurrence simple (quotidien, hebdo)
+- Vue liste + vue par membre
+
+### Types de tâches
+Les tâches ont un champ `type` :
+- `household` → tâche du foyer, partagée, soumise au TLX
+- `personal` → activité personnelle, aucun TLX, complétion directe sans friction
+
+### Charge mentale à la complétion (tâches household uniquement)
+À chaque fois qu'un membre marque une tâche `household` comme faite :
+- Un modal/bottom sheet s'affiche immédiatement
+- Question unique : **"Comment tu t'es senti·e sur cette tâche ?"**
+- 3 niveaux : 🟢 Légère (1) — 🟡 Moyenne (2) — 🔴 Lourde (3)
+- L'utilisateur répond en 2 secondes maximum
+- Le score est stocké lié à : tâche + membre + timestamp
+
+Pour les tâches `personal` : complétion directe, aucun écran supplémentaire.
+
+**Sortie :** un foyer peut se répartir ses tâches, suivre qui fait quoi, et collecter des données de charge mentale sans friction.
+
+---
+
+## Palier 3 — Équilibre & charge mentale 🟠
+*Le différenciant de Keurzen par rapport à une simple todo*
+
+### Score d'équilibre
+- Calcul du ratio tâches / score TLX par membre sur la semaine
+- Seuil d'alerte configurable (ex. écart > 30%)
+- Indicateur visuel sur le dashboard (pas d'alerte agressive)
+
+### Vue comparative
+- Affichage du score d'équilibre entre membres
+- Basé sur les données de rating quotidien collectées au Palier 2
+- Historique semaine par semaine
+
+### Bilan TLX hebdomadaire (V1)
+- Proposé **une fois par semaine**, pas à chaque tâche
+- Format : 6 dimensions NASA-TLX complètes
+- Déclenchement : notification douce le dimanche soir ou lundi matin
+- Facultatif, l'utilisateur peut ignorer
+
+### Notification hebdo
+- Message doux type : *"Cette semaine, Ouss a pris 70% des tâches"*
+- Jamais intrusif, jamais culpabilisant
+
+**Sortie :** le foyer voit en un coup d'œil si la charge est équilibrée.
+
+---
+
+## Palier 4 — Budget 🟡
+*Utile mais pas différenciant au lancement*
+
+- Ajout d'une dépense
+- Catégories de base
+- Solde mensuel du foyer
+
+**Sortie :** suivi basique des dépenses communes.
+
+---
+
+## Palier 5 — Prêt au lancement 🟢
+*La dernière ligne droite avant publication*
+
+- Notifications push (rappels tâches)
+- États vides soignés (foyer vide, aucune tâche, aucune dépense)
+- Profil utilisateur (prénom, photo)
+- Gestion du compte (modification MDP, suppression)
+- Revue design globale (cohérence palette Keurzen)
+- Tests bout en bout iOS et Android
+
+**Sortie :** app publiable sur l'App Store et le Play Store.
+
+---
+
+## Après le lancement — V2
+
+- Suggestions de réassignation actives basées sur l'historique TLX
+- Détection automatique du déséquilibre chronique
+- Mode sombre
+- Widget iOS / Android
+- Rapport hebdomadaire automatique par email / notif
+- Paywall / abonnement premium
+
+---
+
+## Design System
+
+| Token | Valeur |
+|---|---|
+| Mint | `#88D4A9` |
+| Blue | `#AFCBFF` |
+| Coral | `#FFA69E` |
+| Lavender | `#BCA7FF` |
+| Navy | `#212E44` |
+| Text | `#1E293B` |
+| Background | `#F7F9FC` |
+
+Style : premium pastel, doux, clair, rassurant, aéré.
+Coins arrondis, ombres très subtiles, CTA principale claire. Pas de surcharge visuelle.
+
+---
+
+## Estimation de timing
+
+| Palier | Durée estimée |
+|---|---|
+| 1 — Fondations | 1 semaine |
+| 2 — Tâches | 1 semaine |
+| 3 — Équilibre / TLX | 1 semaine |
+| 4 — Budget | 3–4 jours |
+| 5 — Lancement | 3–4 jours |
+| **Total** | **~5 semaines** |

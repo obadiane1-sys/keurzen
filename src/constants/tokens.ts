@@ -56,6 +56,14 @@ export const Colors = {
   gray800: '#1E293B',
   gray900: '#0F172A',
 
+  // Badge text (strong contrast variants)
+  blueStrong: '#3B82F6',
+  greenStrong: '#059669',
+  redStrong: '#DC2626',
+  orangeStrong: '#EA580C',
+  blueDeep: '#2563EB',
+  redBgLight: '#FEE2E2',
+
   // Transparent overlays
   overlay: 'rgba(33, 46, 68, 0.5)',
   overlayLight: 'rgba(33, 46, 68, 0.1)',

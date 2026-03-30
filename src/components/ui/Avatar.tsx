@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle } from 'react-native';
+import { View, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 import { Colors, Typography, BorderRadius } from '../../constants/tokens';
 import { Text } from './Text';
 
@@ -52,8 +52,9 @@ export function Avatar({ name, avatarUrl, color, size = 'md', style }: AvatarPro
             height: dimension,
             borderRadius: dimension / 2,
           },
-          style,
+          style as ImageStyle,
         ]}
+        accessibilityLabel={name ? `Photo de ${name}` : 'Photo de profil'}
       />
     );
   }

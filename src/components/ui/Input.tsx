@@ -86,6 +86,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             secureTextEntry={isSecure}
+            accessibilityLabel={label}
             {...props}
           />
 
@@ -94,6 +95,8 @@ export const Input = forwardRef<TextInput, InputProps>(
               onPress={() => setShowPassword(!showPassword)}
               style={styles.rightIcon}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              accessibilityRole="button"
             >
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}

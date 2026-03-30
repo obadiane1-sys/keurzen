@@ -20,7 +20,7 @@ interface TextProps {
   variant?: TextVariant;
   color?: TextColor;
   weight?: 'regular' | 'medium' | 'semibold' | 'bold';
-  style?: TextStyle | TextStyle[];
+  style?: TextStyle | (TextStyle | undefined)[];
   children: React.ReactNode;
   numberOfLines?: number;
   selectable?: boolean;

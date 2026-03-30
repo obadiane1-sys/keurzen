@@ -1,22 +1,26 @@
-import { Stack, Redirect } from 'expo-router';
+import { Stack, Redirect, usePathname } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useUiStore } from '../../src/stores/ui.store';
 import { Colors } from '../../src/constants/tokens';
 
 export default function AuthLayout() {
-  const { session, isInitialized, needsPasswordSetup } = useAuthStore();
-  const { pendingInviteToken } = useUiStore();
+  const { session, isInitialized } = useAuthStore();
+  const { pendingInviteToken, pendingInviteCode } = useUiStore();
+  const pathname = usePathname();
+  const isJoinPage = pathname.includes('/join/') || pathname.includes('/join-code');
 
-  // needsPasswordSetup est mis à true par join/[token].tsx avant la navigation
-  // vers setup-profile, et remis à false après le changement de mot de passe.
-  // Ce flag est la source de vérité déterministe pour bloquer la redirection
-  // automatique vers dashboard lors du flux post-invitation.
-  if (isInitialized && session && !needsPasswordSetup) {
-    // Si une invitation est en attente, rediriger vers la page join.
-    // ?auto=1 signale à la page web de rejoindre automatiquement le foyer
-    // sans demander un clic supplémentaire à l'utilisateur.
+  // Ordre strict de redirection :
+  // 1. Pas de session → rester sur auth
+  // 2. Session + invitation en attente (Magic Link) → rejoindre le foyer
+  // 3. Session + code d'invitation en attente → redemption du code
+  // 4. Session normale → dashboard (sauf si déjà sur une page join)
+
+  if (isInitialized && session && !isJoinPage) {
     if (pendingInviteToken) {
-      return <Redirect href={`/join/${pendingInviteToken}?auto=1`} />;
+      return <Redirect href={`/join/${pendingInviteToken}`} />;
+    }
+    if (pendingInviteCode) {
+      return <Redirect href={`/(auth)/join-code?code=${pendingInviteCode}`} />;
     }
     return <Redirect href="/(app)/dashboard" />;
   }

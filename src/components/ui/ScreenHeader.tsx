@@ -41,7 +41,7 @@ export function ScreenHeader({
     <View style={[styles.container, style]}>
       {/* Left — back button */}
       {showBack ? (
-        <TouchableOpacity onPress={handleBack} style={styles.side} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleBack} style={styles.side} activeOpacity={0.7} accessibilityLabel="Retour" accessibilityRole="button">
           <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
       ) : (

@@ -1,104 +1,183 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
+import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+
+import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Card } from '../../../src/components/ui/Card';
 import { Mascot } from '../../../src/components/ui/Mascot';
-import { Ionicons } from '@expo/vector-icons';
+import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
+import { faqData, type FaqItem } from '../../../src/constants/faq';
 
-const FAQ = [
-  {
-    q: 'Comment créer un foyer ?',
-    a: 'Allez dans Paramètres > Mon foyer et appuyez sur "Créer un foyer". Vous pouvez ensuite inviter d\'autres membres via le code d\'invitation.',
-  },
-  {
-    q: 'Comment fonctionne le bilan TLX ?',
-    a: 'Le NASA-TLX mesure votre charge mentale perçue sur 6 dimensions. Vous pouvez le remplir une fois par semaine. Le score global va de 0 (légère) à 100 (très élevée).',
-  },
-  {
-    q: 'Comment sont calculés les déséquilibres ?',
-    a: 'Chaque semaine, Keurzen compare la part de tâches et de temps de chaque membre avec la part attendue (1 / nombre de membres). Un écart de plus de 20% génère une alerte.',
-  },
-  {
-    q: 'Mes données sont-elles privées ?',
-    a: 'Oui. Vos données ne sont accessibles qu\'aux membres de votre foyer. Consultez notre Politique de confidentialité pour plus de détails.',
-  },
-  {
-    q: 'Comment récupérer mon mot de passe ?',
-    a: 'Depuis l\'écran de connexion, appuyez sur "Mot de passe oublié ?" et entrez votre email. Si un compte existe, vous recevrez un lien de réinitialisation.',
-  },
-];
+// ─── FAQ Accordion ───────────────────────────────────────────────────────────
 
-export default function HelpScreen() {
-  const router = useRouter();
-  const [expanded, setExpanded] = React.useState<number | null>(null);
+function FaqAccordion({ item }: { item: FaqItem }) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text variant="h3">{"Centre d'aide"}</Text>
-          <View style={{ width: 44 }} />
+    <TouchableOpacity
+      onPress={() => setOpen(!open)}
+      activeOpacity={0.85}
+      style={styles.faqItem}
+    >
+      <View style={styles.faqHeader}>
+        <Text variant="label" style={styles.faqQuestion}>
+          {item.question}
+        </Text>
+        <Ionicons
+          name={open ? 'chevron-up' : 'chevron-down'}
+          size={18}
+          color={Colors.textMuted}
+        />
+      </View>
+      {open && (
+        <Text variant="body" color="secondary" style={styles.faqAnswer}>
+          {item.answer}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+
+export default function HelpScreen() {
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  const handleContact = () => {
+    Linking.openURL('mailto:contact@keurzen.app?subject=Aide%20Keurzen');
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScreenHeader title="Aide" />
+
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Mascot + intro */}
+        <View style={styles.heroSection}>
+          <Mascot size={80} expression="happy" />
+          <Text variant="h4" style={styles.heroTitle}>
+            Comment pouvons-nous vous aider ?
+          </Text>
         </View>
 
-        <View style={styles.hero}>
-          <Mascot size={80} expression="happy" color={Colors.blue} />
-          <Text variant="h4" style={{ textAlign: 'center' }}>Comment pouvons-nous vous aider ?</Text>
-        </View>
-
-        <Text variant="h4">Questions fréquentes</Text>
-
-        {FAQ.map((item, i) => (
-          <Card key={i} onPress={() => setExpanded(expanded === i ? null : i)} style={{ gap: Spacing.sm }}>
-            <View style={styles.faqRow}>
-              <Text variant="label" style={{ flex: 1 }}>{item.q}</Text>
-              <Ionicons
-                name={expanded === i ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={Colors.textMuted}
-              />
+        {/* FAQ */}
+        <Text variant="overline" color="muted" style={styles.sectionLabel}>
+          Questions frequentes
+        </Text>
+        <Card padding="none">
+          {faqData.map((item, index) => (
+            <View key={index}>
+              <FaqAccordion item={item} />
+              {index < faqData.length - 1 && <View style={styles.divider} />}
             </View>
-            {expanded === i && (
-              <Text variant="body" color="secondary" style={{ lineHeight: 22 }}>
-                {item.a}
+          ))}
+        </Card>
+
+        {/* Contact */}
+        <Text variant="overline" color="muted" style={styles.sectionLabel}>
+          Nous contacter
+        </Text>
+        <Card onPress={handleContact} padding="md">
+          <View style={styles.contactRow}>
+            <View style={styles.contactIcon}>
+              <Ionicons name="mail-outline" size={20} color={Colors.mint} />
+            </View>
+            <View style={styles.contactText}>
+              <Text variant="label">Envoyer un email</Text>
+              <Text variant="bodySmall" color="secondary">
+                contact@keurzen.app
               </Text>
-            )}
-          </Card>
-        ))}
-
-        <Card onPress={() => router.push('/(app)/settings/contact')}>
-          <View style={styles.faqRow}>
-            <View style={[styles.contactIcon, { backgroundColor: Colors.coral + '25' }]}>
-              <Ionicons name="mail-outline" size={20} color={Colors.coral} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="label">Nous contacter</Text>
-              <Text variant="caption" color="muted">Une question ? Écrivez-nous.</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
           </View>
         </Card>
+
+        {/* Version */}
+        <Text
+          variant="caption"
+          color="muted"
+          style={styles.version}
+        >
+          Keurzen v{appVersion}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { paddingHorizontal: Spacing.base, paddingBottom: Spacing['4xl'], gap: Spacing.base },
-  header: {
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing['4xl'],
+    gap: Spacing.md,
+  },
+  heroSection: {
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.lg,
+  },
+  heroTitle: {
+    textAlign: 'center',
+  },
+  sectionLabel: {
+    marginTop: Spacing.md,
+  },
+  faqItem: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+  },
+  faqHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: Spacing.base,
+    gap: Spacing.sm,
   },
-  backBtn: { minWidth: 44, minHeight: 44, justifyContent: 'center' },
-  hero: { alignItems: 'center', gap: Spacing.base, paddingVertical: Spacing.lg },
-  faqRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.base },
-  contactIcon: { width: 40, height: 40, borderRadius: BorderRadius.lg, alignItems: 'center', justifyContent: 'center' },
+  faqQuestion: {
+    flex: 1,
+  },
+  faqAnswer: {
+    marginTop: Spacing.sm,
+    lineHeight: 22,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.base,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  contactIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.mint + '18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactText: {
+    flex: 1,
+    gap: 2,
+  },
+  version: {
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+  },
 });

@@ -1,407 +1,224 @@
 import React, { useState } from 'react';
 import {
-  View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Pressable,
+  View,
+  Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import Slider from '@react-native-community/slider';
+import Animated, { FadeIn } from 'react-native-reanimated';
+
+import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/tokens';
+import { Text } from '../../../src/components/ui/Text';
+import { Card } from '../../../src/components/ui/Card';
+import { Button } from '../../../src/components/ui/Button';
+import { Badge } from '../../../src/components/ui/Badge';
+import KeurzenMascot, { type MascotExpression } from '../../../src/components/ui/KeurzenMascot';
+import { Loader } from '../../../src/components/ui/Loader';
+import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
 import {
   useCurrentTlx,
   useSubmitTlx,
   useTlxHistory,
   computeTlxScore,
-  useTlxDelta,
 } from '../../../src/lib/queries/tlx';
-import { tlxSchema } from '../../../src/utils/validation';
-import { useUiStore } from '../../../src/stores/ui.store';
-import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../../src/constants/tokens';
-import { Text } from '../../../src/components/ui/Text';
-import { Card } from '../../../src/components/ui/Card';
-import { Button } from '../../../src/components/ui/Button';
-import { Loader } from '../../../src/components/ui/Loader';
-import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
-import { Ionicons } from '@expo/vector-icons';
 import type { TlxFormValues } from '../../../src/types';
-import dayjs from 'dayjs';
 
-// ─── TLX Dimensions ───────────────────────────────────────────────────────────
+// ─── Dimension config ────────────────────────────────────────────────────────
 
-const TLX_DIMENSIONS = [
-  {
-    key: 'mental_demand' as const,
-    label: 'Demande mentale',
-    description: 'Réflexion, décisions, concentration nécessaires.',
-    icon: 'brain-outline' as const,
-    color: Colors.lavender,
-  },
-  {
-    key: 'physical_demand' as const,
-    label: 'Demande physique',
-    description: "Effort physique engagé cette semaine.",
-    icon: 'fitness-outline' as const,
-    color: Colors.mint,
-  },
-  {
-    key: 'temporal_demand' as const,
-    label: 'Pression temporelle',
-    description: 'Sentiment d\'urgence ou de manque de temps.',
-    icon: 'time-outline' as const,
-    color: Colors.coral,
-  },
-  {
-    key: 'performance' as const,
-    label: 'Performance',
-    description: 'Satisfaction vis-à-vis de vos accomplissements.',
-    icon: 'star-outline' as const,
-    color: Colors.blue,
-    inverted: true,
-  },
-  {
-    key: 'effort' as const,
-    label: 'Effort',
-    description: 'Intensité du travail fourni, mental ou physique.',
-    icon: 'barbell-outline' as const,
-    color: Colors.navy,
-  },
-  {
-    key: 'frustration' as const,
-    label: 'Frustration',
-    description: 'Irritabilité, stress ou tension ressentis.',
-    icon: 'sad-outline' as const,
-    color: Colors.coral,
-  },
+const dimensions: { key: keyof TlxFormValues; label: string; description: string; color: string }[] = [
+  { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: Colors.lavender },
+  { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: Colors.coral },
+  { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: Colors.blue },
+  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: Colors.mint },
+  { key: 'effort', label: 'Effort', description: 'Intensite de l\'effort fourni', color: Colors.coral },
+  { key: 'frustration', label: 'Frustration', description: 'Sentiment de decouragement, stress', color: Colors.error },
 ];
 
-// ─── Score helpers ─────────────────────────────────────────────────────────────
+// ─── Level config (reactive mascot) ─────────────────────────────────────────
 
-type ScoreZone = { label: string; color: string; bg: string };
+const LEVEL_CONFIG: Record<1 | 2 | 3, { expression: MascotExpression; label: string; labelColor: string; labelBg: string }> = {
+  1: { expression: 'happy', label: 'Super !', labelColor: '#0F6E56', labelBg: '#E1F5EE' },
+  2: { expression: 'normal', label: "C'est note", labelColor: '#444441', labelBg: '#F1EFE8' },
+  3: { expression: 'tired', label: 'Prenez soin de vous', labelColor: '#993C1D', labelBg: '#FAECE7' },
+};
 
-function getScoreZone(score: number): ScoreZone {
-  if (score <= 30) return { label: 'Équilibré', color: Colors.mint, bg: Colors.mint + '22' };
-  if (score <= 60) return { label: 'Modéré', color: Colors.blue, bg: Colors.blue + '22' };
-  if (score <= 80) return { label: 'Élevé', color: Colors.coral, bg: Colors.coral + '22' };
-  return { label: 'Critique', color: Colors.error, bg: Colors.error + '22' };
+function scoreToLevel(score: number): 1 | 2 | 3 {
+  if (score <= 33) return 1;
+  if (score <= 66) return 2;
+  return 3;
 }
 
-// ─── Segmented Dimension Card ──────────────────────────────────────────────────
-
-const SEGMENTS = [
-  { value: 0, short: 'Min' },
-  { value: 25, short: 'Faible' },
-  { value: 50, short: 'Modéré' },
-  { value: 75, short: 'Élevé' },
-  { value: 100, short: 'Max' },
-];
-
-interface TlxCardProps {
-  label: string;
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  inverted?: boolean;
-  value: number;
-  onChange: (v: number) => void;
-}
-
-function TlxCard({ label, description, icon, color, inverted, value, onChange }: TlxCardProps) {
-  // Snap displayed value to nearest segment for indicator alignment
-  const displayValue = value;
-
-  return (
-    <Card style={styles.dimensionCard}>
-      {/* Header */}
-      <View style={styles.dimensionHeader}>
-        <View style={[styles.dimensionIconBg, { backgroundColor: color + '18' }]}>
-          <Ionicons name={icon} size={18} color={color} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text variant="label">{label}</Text>
-          {inverted && (
-            <Text variant="caption" color="muted" style={{ marginTop: 1 }}>
-              Score inversé — plus haut = meilleur
-            </Text>
-          )}
-        </View>
-        <View style={[styles.valuePill, { backgroundColor: color + '18' }]}>
-          <Text style={[styles.valueText, { color }]}>{displayValue}</Text>
-        </View>
-      </View>
-
-      {/* Description */}
-      <Text variant="caption" color="secondary" style={styles.dimensionDesc}>
-        {description}
-      </Text>
-
-      {/* 5-point segmented picker */}
-      <View style={styles.segmentRow}>
-        {SEGMENTS.map((seg) => {
-          const isSelected = value === seg.value;
-          return (
-            <TouchableOpacity
-              key={seg.value}
-              onPress={() => onChange(seg.value)}
-              style={styles.segmentItem}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.segmentDot,
-                  {
-                    backgroundColor: isSelected ? color : Colors.gray100,
-                    borderColor: isSelected ? color : Colors.border,
-                    transform: [{ scale: isSelected ? 1.15 : 1 }],
-                  },
-                ]}
-              >
-                {isSelected && (
-                  <Ionicons name="checkmark" size={12} color={Colors.textInverse} />
-                )}
-              </View>
-              <Text
-                style={[
-                  styles.segmentLabel,
-                  { color: isSelected ? color : Colors.textMuted, fontWeight: isSelected ? '600' : '400' },
-                ]}
-                numberOfLines={1}
-              >
-                {seg.short}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Progress bar */}
-      <View style={styles.progressTrack}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${value}%`, backgroundColor: color + 'AA' },
-          ]}
-        />
-      </View>
-    </Card>
-  );
-}
-
-// ─── TLX Explanation Sheet ────────────────────────────────────────────────────
-
-function TlxExplanationModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.explanationSheet}>
-          <View style={styles.sheetHandle} />
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text variant="h3" style={styles.sheetTitle}>
-              Comprendre la charge mentale
-            </Text>
-            <Text variant="body" color="secondary" style={styles.sheetText}>
-              Le NASA-TLX (Task Load Index) est un outil scientifique développé par la NASA pour mesurer la charge perçue. Adapté ici au foyer, il vous aide à évaluer objectivement votre ressenti hebdomadaire.
-            </Text>
-            <Text variant="h4" style={styles.sheetSubtitle}>Les 6 dimensions</Text>
-            {TLX_DIMENSIONS.map((dim) => (
-              <View key={dim.key} style={styles.sheetDimension}>
-                <View style={[styles.dimensionDot, { backgroundColor: dim.color }]} />
-                <View style={{ flex: 1 }}>
-                  <Text variant="label">{dim.label}</Text>
-                  <Text variant="bodySmall" color="secondary">{dim.description}</Text>
-                </View>
-              </View>
-            ))}
-            <Card style={styles.reassuranceCard}>
-              <Ionicons name="heart-outline" size={20} color={Colors.mint} />
-              <Text variant="body" style={styles.reassuranceText}>
-                {"Ce n'est pas une note de performance. C'est un indicateur d'équilibre et de ressenti."}
-              </Text>
-            </Card>
-            <Button
-              label="Fermer"
-              variant="ghost"
-              fullWidth
-              onPress={onClose}
-              style={{ marginTop: Spacing.base }}
-            />
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function TlxScreen() {
   const router = useRouter();
-  const { showToast } = useUiStore();
   const { data: currentTlx, isLoading } = useCurrentTlx();
-  const { data: history = [] } = useTlxHistory();
-  const { data: delta } = useTlxDelta();
+  const { data: history = [] } = useTlxHistory(8);
   const submitTlx = useSubmitTlx();
-  const [showExplanation, setShowExplanation] = useState(false);
 
-  const { control, handleSubmit, watch, formState: { isSubmitting } } = useForm<TlxFormValues>({
-    resolver: zodResolver(tlxSchema),
-    defaultValues: {
-      mental_demand: currentTlx?.mental_demand ?? 50,
-      physical_demand: currentTlx?.physical_demand ?? 50,
-      temporal_demand: currentTlx?.temporal_demand ?? 50,
-      performance: currentTlx?.performance ?? 50,
-      effort: currentTlx?.effort ?? 50,
-      frustration: currentTlx?.frustration ?? 50,
-    },
+  const [values, setValues] = useState<TlxFormValues>({
+    mental_demand: currentTlx?.mental_demand ?? 50,
+    physical_demand: currentTlx?.physical_demand ?? 50,
+    temporal_demand: currentTlx?.temporal_demand ?? 50,
+    performance: currentTlx?.performance ?? 50,
+    effort: currentTlx?.effort ?? 50,
+    frustration: currentTlx?.frustration ?? 50,
   });
 
-  const values = watch();
-  const liveScore = computeTlxScore(values);
-  const zone = getScoreZone(liveScore);
-  const weekLabel = dayjs().startOf('isoWeek').format('D MMM');
+  const previewScore = computeTlxScore(values);
 
-  const onSubmit = async (data: TlxFormValues) => {
+  const handleSubmit = async () => {
     try {
-      await submitTlx.mutateAsync(data);
-      showToast('Bilan enregistré avec succès ✓', 'success');
+      await submitTlx.mutateAsync(values);
+      if (Platform.OS === 'web') {
+        window.alert('Bilan enregistre !');
+      } else {
+        Alert.alert('Bilan enregistre', 'Votre score TLX a ete mis a jour.');
+      }
       router.back();
     } catch (err: unknown) {
-      showToast(
-        err instanceof Error ? err.message : "Erreur lors de l'enregistrement",
-        'error'
-      );
+      const message = err instanceof Error ? err.message : 'Erreur inconnue';
+      if (Platform.OS === 'web') {
+        window.alert(message);
+      } else {
+        Alert.alert('Erreur', message);
+      }
     }
   };
 
-  if (isLoading) return <Loader fullScreen />;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <Loader fullScreen label="Chargement..." />
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScreenHeader title="Charge mentale" subtitle="NASA-TLX" />
+
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <ScreenHeader
-          title="Bilan de charge"
-          rightAction={
-            <TouchableOpacity
-              onPress={() => setShowExplanation(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="help-circle-outline" size={22} color={Colors.textMuted} />
-            </TouchableOpacity>
-          }
-        />
+        {/* Intro text */}
+        <View style={styles.intro}>
+          <Text variant="body" color="secondary" style={styles.introText}>
+            {currentTlx
+              ? 'Vous avez deja rempli cette semaine. Vous pouvez mettre a jour vos reponses.'
+              : 'Evaluez votre charge mentale cette semaine sur chaque dimension (0 = tres faible, 100 = tres forte).'}
+          </Text>
+        </View>
 
-        {/* Hero Score Card */}
-        <View style={styles.heroCard}>
-          {/* Week label */}
-          <Text style={styles.heroWeek}>Semaine du {weekLabel}</Text>
+        {/* Reactive mascot + score preview */}
+        {(() => {
+          const level = scoreToLevel(previewScore);
+          const config = LEVEL_CONFIG[level];
+          return (
+            <Card padding="md" style={styles.scoreCard}>
+              <Animated.View
+                key={level}
+                entering={FadeIn.duration(300).springify()}
+                style={styles.mascotSection}
+              >
+                <KeurzenMascot
+                  expression={config.expression}
+                  size={100}
+                  animated
+                />
+                <View style={[styles.levelBadge, { backgroundColor: config.labelBg }]}>
+                  <Text style={[styles.levelBadgeText, { color: config.labelColor }]}>
+                    {config.label}
+                  </Text>
+                </View>
+              </Animated.View>
 
-          {/* Score */}
-          <View style={styles.heroScoreRow}>
-            <Text style={styles.heroScore}>{liveScore}</Text>
-            <Text style={styles.heroScoreDenom}>/100</Text>
-          </View>
+              <Text variant="caption" color="muted">Score prevu</Text>
+              <Text variant="h1" style={{ color: tlxColor(previewScore) }}>
+                {previewScore}
+              </Text>
+              <Text variant="caption" color="muted">/100</Text>
+            </Card>
+          );
+        })()}
 
-          {/* Zone pill */}
-          <View style={[styles.zonePill, { backgroundColor: zone.color + '30' }]}>
-            <View style={[styles.zoneDot, { backgroundColor: zone.color }]} />
-            <Text style={[styles.zoneLabel, { color: zone.color }]}>{zone.label}</Text>
-          </View>
-
-          {/* Delta */}
-          {delta?.hasComparison && delta.delta !== null && (
-            <View style={styles.heroDelta}>
-              <Ionicons
-                name={delta.delta > 0 ? 'trending-up' : 'trending-down'}
-                size={13}
-                color={delta.delta > 0 ? Colors.coral : Colors.mint}
-              />
-              <Text style={[styles.heroDeltaText, { color: delta.delta > 0 ? Colors.coral : Colors.mint }]}>
-                {delta.delta > 0 ? '+' : ''}{delta.delta} pts vs semaine dernière
+        {/* Sliders */}
+        {dimensions.map((dim) => (
+          <Card key={dim.key} padding="md">
+            <View style={styles.dimHeader}>
+              <Text variant="label">{dim.label}</Text>
+              <Text variant="h4" style={{ color: dim.color }}>
+                {values[dim.key]}
               </Text>
             </View>
-          )}
-        </View>
-
-        {/* Section title */}
-        <View style={styles.sectionHeader}>
-          <Text variant="h4">Évaluez votre semaine</Text>
-          <Text variant="caption" color="muted">Ajustez chaque dimension</Text>
-        </View>
-
-        {/* Dimension cards */}
-        {TLX_DIMENSIONS.map((dim) => (
-          <Controller
-            key={dim.key}
-            control={control}
-            name={dim.key}
-            render={({ field: { value, onChange } }) => (
-              <TlxCard
-                label={dim.label}
-                description={dim.description}
-                icon={dim.icon}
-                color={dim.color}
-                inverted={dim.inverted}
-                value={value}
-                onChange={onChange}
-              />
-            )}
-          />
+            <Text variant="caption" color="muted" style={styles.dimDesc}>
+              {dim.description}
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={100}
+              step={1}
+              value={values[dim.key]}
+              onValueChange={(v) => setValues((prev) => ({ ...prev, [dim.key]: Math.round(v) }))}
+              accessibilityLabel={`${dim.label}, ${values[dim.key]} sur 100`}
+              minimumTrackTintColor={dim.color}
+              maximumTrackTintColor={Colors.gray200}
+              thumbTintColor={dim.color}
+            />
+            <View style={styles.sliderLabels}>
+              <Text variant="caption" color="muted">Tres faible</Text>
+              <Text variant="caption" color="muted">Tres forte</Text>
+            </View>
+          </Card>
         ))}
 
         {/* Submit */}
         <Button
-          label={currentTlx ? 'Mettre à jour mon bilan' : 'Enregistrer mon bilan'}
-          onPress={handleSubmit(onSubmit)}
-          isLoading={isSubmitting}
+          label={currentTlx ? 'Mettre a jour' : 'Enregistrer mon bilan'}
+          onPress={handleSubmit}
+          isLoading={submitTlx.isPending}
           fullWidth
           size="lg"
-          style={{ marginTop: Spacing.sm }}
+          style={styles.submitBtn}
         />
 
         {/* History */}
-        {history.length > 1 && (
-          <Card style={{ marginTop: Spacing.sm }}>
-            <Text variant="h4" style={{ marginBottom: Spacing.base }}>
+        {history.length > 0 && (
+          <>
+            <Text variant="overline" color="muted" style={styles.historyLabel}>
               Historique
             </Text>
-            {history.slice(0, 8).map((entry) => {
-              const entryZone = getScoreZone(entry.score);
-              return (
-                <View key={entry.id} style={styles.historyRow}>
-                  <Text variant="bodySmall" color="secondary" style={styles.historyDate}>
-                    {dayjs(entry.week_start).format('D MMM')}
+            {history.map((entry) => (
+              <Card key={entry.id} padding="sm" style={styles.historyCard}>
+                <View style={styles.historyRow}>
+                  <Text variant="bodySmall" color="secondary">
+                    Sem. {entry.week_start}
                   </Text>
-                  <View style={styles.historyBarTrack}>
-                    <View
-                      style={[
-                        styles.historyBarFill,
-                        { width: `${entry.score}%`, backgroundColor: entryZone.color },
-                      ]}
-                    />
+                  <View style={[styles.historyScore, { borderColor: tlxColor(entry.score) }]}>
+                    <Text variant="label" style={{ color: tlxColor(entry.score) }}>
+                      {entry.score}
+                    </Text>
                   </View>
-                  <Text style={[styles.historyScore, { color: entryZone.color }]}>
-                    {entry.score}
-                  </Text>
                 </View>
-              );
-            })}
-          </Card>
+              </Card>
+            ))}
+          </>
         )}
       </ScrollView>
-
-      <TlxExplanationModal
-        visible={showExplanation}
-        onClose={() => setShowExplanation(false)}
-      />
     </SafeAreaView>
   );
+}
+
+function tlxColor(score: number): string {
+  if (score <= 33) return Colors.mint;
+  if (score <= 66) return Colors.lavender;
+  return Colors.coral;
 }
 
 const styles = StyleSheet.create({
@@ -409,235 +226,75 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scroll: {
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing['4xl'],
-    gap: Spacing.base,
-  },
-
-  // ── Hero card ──
-  heroCard: {
-    backgroundColor: Colors.navy,
-    borderRadius: BorderRadius['2xl'],
-    alignItems: 'center',
-    paddingVertical: Spacing['3xl'],
+  content: {
     paddingHorizontal: Spacing.xl,
-    gap: Spacing.md,
-    ...Shadows.lg,
-  },
-  heroWeek: {
-    fontSize: Typography.fontSize.sm,
-    color: 'rgba(255,255,255,0.55)',
-    fontWeight: '500',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  heroScoreRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  heroScore: {
-    fontSize: 80,
-    fontWeight: '800',
-    color: Colors.textInverse,
-    lineHeight: 88,
-  },
-  heroScoreDenom: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.45)',
-    marginBottom: 14,
-  },
-  zonePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-  },
-  zoneDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  zoneLabel: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  heroDelta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  heroDeltaText: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: '600',
-  },
-
-  // ── Section header ──
-  sectionHeader: {
-    gap: 2,
-    marginTop: Spacing.xs,
-  },
-
-  // ── Dimension card ──
-  dimensionCard: {
+    paddingBottom: Spacing['4xl'],
     gap: Spacing.md,
   },
-  dimensionHeader: {
-    flexDirection: 'row',
+  intro: {
     alignItems: 'center',
     gap: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
-  dimensionIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.md,
+  introText: {
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  scoreCard: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 2,
   },
-  valuePill: {
-    paddingHorizontal: Spacing.sm,
+  mascotSection: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  levelBadge: {
+    borderRadius: 20,
     paddingVertical: 4,
-    borderRadius: BorderRadius.md,
-    minWidth: 44,
-    alignItems: 'center',
+    paddingHorizontal: 14,
   },
-  valueText: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: '700',
+  levelBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  dimensionDesc: {
-    lineHeight: 18,
-    marginTop: -Spacing.xs,
-  },
-
-  // ── Segmented picker ──
-  segmentRow: {
+  dimHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  segmentItem: {
-    flex: 1,
     alignItems: 'center',
-    gap: 5,
   },
-  segmentDot: {
-    width: 34,
-    height: 34,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  dimDesc: {
+    marginTop: 2,
   },
-  segmentLabel: {
-    fontSize: Typography.fontSize.xs,
-    textAlign: 'center',
+  slider: {
+    width: '100%',
+    height: 40,
+    marginTop: Spacing.sm,
   },
-
-  // ── Progress bar ──
-  progressTrack: {
-    height: 4,
-    backgroundColor: Colors.gray100,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-    marginTop: -Spacing.xs,
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: BorderRadius.full,
+  submitBtn: {
+    marginTop: Spacing.md,
   },
-
-  // ── History ──
+  historyLabel: {
+    marginTop: Spacing.xl,
+  },
+  historyCard: {
+    marginBottom: Spacing.xs,
+  },
   historyRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: 5,
-  },
-  historyDate: {
-    width: 44,
-  },
-  historyBarTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.gray100,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  historyBarFill: {
-    height: '100%',
-    borderRadius: BorderRadius.full,
   },
   historyScore: {
-    width: 28,
-    textAlign: 'right',
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
-  },
-
-  // ── Modal / sheet ──
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  explanationSheet: {
-    backgroundColor: Colors.backgroundCard,
-    borderTopLeftRadius: BorderRadius['2xl'],
-    borderTopRightRadius: BorderRadius['2xl'],
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing['3xl'],
-    maxHeight: '85%',
-  },
-  sheetHandle: {
     width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.gray300,
-    alignSelf: 'center',
-    marginBottom: Spacing.base,
-  },
-  sheetTitle: {
-    marginBottom: Spacing.base,
-    textAlign: 'center',
-  },
-  sheetText: {
-    lineHeight: 22,
-    marginBottom: Spacing.lg,
-  },
-  sheetSubtitle: {
-    marginBottom: Spacing.base,
-  },
-  sheetDimension: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.base,
-    alignItems: 'flex-start',
-  },
-  dimensionDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 5,
-    flexShrink: 0,
-  },
-  reassuranceCard: {
-    backgroundColor: Colors.mint + '15',
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'flex-start',
-    marginTop: Spacing.base,
-  },
-  reassuranceText: {
-    flex: 1,
-    fontStyle: 'italic',
-    lineHeight: 22,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

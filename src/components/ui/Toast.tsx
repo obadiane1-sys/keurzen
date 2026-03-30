@@ -78,6 +78,8 @@ export function Toast() {
         onPress={hideToast}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         style={styles.close}
+        accessibilityLabel="Fermer la notification"
+        accessibilityRole="button"
       >
         <Ionicons name="close" size={16} color={Colors.textMuted} />
       </TouchableOpacity>

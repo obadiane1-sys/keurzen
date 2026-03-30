@@ -1,11 +1,11 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useAuthInit } from '../src/hooks/useAuth';
 import { Toast } from '../src/components/ui/Toast';
 import { Colors } from '../src/constants/tokens';
@@ -13,7 +13,7 @@ import { Colors } from '../src/constants/tokens';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
     },
@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppInit() {
+function AuthInit() {
   useAuthInit();
   return null;
 }
@@ -33,7 +33,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <AppInit />
+          <AuthInit />
           <StatusBar style="dark" backgroundColor={Colors.background} />
           <Stack
             screenOptions={{

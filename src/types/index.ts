@@ -46,6 +46,7 @@ export interface Invitation {
   household_id: string;
   invited_by: string;
   email: string | null;
+  first_name: string | null;
   token: string;
   channel: InvitationChannel;
   status: 'pending' | 'sent' | 'accepted' | 'revoked' | 'expired';
@@ -258,6 +259,42 @@ export interface NotificationPreference {
   updated_at: string;
 }
 
+export type InAppNotificationType =
+  | 'task_reminder'
+  | 'overdue'
+  | 'digest'
+  | 'imbalance'
+  | 'invitation'
+  | 'system';
+
+export interface InAppNotification {
+  id: string;
+  user_id: string;
+  household_id: string;
+  type: InAppNotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  read: boolean;
+  created_at: string;
+}
+
+// ─── Invitation Codes ─────────────────────────────────────────────────────────
+
+export interface InvitationCode {
+  id: string;
+  code: string;
+  household_id: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  used: boolean;
+  used_by: string | null;
+  used_at: string | null;
+  email: string | null;
+  invited_name: string | null;
+}
+
 // ─── Utility Types ─────────────────────────────────────────────────────────────
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -308,20 +345,8 @@ export interface BudgetExpenseFormValues {
 export interface SignUpFormValues {
   email: string;
   full_name: string;
-  password: string;
-  confirmPassword: string;
 }
 
 export interface SignInFormValues {
   email: string;
-  password: string;
-}
-
-export interface ResetPasswordFormValues {
-  email: string;
-}
-
-export interface NewPasswordFormValues {
-  password: string;
-  confirmPassword: string;
 }

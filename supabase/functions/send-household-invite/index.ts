@@ -232,10 +232,18 @@ serve(async (req: Request) => {
 
   // ── Génération du magic link Supabase ─────────────────────────────────────
   // Le magic link connecte l'invité automatiquement sans mot de passe.
-  // redirect_to doit être dans la liste des URLs autorisées Supabase Auth
-  // (Dashboard → Auth → URL Configuration → Redirect URLs : ajouter keurzen://*).
+  // On utilise l'URL web (https) pour le redirectTo :
+  //   • Sur web : le navigateur redirige vers /join/[token]#access_token=...
+  //     que [token].tsx traite manuellement (detectSessionInUrl: false).
+  //   • Sur mobile natif : configurer les Universal Links / App Links pour que
+  //     https://app.keurzen.app/join/* ouvre l'app (sinon l'invité arrive
+  //     sur la web app, ce qui fonctionne aussi).
+  // Le scheme keurzen:// est inutilisable depuis un navigateur web — il
+  // empêche toute redirection correcte et est la cause du bug "redirect dashboard".
+  // Prérequis : ajouter https://app.keurzen.app/join/* dans Supabase
+  //             Dashboard → Auth → URL Configuration → Redirect URLs.
 
-  const redirectTo = `keurzen://join/${invitation.token}`;
+  const redirectTo = `https://app.keurzen.app/join/${invitation.token}`;
 
   const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
     type: 'magiclink',

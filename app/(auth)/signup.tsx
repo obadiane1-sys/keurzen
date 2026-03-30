@@ -11,41 +11,42 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signUp, signUpForInvite } from '../../src/lib/supabase/auth';
+import { Ionicons } from '@expo/vector-icons';
+import { signUp } from '../../src/lib/supabase/auth';
 import { signUpSchema } from '../../src/utils/validation';
 import { useUiStore } from '../../src/stores/ui.store';
 import { useInvitePreview } from '../../src/lib/queries/household';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
-import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
-import { Mascot } from '../../src/components/ui/Mascot';
+import KeurzenMascot from '../../src/components/ui/KeurzenMascot';
 import type { SignUpFormValues } from '../../src/types';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { invite, email: emailParam } = useLocalSearchParams<{ invite?: string; email?: string }>();
+  const { invite, email: emailParam } = useLocalSearchParams<{
+    invite?: string;
+    email?: string;
+  }>();
   const { showToast, pendingInviteToken, setPendingInviteToken } = useUiStore();
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
 
-  // Sur web, window.location.search est synchrone et disponible dès le premier
-  // rendu, contrairement à useLocalSearchParams qui peut arriver en retard lors
-  // d'un fresh load depuis un lien externe (email, SMS).
-  const resolvedEmail: string | undefined = emailParam
-    ?? (Platform.OS === 'web' && typeof window !== 'undefined'
+  const resolvedEmail: string | undefined =
+    emailParam ??
+    (Platform.OS === 'web' && typeof window !== 'undefined'
       ? (new URLSearchParams(window.location.search).get('email') ?? undefined)
       : undefined);
 
-  const resolvedInvite: string | undefined = invite
-    ?? (Platform.OS === 'web' && typeof window !== 'undefined'
+  const resolvedInvite: string | undefined =
+    invite ??
+    (Platform.OS === 'web' && typeof window !== 'undefined'
       ? (new URLSearchParams(window.location.search).get('invite') ?? undefined)
       : undefined);
 
-  // URL param is the authoritative source — survives Zustand resets and hot reloads.
-  // Sync it back to the store so (auth)/_layout.tsx can redirect after auth.
   const effectiveToken = resolvedInvite || pendingInviteToken;
 
+  // Sync invite token to store
   useEffect(() => {
     if (resolvedInvite && resolvedInvite !== pendingInviteToken) {
       setPendingInviteToken(resolvedInvite);
@@ -53,8 +54,6 @@ export default function SignupScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Récupère le contexte de l'invitation (nom du foyer, invitant, email)
-  // pour l'afficher à l'écran et pré-remplir l'email si non fourni en URL param.
   const { data: preview } = useInvitePreview(effectiveToken ?? null);
 
   const {
@@ -67,53 +66,25 @@ export default function SignupScreen() {
     defaultValues: {
       email: resolvedEmail ?? '',
       full_name: '',
-      password: '',
-      confirmPassword: '',
     },
   });
 
-  // Applique l'email dès qu'il est résolu (late arrival sur web ou deep link natif).
   useEffect(() => {
     const email = resolvedEmail ?? preview?.invited_email;
     if (email) {
       setValue('email', email, { shouldValidate: false });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedEmail, preview?.invited_email]);
 
   const onSubmit = async (values: SignUpFormValues) => {
-    // ── Flow invitation : création directe sans email de confirmation ────────
-    if (effectiveToken) {
-      const { error } = await signUpForInvite(
-        values.email,
-        values.password,
-        values.full_name,
-        effectiveToken,
-      );
-
-      if (error === 'already_exists') {
-        showToast('Un compte avec cet email existe déjà. Connectez-vous pour rejoindre le foyer.', 'info');
-        router.replace('/(auth)/login');
-        return;
-      }
-
-      if (error) {
-        showToast(error, 'error');
-        return;
-      }
-
-      // Succès : session établie → (auth)/_layout.tsx redirige automatiquement
-      // vers /join/{token}?auto=1 qui déclenche le join sans friction.
-      return;
-    }
-
-    // ── Flow standard : inscription classique ────────────────────────────────
-    const { error, requiresConfirmation } = await signUp(values.email, values.password, values.full_name);
+    const { error } = await signUp(values.email, values.full_name);
 
     if (error) {
-      if (error === 'email_already_exists') {
-        setEmailAlreadyExists(true);
-      } else if (error.toLowerCase().includes('already registered') || error.toLowerCase().includes('already exists')) {
+      if (
+        error.toLowerCase().includes('already registered') ||
+        error.toLowerCase().includes('already exists')
+      ) {
         setEmailAlreadyExists(true);
       } else {
         showToast(error, 'error');
@@ -121,28 +92,23 @@ export default function SignupScreen() {
       return;
     }
 
-    if (requiresConfirmation) {
-      // Confirmation email envoyée — l'utilisateur doit cliquer sur le lien
-      showToast('Compte créé ! Vérifiez votre email pour confirmer.', 'success');
-      router.replace('/(auth)/login');
-    }
-    // Si requiresConfirmation === false : Supabase a auto-confirmé le compte
-    // et la session est déjà établie. onAuthStateChange → (auth)/_layout.tsx
-    // gère la redirection automatiquement. Rien d'autre à faire ici.
+    router.replace({
+      pathname: '/(auth)/verify-email',
+      params: { email: values.email },
+    });
   };
 
-  // Détermine si l'email doit être verrouillé (connu via URL ou preview)
   const knownEmail = resolvedEmail || preview?.invited_email;
   const emailLocked = !!(effectiveToken && knownEmail);
 
-  // Construit le message contextuel de l'invitation
-  const inviteContext = effectiveToken && preview?.valid
-    ? preview.inviter_name && preview.household_name
-      ? `${preview.inviter_name} vous invite à rejoindre le foyer « ${preview.household_name} »`
-      : preview.household_name
-        ? `Vous avez été invité(e) à rejoindre le foyer « ${preview.household_name} »`
-        : 'Vous avez été invité(e) à rejoindre un foyer Keurzen.'
-    : null;
+  const inviteContext =
+    effectiveToken && preview?.valid
+      ? preview.inviter_name && preview.household_name
+        ? `${preview.inviter_name} vous invite a rejoindre le foyer "${preview.household_name}"`
+        : preview.household_name
+          ? `Vous avez ete invite(e) a rejoindre le foyer "${preview.household_name}"`
+          : 'Vous avez ete invite(e) a rejoindre un foyer Keurzen.'
+      : null;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -155,35 +121,37 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Bannière d'invitation contextuelle */}
+          {/* Invite banner */}
           {effectiveToken && (
             <View style={styles.inviteBanner}>
               <Ionicons name="mail-unread-outline" size={16} color={Colors.mint} />
               <Text variant="bodySmall" style={styles.inviteBannerText}>
-                {inviteContext ?? 'Vous avez été invité(e) à rejoindre un foyer Keurzen.'}
+                {inviteContext ?? 'Vous avez ete invite(e) a rejoindre un foyer Keurzen.'}
               </Text>
             </View>
           )}
 
-          {/* Back button */}
+          {/* Back */}
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backBtn}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text variant="label" color="mint">← Retour</Text>
+            <Text variant="label" color="mint">
+              ← Retour
+            </Text>
           </TouchableOpacity>
 
           {/* Header */}
           <View style={styles.header}>
-            <Mascot size={72} expression="happy" />
+            <KeurzenMascot size={100} expression="happy" animated />
             <Text variant="h2" style={styles.title}>
-              Créer mon compte
+              Creer mon compte
             </Text>
             <Text variant="body" color="secondary" style={styles.subtitle}>
               {effectiveToken
-                ? 'Créez votre compte pour rejoindre le foyer.'
-                : 'Rejoignez Keurzen et organisez votre foyer en équipe.'}
+                ? 'Creez votre compte pour rejoindre le foyer.'
+                : 'Rejoignez Keurzen et organisez votre foyer en equipe.'}
             </Text>
           </View>
 
@@ -194,7 +162,7 @@ export default function SignupScreen() {
               name="full_name"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Prénom et nom"
+                  label="Prenom et nom"
                   placeholder="Marie Dupont"
                   autoComplete="name"
                   autoCapitalize="words"
@@ -219,45 +187,13 @@ export default function SignupScreen() {
                   autoComplete="email"
                   leftIcon="mail-outline"
                   value={value}
-                  onChangeText={(v) => { setEmailAlreadyExists(false); onChange(v); }}
+                  onChangeText={(v) => {
+                    setEmailAlreadyExists(false);
+                    onChange(v);
+                  }}
                   onBlur={onBlur}
                   error={errors.email?.message}
                   editable={!emailLocked}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Mot de passe"
-                  placeholder="••••••••••••"
-                  isPassword
-                  leftIcon="lock-closed-outline"
-                  hint="12 car. min · maj · chiffre · symbole · sans espace"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.password?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="confirmPassword"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Confirmer le mot de passe"
-                  placeholder="••••••••••••"
-                  isPassword
-                  leftIcon="lock-closed-outline"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.confirmPassword?.message}
                 />
               )}
             />
@@ -266,14 +202,14 @@ export default function SignupScreen() {
               <View style={styles.emailExistsBanner}>
                 <Ionicons name="alert-circle-outline" size={16} color={Colors.error} />
                 <View style={styles.emailExistsBannerContent}>
-                  <Text variant="bodySmall" style={styles.emailExistsBannerText}>
-                    Un compte existe déjà avec cette adresse email.
+                  <Text variant="bodySmall" style={{ color: Colors.textPrimary }}>
+                    Un compte existe deja avec cette adresse email.
                   </Text>
                   <TouchableOpacity
                     onPress={() => router.replace('/(auth)/login')}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Text variant="bodySmall" color="mint" style={styles.emailExistsLoginLink}>
+                    <Text variant="bodySmall" color="mint" style={{ fontWeight: '600' }}>
                       Se connecter
                     </Text>
                   </TouchableOpacity>
@@ -282,7 +218,7 @@ export default function SignupScreen() {
             )}
 
             <Button
-              label={effectiveToken ? 'Créer mon compte et rejoindre' : 'Créer mon compte'}
+              label={effectiveToken ? 'Creer mon compte et rejoindre' : 'Creer mon compte'}
               onPress={handleSubmit(onSubmit)}
               isLoading={isSubmitting}
               fullWidth
@@ -290,7 +226,6 @@ export default function SignupScreen() {
               style={{ marginTop: Spacing.sm }}
             />
 
-            {/* Lien "J'ai déjà un compte" — visible uniquement en mode invitation */}
             {effectiveToken && (
               <TouchableOpacity
                 onPress={() => router.replace('/(auth)/login')}
@@ -298,23 +233,38 @@ export default function SignupScreen() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text variant="bodySmall" color="muted">
-                  {'J\'ai déjà un compte — '}
-                  <Text variant="bodySmall" color="mint">Se connecter</Text>
+                  {"J'ai deja un compte — "}
+                  <Text variant="bodySmall" color="mint">
+                    Se connecter
+                  </Text>
                 </Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Legal note */}
-          <Text
-            variant="caption"
-            color="muted"
-            style={styles.legal}
+          {/* Join code link */}
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/join-code')}
+            style={styles.joinCodeLink}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            En créant un compte, vous acceptez nos{' '}
-            <Text variant="caption" color="mint">{"Conditions d'utilisation"}</Text>
-            {' '}et notre{' '}
-            <Text variant="caption" color="mint">Politique de confidentialité</Text>.
+            <Ionicons name="key-outline" size={14} color={Colors.mint} />
+            <Text variant="bodySmall" color="mint" weight="semibold">
+              J'ai un code d'invitation
+            </Text>
+          </TouchableOpacity>
+
+          {/* Legal */}
+          <Text variant="caption" color="muted" style={styles.legal}>
+            {"En creant un compte, vous acceptez nos "}
+            <Text variant="caption" color="mint">
+              {"Conditions d'utilisation"}
+            </Text>
+            {' et notre '}
+            <Text variant="caption" color="mint">
+              Politique de confidentialite
+            </Text>
+            .
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -392,11 +342,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.xs,
   },
-  emailExistsBannerText: {
-    color: Colors.textPrimary,
-    lineHeight: 20,
-  },
-  emailExistsLoginLink: {
-    fontWeight: '600' as const,
+  joinCodeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
 });

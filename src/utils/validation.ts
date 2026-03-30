@@ -1,48 +1,15 @@
 import { z } from 'zod';
 
-// ─── Password Schema ──────────────────────────────────────────────────────────
-
-export const passwordSchema = z
-  .string()
-  .min(12, 'Au moins 12 caractères')
-  .regex(/[a-z]/, 'Au moins une minuscule')
-  .regex(/[A-Z]/, 'Au moins une majuscule')
-  .regex(/[0-9]/, 'Au moins un chiffre')
-  .regex(/[^a-zA-Z0-9]/, 'Au moins un caractère spécial')
-  .regex(/^\S+$/, 'Pas d\'espaces autorisés');
-
 // ─── Auth Schemas ─────────────────────────────────────────────────────────────
 
-export const signUpSchema = z
-  .object({
-    email: z.string().email('Email invalide').toLowerCase(),
-    full_name: z.string().min(2, 'Au moins 2 caractères').max(80, 'Trop long'),
-    password: passwordSchema,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
-    path: ['confirmPassword'],
-  });
+export const signUpSchema = z.object({
+  email: z.string().email('Email invalide').toLowerCase(),
+  full_name: z.string().min(2, 'Au moins 2 caractères').max(80, 'Trop long'),
+});
 
 export const signInSchema = z.object({
   email: z.string().email('Email invalide'),
-  password: z.string().min(1, 'Mot de passe requis'),
 });
-
-export const resetPasswordSchema = z.object({
-  email: z.string().email('Email invalide'),
-});
-
-export const newPasswordSchema = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
-    path: ['confirmPassword'],
-  });
 
 // ─── Task Schema ──────────────────────────────────────────────────────────────
 
