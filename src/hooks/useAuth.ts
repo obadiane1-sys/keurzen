@@ -20,6 +20,10 @@ export function useAuthInit() {
       }
       setLoading(false);
       setInitialized(true);
+    }).catch(() => {
+      // Ensure app never stays stuck on splash if session retrieval fails
+      setLoading(false);
+      setInitialized(true);
     });
 
     // Listen to auth changes
