@@ -185,13 +185,13 @@ async function handleRequest(req: Request): Promise<Response> {
       console.error('insert member error:', insertError.message);
       return json({ error: 'Impossible de rejoindre le foyer' }, 500);
     }
-  }
 
-  // Marquer le code comme utilise
-  await adminClient
-    .from('invitation_codes')
-    .update({ used: true, used_by: userId, used_at: new Date().toISOString() })
-    .eq('id', invite.id);
+    // Marquer le code comme utilise (uniquement lors d'un vrai ajout)
+    await adminClient
+      .from('invitation_codes')
+      .update({ used: true, used_by: userId, used_at: new Date().toISOString() })
+      .eq('id', invite.id);
+  }
 
   // Recuperer le foyer
   const { data: household } = await adminClient
