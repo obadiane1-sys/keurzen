@@ -64,7 +64,7 @@ export default function VerifyEmailScreen() {
       return;
     }
 
-    showToast('Connexion reussie !', 'success');
+    showToast('Connexion r\u00e9ussie !', 'success');
     router.replace('/(app)/dashboard');
   }, [code, resolvedEmail, showToast, router]);
 
@@ -114,7 +114,7 @@ export default function VerifyEmailScreen() {
           <View style={styles.header}>
             <Mascot size={72} expression="happy" />
             <Text variant="h2" style={styles.title}>
-              Verifiez vos emails
+              V\u00e9rifiez vos emails
             </Text>
             <Text variant="body" color="secondary" style={styles.subtitle}>
               {'Entrez le code à 6 chiffres envoyé à '}
@@ -139,7 +139,7 @@ export default function VerifyEmailScreen() {
 
           {/* Bouton Vérifier */}
           <Button
-            label="Verifier le code"
+            label="V\u00e9rifier le code"
             onPress={handleVerify}
             isLoading={isVerifying}
             fullWidth

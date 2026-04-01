@@ -26,7 +26,8 @@
     ]
   },
   "env": {
-    "ESLINT_USE_FLAT_CONFIG": "false"
+    "ESLINT_USE_FLAT_CONFIG": "false",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
     "PostToolUse": [

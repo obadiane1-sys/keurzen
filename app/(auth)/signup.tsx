@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { signUp } from '../../src/lib/supabase/auth';
+import { supabase } from '../../src/lib/supabase/client';
 import { signUpSchema } from '../../src/utils/validation';
 import { useUiStore } from '../../src/stores/ui.store';
 import { useInvitePreview } from '../../src/lib/queries/household';
@@ -20,7 +21,7 @@ import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
-import KeurzenMascot from '../../src/components/ui/KeurzenMascot';
+import { Mascot } from '../../src/components/ui/Mascot';
 import type { SignUpFormValues } from '../../src/types';
 
 export default function SignupScreen() {
@@ -78,6 +79,19 @@ export default function SignupScreen() {
   }, [resolvedEmail, preview?.invited_email]);
 
   const onSubmit = async (values: SignUpFormValues) => {
+    // Pre-check: verify email is not already registered before sending OTP
+    try {
+      const { data: exists } = await supabase.rpc('check_email_registered', {
+        p_email: values.email,
+      });
+      if (exists) {
+        setEmailAlreadyExists(true);
+        return;
+      }
+    } catch {
+      // If RPC fails, fall through to signUp which has its own detection
+    }
+
     const { error } = await signUp(values.email, values.full_name);
 
     if (error) {
@@ -104,10 +118,10 @@ export default function SignupScreen() {
   const inviteContext =
     effectiveToken && preview?.valid
       ? preview.inviter_name && preview.household_name
-        ? `${preview.inviter_name} vous invite a rejoindre le foyer "${preview.household_name}"`
+        ? `${preview.inviter_name} vous invite \u00e0 rejoindre le foyer "${preview.household_name}"`
         : preview.household_name
-          ? `Vous avez ete invite(e) a rejoindre le foyer "${preview.household_name}"`
-          : 'Vous avez ete invite(e) a rejoindre un foyer Keurzen.'
+          ? `Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre le foyer "${preview.household_name}"`
+          : 'Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre un foyer Keurzen.'
       : null;
 
   return (
@@ -126,7 +140,7 @@ export default function SignupScreen() {
             <View style={styles.inviteBanner}>
               <Ionicons name="mail-unread-outline" size={16} color={Colors.mint} />
               <Text variant="bodySmall" style={styles.inviteBannerText}>
-                {inviteContext ?? 'Vous avez ete invite(e) a rejoindre un foyer Keurzen.'}
+                {inviteContext ?? 'Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre un foyer Keurzen.'}
               </Text>
             </View>
           )}
@@ -144,14 +158,14 @@ export default function SignupScreen() {
 
           {/* Header */}
           <View style={styles.header}>
-            <KeurzenMascot size={100} expression="happy" animated />
+            <Mascot size={100} expression="happy" />
             <Text variant="h2" style={styles.title}>
-              Creer mon compte
+              Cr\u00e9er mon compte
             </Text>
             <Text variant="body" color="secondary" style={styles.subtitle}>
               {effectiveToken
-                ? 'Creez votre compte pour rejoindre le foyer.'
-                : 'Rejoignez Keurzen et organisez votre foyer en equipe.'}
+                ? 'Cr\u00e9ez votre compte pour rejoindre le foyer.'
+                : 'Rejoignez Keurzen et organisez votre foyer en \u00e9quipe.'}
             </Text>
           </View>
 
@@ -162,7 +176,7 @@ export default function SignupScreen() {
               name="full_name"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Prenom et nom"
+                  label="Pr\u00e9nom et nom"
                   placeholder="Marie Dupont"
                   autoComplete="name"
                   autoCapitalize="words"
@@ -203,7 +217,7 @@ export default function SignupScreen() {
                 <Ionicons name="alert-circle-outline" size={16} color={Colors.error} />
                 <View style={styles.emailExistsBannerContent}>
                   <Text variant="bodySmall" style={{ color: Colors.textPrimary }}>
-                    Un compte existe deja avec cette adresse email.
+                    Un compte existe d\u00e9j\u00e0 avec cette adresse email.
                   </Text>
                   <TouchableOpacity
                     onPress={() => router.replace('/(auth)/login')}
@@ -218,7 +232,7 @@ export default function SignupScreen() {
             )}
 
             <Button
-              label={effectiveToken ? 'Creer mon compte et rejoindre' : 'Creer mon compte'}
+              label={effectiveToken ? 'Cr\u00e9er mon compte et rejoindre' : 'Cr\u00e9er mon compte'}
               onPress={handleSubmit(onSubmit)}
               isLoading={isSubmitting}
               fullWidth
@@ -233,7 +247,7 @@ export default function SignupScreen() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text variant="bodySmall" color="muted">
-                  {"J'ai deja un compte — "}
+                  {"J'ai d\u00e9j\u00e0 un compte \u2014 "}
                   <Text variant="bodySmall" color="mint">
                     Se connecter
                   </Text>
@@ -256,13 +270,13 @@ export default function SignupScreen() {
 
           {/* Legal */}
           <Text variant="caption" color="muted" style={styles.legal}>
-            {"En creant un compte, vous acceptez nos "}
+            {"En cr\u00e9ant un compte, vous acceptez nos "}
             <Text variant="caption" color="mint">
               {"Conditions d'utilisation"}
             </Text>
             {' et notre '}
             <Text variant="caption" color="mint">
-              Politique de confidentialite
+              Politique de confidentialit\u00e9
             </Text>
             .
           </Text>

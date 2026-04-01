@@ -1,6 +1,21 @@
 /**
  * Keurzen — Edge Function: verify-email-code
  *
+ * STATUS: VESTIGE — Cette Edge Function fait partie du systeme OTP custom
+ * (send-confirmation-email + verify-email-code + table email_verifications)
+ * qui n'est plus appele par l'application mobile.
+ *
+ * L'app utilise desormais exclusivement le systeme OTP natif de Supabase :
+ *   - signInWithOtp() pour l'envoi (login et signup)
+ *   - verifyOtp() pour la verification
+ *   Voir : src/lib/supabase/auth.ts
+ *
+ * Cette fonction est conservee pour reference et au cas ou le systeme custom
+ * serait reactive (ex: besoin de confirmer l'email via un code envoye par Resend).
+ * Ne pas supprimer sans verifier qu'aucun workflow externe ne l'appelle.
+ *
+ * ---
+ *
  * Vérifie le code OTP saisi par l'utilisateur et confirme son email côté Supabase.
  *
  * Flow :
@@ -102,26 +117,36 @@ serve(async (req: Request) => {
 
   // ── Confirmer l'email dans Supabase Auth ──────────────────────────────────
 
-  // Récupérer l'utilisateur par email
-  const { data: usersPage, error: listError } = await adminClient.auth.admin.listUsers();
+  // Lookup user_id via profiles table (scalable, no full user list scan)
+  const { data: profile, error: profileError } = await adminClient
+    .from('profiles')
+    .select('id')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
 
-  if (listError) {
-    console.error('listUsers error:', listError.message);
+  if (profileError) {
+    console.error('Profile lookup error:', profileError.message);
     return json({ error: 'Erreur lors de la confirmation du compte' }, 500);
   }
 
-  const user = usersPage.users.find(
-    (u) => u.email?.toLowerCase() === normalizedEmail,
-  );
-
-  if (!user) {
-    console.error('User not found for email:', normalizedEmail);
+  if (!profile) {
+    console.error('Profile not found for email:', normalizedEmail);
     return json({ error: 'Utilisateur introuvable' }, 404);
   }
 
-  if (!user.email_confirmed_at) {
+  // Fetch the auth user by ID to check email_confirmed_at
+  const { data: authUser, error: getUserError } = await adminClient.auth.admin.getUserById(
+    profile.id,
+  );
+
+  if (getUserError) {
+    console.error('getUserById error:', getUserError.message);
+    return json({ error: 'Erreur lors de la confirmation du compte' }, 500);
+  }
+
+  if (!authUser.user.email_confirmed_at) {
     const { error: updateError } = await adminClient.auth.admin.updateUserById(
-      user.id,
+      profile.id,
       { email_confirm: true },
     );
 
@@ -131,6 +156,6 @@ serve(async (req: Request) => {
     }
   }
 
-  console.log(`Email confirmed for ${normalizedEmail} (user: ${user.id})`);
+  console.log(`Email confirmed for ${normalizedEmail} (user: ${profile.id})`);
   return json({ success: true });
 });

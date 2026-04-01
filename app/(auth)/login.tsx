@@ -19,7 +19,7 @@ import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
-import KeurzenMascot from '../../src/components/ui/KeurzenMascot';
+import { Mascot } from '../../src/components/ui/Mascot';
 import type { SignInFormValues } from '../../src/types';
 
 export default function LoginScreen() {
@@ -67,7 +67,7 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <KeurzenMascot size={100} expression="happy" animated />
+            <Mascot size={100} expression="happy" />
             <Text variant="h2" style={styles.title}>
               Bon retour !
             </Text>
@@ -111,14 +111,14 @@ export default function LoginScreen() {
                 <Ionicons name="alert-circle-outline" size={16} color={Colors.coral} />
                 <View style={styles.notFoundContent}>
                   <Text variant="bodySmall" style={{ color: Colors.textPrimary }}>
-                    Aucun compte trouve avec cette adresse.
+                    Aucun compte trouv\u00e9 avec cette adresse.
                   </Text>
                   <TouchableOpacity
                     onPress={() => router.push('/(auth)/signup')}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text variant="bodySmall" color="mint" style={{ fontWeight: '600' }}>
-                      Creer un compte
+                      Cr\u00e9er un compte
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -147,7 +147,7 @@ export default function LoginScreen() {
             <Text variant="body" color="muted">
               {'Pas encore de compte ? '}
               <Text variant="body" color="mint">
-                Creer un compte
+                Cr\u00e9er un compte
               </Text>
             </Text>
           </TouchableOpacity>

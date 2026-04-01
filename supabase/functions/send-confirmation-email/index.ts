@@ -1,6 +1,21 @@
 /**
  * Keurzen — Edge Function: send-confirmation-email
  *
+ * STATUS: VESTIGE — Cette Edge Function fait partie du systeme OTP custom
+ * (send-confirmation-email + verify-email-code + table email_verifications)
+ * qui n'est plus appele par l'application mobile.
+ *
+ * L'app utilise desormais exclusivement le systeme OTP natif de Supabase :
+ *   - signInWithOtp() pour l'envoi (login et signup)
+ *   - verifyOtp() pour la verification
+ *   Voir : src/lib/supabase/auth.ts
+ *
+ * Cette fonction est conservee pour reference et au cas ou le systeme custom
+ * serait reactive (ex: besoin d'emails via Resend au lieu du SMTP Supabase).
+ * Ne pas supprimer sans verifier qu'aucun workflow externe ne l'appelle.
+ *
+ * ---
+ *
  * Génère un code OTP à 6 chiffres et l'envoie via Resend.
  * Le code est stocké dans la table `email_verifications` avec une expiration 30 min.
  * L'utilisateur saisit le code dans l'app (écran verify-email) — pas de lien cliquable.
@@ -147,15 +162,37 @@ serve(async (req: Request) => {
     return json({ error: 'email requis' }, 400);
   }
 
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+  // Count non-expired codes for this email in the last 30 minutes
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: recentCount, error: countError } = await adminClient
+    .from('email_verifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('email', normalizedEmail)
+    .gte('created_at', thirtyMinutesAgo)
+    .gte('expires_at', new Date().toISOString());
+
+  if (countError) {
+    console.error('Rate limit check error:', countError.message);
+    return json({ error: 'Erreur interne' }, 500);
+  }
+
+  if ((recentCount ?? 0) >= 3) {
+    return json({ error: 'Trop de tentatives. Réessayez dans quelques minutes.' }, 429);
+  }
+
   // ── Génération et stockage du code OTP ────────────────────────────────────
 
   const code = generateOtp();
-  const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   const { error: insertError } = await adminClient
     .from('email_verifications')
     .insert({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       code,
       expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     });

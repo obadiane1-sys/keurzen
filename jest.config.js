@@ -1,10 +1,10 @@
 module.exports = {
-  preset: 'jest-expo',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react' } }],
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: { jsx: 'react' }, diagnostics: false }],
   },
-  testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
+  testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts', '<rootDir>/src/**/__tests__/**/*.test.tsx'],
+  testPathIgnorePatterns: ['/node_modules/', '\\.claude/worktrees/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -12,8 +12,5 @@ module.exports = {
     'src/lib/queries/*.ts',
     'src/utils/*.ts',
     '!src/**/*.d.ts',
-  ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|expo|@expo|@unimodules|unimodules)',
   ],
 };

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
@@ -9,242 +9,30 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Button } from '../../src/components/ui/Button';
 import { Mascot } from '../../src/components/ui/Mascot';
-import { useAuthStore } from '../../src/stores/auth.store';
-import { useUiStore } from '../../src/stores/ui.store';
-import { useHouseholdStore } from '../../src/stores/household.store';
-import { supabase, supabaseAnonKey, supabaseUrl } from '../../src/lib/supabase/client';
-
-const CODE_LENGTH = 6;
+import { useJoinCode } from '../../src/hooks/useJoinCode';
 
 export default function JoinCodeScreen() {
   const router = useRouter();
-  const { code: codeParam } = useLocalSearchParams<{ code?: string }>();
-  const { session } = useAuthStore();
-  const { showToast, setPendingInviteCode } = useUiStore();
-  const [isJoining, setIsJoining] = useState(false);
-  const [alreadyMemberHousehold, setAlreadyMemberHousehold] = useState<string | null>(null);
-
-  const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
-  const [error, setError] = useState<string | null>(null);
-  const inputRefs = useRef<(TextInput | null)[]>([]);
-  const [autoSubmitted, setAutoSubmitted] = useState(false);
-
-  // Read code from URL params (email CTA link) and pre-fill
-  useEffect(() => {
-    // Also check window.location on web for immediate access
-    const urlCode =
-      codeParam ??
-      (Platform.OS === 'web' && typeof window !== 'undefined'
-        ? (new URLSearchParams(window.location.search).get('code') ?? undefined)
-        : undefined);
-
-    if (urlCode) {
-      const cleaned = urlCode.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH);
-      if (cleaned.length > 0) {
-        const newDigits = Array(CODE_LENGTH).fill('');
-        for (let i = 0; i < cleaned.length; i++) {
-          newDigits[i] = cleaned[i];
-        }
-        setDigits(newDigits);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeParam]);
-
-  const code = digits.join('');
-  const isComplete = code.length === CODE_LENGTH && digits.every((d) => d !== '');
-
-  // Auto-submit when pre-filled from URL (Edge Function gere auth si pas de session)
-  useEffect(() => {
-    if (isComplete && !autoSubmitted && codeParam && !isJoining) {
-      setAutoSubmitted(true);
-      // Defer to next tick to ensure state is fully settled
-      const timer = setTimeout(() => handleSubmit(), 100);
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isComplete, autoSubmitted, isJoining]);
-
-  const handleChange = (text: string, index: number) => {
-    // Only allow digits
-    const digit = text.replace(/[^0-9]/g, '').slice(-1);
-    const newDigits = [...digits];
-    newDigits[index] = digit;
-    setDigits(newDigits);
-    setError(null);
-
-    // Auto-focus next
-    if (digit && index < CODE_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !digits[index] && index > 0) {
-      const newDigits = [...digits];
-      newDigits[index - 1] = '';
-      setDigits(newDigits);
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (text: string) => {
-    const cleaned = text.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH);
-    if (cleaned.length > 0) {
-      const newDigits = Array(CODE_LENGTH).fill('');
-      for (let i = 0; i < cleaned.length; i++) {
-        newDigits[i] = cleaned[i];
-      }
-      setDigits(newDigits);
-      // Focus last filled or next empty
-      const focusIndex = Math.min(cleaned.length, CODE_LENGTH - 1);
-      inputRefs.current[focusIndex]?.focus();
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!isComplete || isJoining) return;
-
-    const currentCode = digits.join('');
-    setIsJoining(true);
-    setError(null);
-
-    try {
-      // Always use direct fetch — supabase.rpc and supabase.functions.invoke hang on web
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20_000);
-
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        apikey: supabaseAnonKey,
-        'x-app-name': 'keurzen-mobile',
-      };
-
-      // Include auth header if user already has a session
-      if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`;
-      }
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/redeem-invite-code`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ code: currentCode }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      const payload = (await res.json()) as {
-        success?: boolean;
-        access_token?: string;
-        refresh_token?: string;
-        household?: object;
-        already_member?: boolean;
-        error?: string;
-      };
-
-      if (!res.ok || payload.error) {
-        throw new Error(payload.error ?? `Erreur serveur (${res.status})`);
-      }
-
-      // Establish session if we don't already have one
-      if (!session && payload.access_token && payload.refresh_token) {
-        let sessionEstablished = false;
-
-        try {
-          await Promise.race([
-            supabase.auth.setSession({
-              access_token: payload.access_token,
-              refresh_token: payload.refresh_token,
-            }),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), 8_000),
-            ),
-          ]);
-          sessionEstablished = true;
-        } catch {
-          // setSession may have succeeded despite timeout — verify
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
-          if (currentSession) {
-            sessionEstablished = true;
-          } else {
-            // One retry attempt
-            try {
-              await Promise.race([
-                supabase.auth.setSession({
-                  access_token: payload.access_token,
-                  refresh_token: payload.refresh_token,
-                }),
-                new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('timeout')), 8_000),
-                ),
-              ]);
-              sessionEstablished = true;
-            } catch {
-              const { data: { session: retrySession } } = await supabase.auth.getSession();
-              sessionEstablished = !!retrySession;
-            }
-          }
-        }
-
-        if (!sessionEstablished) {
-          setError('Impossible d\'etablir la session. Verifiez votre connexion et reessayez.');
-          setIsJoining(false);
-          return;
-        }
-      }
-
-      if (payload.already_member) {
-        setAlreadyMemberHousehold((payload.household as { name?: string })?.name ?? 'ce foyer');
-        setIsJoining(false);
-        return;
-      }
-
-      // Hydrate household store
-      if (payload.household) {
-        const { setHousehold, setMembers } = useHouseholdStore.getState();
-        setHousehold(payload.household as any);
-
-        const householdIdForHydration = (payload.household as { id?: string })?.id;
-        if (householdIdForHydration) {
-          const { data: members } = await supabase
-            .from('household_members')
-            .select('*, profile:profiles(*)')
-            .eq('household_id', householdIdForHydration);
-          if (members) setMembers(members as any);
-        }
-      }
-
-      setPendingInviteCode(null);
-
-      // Navigate to post-join onboarding (or dashboard if already completed)
-      const householdId = (payload.household as { id?: string })?.id;
-      if (householdId) {
-        const { completedJoinOnboardingForHouseholds } = useUiStore.getState();
-        if (completedJoinOnboardingForHouseholds.includes(householdId)) {
-          router.replace('/(app)/dashboard');
-        } else {
-          router.replace('/(app)/onboarding/post-join');
-        }
-      } else {
-        router.replace('/(app)/dashboard');
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('aborted') || msg.includes('abort')) {
-        setError('Le serveur met trop de temps a repondre. Reessayez.');
-      } else {
-        setError(msg);
-      }
-    } finally {
-      setIsJoining(false);
-    }
-  };
+  const {
+    digits,
+    error,
+    isJoining,
+    isComplete,
+    alreadyMemberHousehold,
+    handleChange,
+    handleKeyPress,
+    handlePaste,
+    handleSubmit,
+    resetAlreadyMember,
+    inputRefs,
+    session,
+  } = useJoinCode();
 
   if (alreadyMemberHousehold) {
     return (
@@ -252,10 +40,10 @@ export default function JoinCodeScreen() {
         <View style={styles.alreadyMemberContainer}>
           <Mascot size={100} expression="thinking" />
           <Text variant="h3" style={styles.alreadyMemberTitle}>
-            Deja membre
+            D\u00e9j\u00e0 membre
           </Text>
           <Text variant="body" color="secondary" style={styles.alreadyMemberSubtitle}>
-            Vous faites deja partie de {alreadyMemberHousehold}.
+            Vous faites d\u00e9j\u00e0 partie de {alreadyMemberHousehold}.
           </Text>
           <Button
             label="Aller au dashboard"
@@ -266,10 +54,7 @@ export default function JoinCodeScreen() {
           <Button
             label="Retour"
             variant="ghost"
-            onPress={() => {
-              setAlreadyMemberHousehold(null);
-              setDigits(Array(CODE_LENGTH).fill(''));
-            }}
+            onPress={resetAlreadyMember}
             fullWidth
           />
         </View>
@@ -297,7 +82,7 @@ export default function JoinCodeScreen() {
             accessibilityRole="button"
           >
             <Text variant="label" color="mint">
-              ← Retour
+              \u2190 Retour
             </Text>
           </TouchableOpacity>
 
@@ -308,7 +93,7 @@ export default function JoinCodeScreen() {
               Rejoindre un foyer
             </Text>
             <Text variant="body" color="secondary" style={styles.subtitle}>
-              Saisissez le code a 6 chiffres que vous avez recu par email.
+              Saisissez le code \u00e0 6 chiffres que vous avez re\u00e7u par email.
             </Text>
           </View>
 
@@ -325,7 +110,6 @@ export default function JoinCodeScreen() {
                 ]}
                 value={digit}
                 onChangeText={(text) => {
-                  // Handle paste (multi-char input)
                   if (text.length > 1) {
                     handlePaste(text);
                   } else {
@@ -364,10 +148,10 @@ export default function JoinCodeScreen() {
             style={styles.submitBtn}
           />
 
-          {/* Info : le compte est cree automatiquement */}
+          {/* Info : le compte est cr\u00e9\u00e9 automatiquement */}
           {!session && (
             <Text variant="bodySmall" color="muted" style={styles.autoCreateHint}>
-              Votre compte sera cree automatiquement.
+              Votre compte sera cr\u00e9\u00e9 automatiquement.
             </Text>
           )}
         </ScrollView>
