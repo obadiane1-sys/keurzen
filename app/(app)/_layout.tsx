@@ -109,6 +109,14 @@ export default function AppLayout() {
           tabBarStyle: { display: 'none' },
         }}
       />
+      {/* Hidden from tabs — post-join onboarding flow */}
+      <Tabs.Screen
+        name="onboarding"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }

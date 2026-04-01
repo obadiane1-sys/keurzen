@@ -105,11 +105,14 @@ async function handleRequest(req: Request): Promise<Response> {
   if (createError) {
     const msg = createError.message.toLowerCase();
     if (msg.includes('already registered') || msg.includes('already exists')) {
-      // Utilisateur existant — recuperer son ID
-      const { data: { users } } = await adminClient.auth.admin.listUsers();
-      const existing = users?.find((u: { email?: string }) => u.email === email);
-      if (!existing) return json({ error: 'Utilisateur introuvable' }, 500);
-      userId = existing.id;
+      // Utilisateur existant — recuperer son ID via la table profiles
+      const { data: existingProfile } = await adminClient
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+      if (!existingProfile) return json({ error: 'Utilisateur introuvable' }, 500);
+      userId = existingProfile.id;
 
       // Mettre a jour le profil si le nom est vide
       if (invitedName) {
@@ -141,12 +144,7 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 
   // Verifier le token OTP pour obtenir une session valide
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-  const anonClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data: otpData, error: otpError } = await anonClient.auth.verifyOtp({
+  const { data: otpData, error: otpError } = await adminClient.auth.verifyOtp({
     token_hash: linkData.properties.hashed_token,
     type: 'magiclink',
   });
@@ -190,13 +188,13 @@ async function handleRequest(req: Request): Promise<Response> {
       console.error('insert member error:', insertError.message);
       return json({ error: 'Impossible de rejoindre le foyer' }, 500);
     }
-  }
 
-  // Marquer le code comme utilise
-  await adminClient
-    .from('invitation_codes')
-    .update({ used: true, used_by: userId, used_at: new Date().toISOString() })
-    .eq('id', invite.id);
+    // Marquer le code comme utilise (uniquement lors d'un vrai ajout)
+    await adminClient
+      .from('invitation_codes')
+      .update({ used: true, used_by: userId, used_at: new Date().toISOString() })
+      .eq('id', invite.id);
+  }
 
   // Recuperer le foyer
   const { data: household } = await adminClient

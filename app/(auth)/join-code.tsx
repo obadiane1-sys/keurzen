@@ -17,6 +17,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Mascot } from '../../src/components/ui/Mascot';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useUiStore } from '../../src/stores/ui.store';
+import { useHouseholdStore } from '../../src/stores/household.store';
 import { supabase, supabaseAnonKey, supabaseUrl } from '../../src/lib/supabase/client';
 
 const CODE_LENGTH = 6;
@@ -27,6 +28,7 @@ export default function JoinCodeScreen() {
   const { session } = useAuthStore();
   const { showToast, setPendingInviteCode } = useUiStore();
   const [isJoining, setIsJoining] = useState(false);
+  const [alreadyMemberHousehold, setAlreadyMemberHousehold] = useState<string | null>(null);
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
@@ -152,29 +154,86 @@ export default function JoinCodeScreen() {
 
       // Establish session if we don't already have one
       if (!session && payload.access_token && payload.refresh_token) {
-        // Wrap setSession in a race with a timeout — it can hang on web
-        await Promise.race([
-          supabase.auth.setSession({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token,
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 8_000),
-          ),
-        ]).catch(() => {
-          // Session may still have been set despite timeout — continue navigation
-        });
+        let sessionEstablished = false;
+
+        try {
+          await Promise.race([
+            supabase.auth.setSession({
+              access_token: payload.access_token,
+              refresh_token: payload.refresh_token,
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 8_000),
+            ),
+          ]);
+          sessionEstablished = true;
+        } catch {
+          // setSession may have succeeded despite timeout — verify
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (currentSession) {
+            sessionEstablished = true;
+          } else {
+            // One retry attempt
+            try {
+              await Promise.race([
+                supabase.auth.setSession({
+                  access_token: payload.access_token,
+                  refresh_token: payload.refresh_token,
+                }),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('timeout')), 8_000),
+                ),
+              ]);
+              sessionEstablished = true;
+            } catch {
+              const { data: { session: retrySession } } = await supabase.auth.getSession();
+              sessionEstablished = !!retrySession;
+            }
+          }
+        }
+
+        if (!sessionEstablished) {
+          setError('Impossible d\'etablir la session. Verifiez votre connexion et reessayez.');
+          setIsJoining(false);
+          return;
+        }
+      }
+
+      if (payload.already_member) {
+        setAlreadyMemberHousehold((payload.household as { name?: string })?.name ?? 'ce foyer');
+        setIsJoining(false);
+        return;
+      }
+
+      // Hydrate household store
+      if (payload.household) {
+        const { setHousehold, setMembers } = useHouseholdStore.getState();
+        setHousehold(payload.household as any);
+
+        const householdIdForHydration = (payload.household as { id?: string })?.id;
+        if (householdIdForHydration) {
+          const { data: members } = await supabase
+            .from('household_members')
+            .select('*, profile:profiles(*)')
+            .eq('household_id', householdIdForHydration);
+          if (members) setMembers(members as any);
+        }
       }
 
       setPendingInviteCode(null);
 
-      if (payload.already_member) {
-        showToast('Vous faites deja partie de ce foyer', 'info');
+      // Navigate to post-join onboarding (or dashboard if already completed)
+      const householdId = (payload.household as { id?: string })?.id;
+      if (householdId) {
+        const { completedJoinOnboardingForHouseholds } = useUiStore.getState();
+        if (completedJoinOnboardingForHouseholds.includes(householdId)) {
+          router.replace('/(app)/dashboard');
+        } else {
+          router.replace('/(app)/onboarding/post-join');
+        }
       } else {
-        showToast('Bienvenue dans le foyer !', 'success');
+        router.replace('/(app)/dashboard');
       }
-
-      router.replace('/(app)/dashboard');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes('aborted') || msg.includes('abort')) {
@@ -186,6 +245,37 @@ export default function JoinCodeScreen() {
       setIsJoining(false);
     }
   };
+
+  if (alreadyMemberHousehold) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.alreadyMemberContainer}>
+          <Mascot size={100} expression="thinking" />
+          <Text variant="h3" style={styles.alreadyMemberTitle}>
+            Deja membre
+          </Text>
+          <Text variant="body" color="secondary" style={styles.alreadyMemberSubtitle}>
+            Vous faites deja partie de {alreadyMemberHousehold}.
+          </Text>
+          <Button
+            label="Aller au dashboard"
+            onPress={() => router.replace('/(app)/dashboard')}
+            fullWidth
+            style={styles.alreadyMemberBtn}
+          />
+          <Button
+            label="Retour"
+            variant="ghost"
+            onPress={() => {
+              setAlreadyMemberHousehold(null);
+              setDigits(Array(CODE_LENGTH).fill(''));
+            }}
+            fullWidth
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -357,6 +447,24 @@ const styles = StyleSheet.create({
   },
   autoCreateHint: {
     textAlign: 'center',
+    marginTop: Spacing.lg,
+  },
+  alreadyMemberContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.base,
+  },
+  alreadyMemberTitle: {
+    textAlign: 'center',
+    marginTop: Spacing.base,
+  },
+  alreadyMemberSubtitle: {
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  alreadyMemberBtn: {
     marginTop: Spacing.lg,
   },
 });

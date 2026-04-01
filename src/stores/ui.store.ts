@@ -5,6 +5,25 @@ import { Platform } from 'react-native';
 
 const INVITE_TOKEN_KEY = 'keurzen_pending_invite_token';
 const INVITE_CODE_KEY = 'keurzen_pending_invite_code';
+const ONBOARDING_KEY = 'keurzen_completed_join_onboarding';
+
+function readOnboardingFromStorage(): string[] {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(ONBOARDING_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function writeOnboardingToStorage(ids: string[]): void {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(ids));
+  }
+}
 
 function readTokenFromStorage(): string | null {
   if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
@@ -54,6 +73,9 @@ interface UiState {
   // Code d'invitation 6 chiffres en attente (entré avant d'avoir un compte).
   pendingInviteCode: string | null;
   setPendingInviteCode: (code: string | null) => void;
+  // Household IDs for which the user has completed the post-join onboarding
+  completedJoinOnboardingForHouseholds: string[];
+  markJoinOnboardingComplete: (householdId: string) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -82,5 +104,15 @@ export const useUiStore = create<UiState>((set) => ({
   setPendingInviteCode: (pendingInviteCode) => {
     writeCodeToStorage(pendingInviteCode);
     set({ pendingInviteCode });
+  },
+
+  completedJoinOnboardingForHouseholds: readOnboardingFromStorage(),
+  markJoinOnboardingComplete: (householdId) => {
+    set((state) => {
+      if (state.completedJoinOnboardingForHouseholds.includes(householdId)) return state;
+      const updated = [...state.completedJoinOnboardingForHouseholds, householdId];
+      writeOnboardingToStorage(updated);
+      return { completedJoinOnboardingForHouseholds: updated };
+    });
   },
 }));

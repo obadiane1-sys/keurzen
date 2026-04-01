@@ -80,6 +80,56 @@ export function useHouseholdMembers(householdId?: string) {
   });
 }
 
+// ─── Update Profile (name + member color) ────────────────────────────────────
+
+interface UpdateMemberProfileInput {
+  fullName: string;
+  color: string;
+}
+
+export function useUpdateMemberProfile() {
+  const qc = useQueryClient();
+  const { user } = useAuthStore();
+  const { currentHousehold, setMembers } = useHouseholdStore();
+
+  return useMutation({
+    mutationFn: async ({ fullName, color }: UpdateMemberProfileInput) => {
+      if (!user) throw new Error('Non authentifie');
+      if (!currentHousehold) throw new Error('Aucun foyer');
+
+      // Update profile name
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      if (profileError) throw new Error(profileError.message);
+
+      // Update member color
+      const { error: memberError } = await supabase
+        .from('household_members')
+        .update({ color })
+        .eq('household_id', currentHousehold.id)
+        .eq('user_id', user.id);
+
+      if (memberError) throw new Error(memberError.message);
+    },
+    onSuccess: async () => {
+      if (!currentHousehold) return;
+
+      // Refresh members list in store
+      const { data: members } = await supabase
+        .from('household_members')
+        .select('*, profile:profiles(*)')
+        .eq('household_id', currentHousehold.id);
+
+      if (members) setMembers(members as HouseholdMember[]);
+
+      qc.invalidateQueries({ queryKey: householdKeys.members(currentHousehold.id) });
+    },
+  });
+}
+
 // ─── Create Household ─────────────────────────────────────────────────────────
 
 export function useCreateHousehold() {

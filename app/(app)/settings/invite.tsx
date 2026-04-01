@@ -26,6 +26,7 @@ import {
 import { Text } from '../../../src/components/ui/Text';
 import { Avatar } from '../../../src/components/ui/Avatar';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import type { InvitationCode } from '../../../src/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -40,6 +41,7 @@ export default function InviteScreen() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Success state
   const [sentResult, setSentResult] = useState<{
@@ -94,14 +96,18 @@ export default function InviteScreen() {
     if (checkDuplicate()) {
       const trimmedEmail = email.trim().toLowerCase();
       if (Platform.OS === 'web') {
-        if (window.confirm(`Une invitation a déjà été envoyée à ${trimmedEmail}. Voulez-vous en envoyer une nouvelle ?`)) {
+        if (window.confirm(`Un code actif existe deja pour ${trimmedEmail}. L'ancien code sera annule. Continuer ?`)) {
           await doSend();
         }
       } else {
-        Alert.alert('Invitation existante', `Une invitation a déjà été envoyée à ${trimmedEmail}. Voulez-vous en envoyer une nouvelle ?`, [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Renvoyer', onPress: doSend },
-        ]);
+        Alert.alert(
+          'Code existant',
+          `Un code actif existe deja pour ${trimmedEmail}. L'ancien code sera annule. Continuer ?`,
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Renvoyer', onPress: doSend },
+          ],
+        );
       }
       return;
     }
@@ -111,6 +117,12 @@ export default function InviteScreen() {
   const handleCopyCode = async () => {
     if (!sentResult) return;
     await Share.share({ message: `Rejoins mon foyer sur Keurzen ! Mon code d'invitation : ${sentResult.code}\nhttps://app.keurzen.app/join-code?code=${sentResult.code}` });
+  };
+
+  const getCodeStatus = (code: InvitationCode): { label: string; color: string } => {
+    if (code.used) return { label: 'Utilise', color: Colors.blue };
+    if (new Date(code.expires_at) < new Date()) return { label: 'Expire', color: Colors.textMuted };
+    return { label: 'Actif', color: Colors.mint };
   };
 
   if (!currentHousehold) {
@@ -258,6 +270,24 @@ export default function InviteScreen() {
           </>
         )}
 
+        {/* Recent codes — always visible */}
+        {recentCodes && recentCodes.length > 0 && (
+          <View style={styles.recentSection}>
+            <Text style={styles.recentTitle}>Codes recents</Text>
+            {recentCodes.slice(0, 5).map((c) => {
+              const status = getCodeStatus(c);
+              return (
+                <View key={c.id} style={styles.recentRow}>
+                  <Text style={styles.recentEmail}>{c.email ?? 'Sans email'}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
+                    <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         <Text style={styles.bottomNote}>Vous pouvez inviter d'autres membres depuis les paramètres du foyer.</Text>
       </ScrollView>
     </SafeAreaView>
@@ -300,4 +330,10 @@ const styles = StyleSheet.create({
   ctaButtonDisabled: { opacity: 0.5 },
   ctaText: { fontSize: Typography.fontSize.md, fontWeight: '700', color: Colors.textInverse, letterSpacing: 0.3 },
   bottomNote: { fontSize: Typography.fontSize.sm, color: Colors.navy + '66', textAlign: 'center', lineHeight: 20 },
+  recentSection: { marginTop: Spacing['2xl'], width: '100%' },
+  recentTitle: { fontSize: Typography.fontSize.base, fontWeight: '700', color: Colors.navy, marginBottom: Spacing.md },
+  recentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  recentEmail: { fontSize: Typography.fontSize.sm, color: Colors.textSecondary, flex: 1 },
+  statusBadge: { paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.sm },
+  statusText: { fontSize: Typography.fontSize.xs, fontWeight: '600' },
 });
