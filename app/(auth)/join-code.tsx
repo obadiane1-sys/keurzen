@@ -152,18 +152,49 @@ export default function JoinCodeScreen() {
 
       // Establish session if we don't already have one
       if (!session && payload.access_token && payload.refresh_token) {
-        // Wrap setSession in a race with a timeout — it can hang on web
-        await Promise.race([
-          supabase.auth.setSession({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token,
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 8_000),
-          ),
-        ]).catch(() => {
-          // Session may still have been set despite timeout — continue navigation
-        });
+        let sessionEstablished = false;
+
+        try {
+          await Promise.race([
+            supabase.auth.setSession({
+              access_token: payload.access_token,
+              refresh_token: payload.refresh_token,
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 8_000),
+            ),
+          ]);
+          sessionEstablished = true;
+        } catch {
+          // setSession may have succeeded despite timeout — verify
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (currentSession) {
+            sessionEstablished = true;
+          } else {
+            // One retry attempt
+            try {
+              await Promise.race([
+                supabase.auth.setSession({
+                  access_token: payload.access_token,
+                  refresh_token: payload.refresh_token,
+                }),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('timeout')), 8_000),
+                ),
+              ]);
+              sessionEstablished = true;
+            } catch {
+              const { data: { session: retrySession } } = await supabase.auth.getSession();
+              sessionEstablished = !!retrySession;
+            }
+          }
+        }
+
+        if (!sessionEstablished) {
+          setError('Impossible d\'etablir la session. Verifiez votre connexion et reessayez.');
+          setIsJoining(false);
+          return;
+        }
       }
 
       setPendingInviteCode(null);
