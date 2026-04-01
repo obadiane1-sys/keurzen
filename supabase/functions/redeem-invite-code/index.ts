@@ -141,12 +141,7 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 
   // Verifier le token OTP pour obtenir une session valide
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-  const anonClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data: otpData, error: otpError } = await anonClient.auth.verifyOtp({
+  const { data: otpData, error: otpError } = await adminClient.auth.verifyOtp({
     token_hash: linkData.properties.hashed_token,
     type: 'magiclink',
   });
