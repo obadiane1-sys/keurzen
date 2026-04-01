@@ -1,15 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Pressable, View } from 'react-native';
+import { StyleSheet, Pressable, View, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withDelay,
-  withTiming,
-  withSequence,
-  runOnJS,
-} from 'react-native-reanimated';
 import KeurzenMascot from '../ui/KeurzenMascot';
 import { Text } from '../ui/Text';
 
@@ -39,32 +30,31 @@ function ConfettiDot({
   size: number;
   index: number;
 }) {
-  const opacity = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  const opacity = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    opacity.value = withDelay(
-      index * 60,
-      withTiming(0, { duration: 600 }),
-    );
-    translateX.value = withDelay(
-      index * 60,
-      withTiming(targetX, { duration: 600 }),
-    );
-    translateY.value = withDelay(
-      index * 60,
-      withTiming(targetY, { duration: 600 }),
-    );
+    const delay = index * 60;
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 600,
+      delay,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(translateX, {
+      toValue: targetX,
+      duration: 600,
+      delay,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(translateY, {
+      toValue: targetY,
+      duration: 600,
+      delay,
+      useNativeDriver: true,
+    }).start();
   }, [index, opacity, targetX, targetY, translateX, translateY]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-    ],
-  }));
 
   return (
     <Animated.View
@@ -78,7 +68,13 @@ function ConfettiDot({
           borderRadius: size / 2,
           backgroundColor: color,
         },
-        style,
+        {
+          opacity,
+          transform: [
+            { translateX },
+            { translateY },
+          ],
+        },
       ]}
     />
   );
@@ -103,29 +99,34 @@ export function TaskCompletionToast({
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Card entrance
-  const cardTranslateY = useSharedValue(60);
-  const cardScale = useSharedValue(0.88);
-  const cardOpacity = useSharedValue(0);
+  const cardTranslateY = useRef(new Animated.Value(60)).current;
+  const cardScale = useRef(new Animated.Value(0.88)).current;
+  const cardOpacity = useRef(new Animated.Value(0)).current;
 
   // Mascot bounce
-  const mascotTranslateY = useSharedValue(0);
+  const mascotTranslateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      // Reset values
+      cardTranslateY.setValue(60);
+      cardScale.setValue(0.88);
+      cardOpacity.setValue(0);
+      mascotTranslateY.setValue(0);
+
       // Entrance
-      cardTranslateY.value = withSpring(0, { damping: 14, stiffness: 180 });
-      cardScale.value = withSpring(1, { damping: 14, stiffness: 180 });
-      cardOpacity.value = withTiming(1, { duration: 200 });
+      Animated.spring(cardTranslateY, { toValue: 0, damping: 14, stiffness: 180, useNativeDriver: true }).start();
+      Animated.spring(cardScale, { toValue: 1, damping: 14, stiffness: 180, useNativeDriver: true }).start();
+      Animated.timing(cardOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
 
       // Mascot bounce after 300ms
-      mascotTranslateY.value = withDelay(
-        300,
-        withSequence(
-          withSpring(-14, { damping: 8, stiffness: 200 }),
-          withSpring(-7, { damping: 10, stiffness: 200 }),
-          withSpring(0, { damping: 12, stiffness: 200 }),
-        ),
-      );
+      setTimeout(() => {
+        Animated.sequence([
+          Animated.spring(mascotTranslateY, { toValue: -14, damping: 8, stiffness: 200, useNativeDriver: true }),
+          Animated.spring(mascotTranslateY, { toValue: -7, damping: 10, stiffness: 200, useNativeDriver: true }),
+          Animated.spring(mascotTranslateY, { toValue: 0, damping: 12, stiffness: 200, useNativeDriver: true }),
+        ]).start();
+      }, 300);
 
       // Auto-dismiss
       dismissTimer.current = setTimeout(() => {
@@ -141,32 +142,29 @@ export function TaskCompletionToast({
 
   const handleExit = () => {
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    cardOpacity.value = withTiming(0, { duration: 280 });
-    cardTranslateY.value = withTiming(20, { duration: 280 }, (finished) => {
-      if (finished) {
-        runOnJS(onDismiss)();
-      }
+    Animated.timing(cardOpacity, { toValue: 0, duration: 280, useNativeDriver: true }).start();
+    Animated.timing(cardTranslateY, { toValue: 20, duration: 280, useNativeDriver: true }).start(() => {
+      onDismiss();
     });
   };
-
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: cardTranslateY.value },
-      { scale: cardScale.value },
-    ],
-    opacity: cardOpacity.value,
-  }));
-
-  const mascotStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: mascotTranslateY.value }],
-  }));
 
   if (!visible) return null;
 
   return (
     <Pressable style={styles.overlay} onPress={handleExit}>
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
-        <Animated.View style={[styles.card, cardStyle]}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              transform: [
+                { translateY: cardTranslateY },
+                { scale: cardScale },
+              ],
+              opacity: cardOpacity,
+            },
+          ]}
+        >
           {/* Confetti */}
           {CONFETTI.map((c, i) => (
             <ConfettiDot
@@ -180,7 +178,7 @@ export function TaskCompletionToast({
           ))}
 
           {/* Mascot */}
-          <Animated.View style={mascotStyle}>
+          <Animated.View style={{ transform: [{ translateY: mascotTranslateY }] }}>
             <KeurzenMascot expression="happy" size={80} animated />
           </Animated.View>
 

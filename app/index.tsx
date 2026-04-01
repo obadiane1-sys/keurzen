@@ -1,55 +1,50 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-  withRepeat,
-  withSequence,
-} from 'react-native-reanimated';
 import KeurzenMascot from '../src/components/ui/KeurzenMascot';
 import { Text } from '../src/components/ui/Text';
 import { useAuthStore } from '../src/stores/auth.store';
+import { useUiStore } from '../src/stores/ui.store';
 
 // ─── Loading Dots ───────────────────────────────────────────────────────────
 
 function LoadingDot({ delay }: { delay: number }) {
-  const scale = useSharedValue(0.7);
-  const opacity = useSharedValue(0.25);
+  const scale = useRef(new Animated.Value(0.7)).current;
+  const opacity = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
-    scale.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 600 }),
-          withTiming(0.7, { duration: 600 }),
-        ),
-        -1,
-      ),
+    const scaleAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1, duration: 600, delay, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 0.7, duration: 600, useNativeDriver: true }),
+      ]),
     );
-    opacity.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 600 }),
-          withTiming(0.25, { duration: 600 }),
-        ),
-        -1,
-      ),
+    const opacityAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 600, delay, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.25, duration: 600, useNativeDriver: true }),
+      ]),
     );
+    scaleAnim.start();
+    opacityAnim.start();
+    return () => {
+      scaleAnim.stop();
+      opacityAnim.stop();
+    };
   }, [delay, scale, opacity]);
 
-  const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  return <Animated.View style={[styles.dot, style]} />;
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          transform: [{ scale }],
+          opacity,
+        },
+      ]}
+    />
+  );
 }
 
 // ─── Splash Screen ──────────────────────────────────────────────────────────
@@ -58,37 +53,38 @@ export default function SplashScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const { session, isInitialized } = useAuthStore();
+  const { pendingInviteToken, pendingInviteCode } = useUiStore();
   const hasNavigated = useRef(false);
   const loadedAt = useRef(Date.now());
 
   // Mascot entrance
-  const mascotOpacity = useSharedValue(0);
-  const mascotTranslateY = useSharedValue(30);
-  const mascotScale = useSharedValue(0.85);
+  const mascotOpacity = useRef(new Animated.Value(0)).current;
+  const mascotTranslateY = useRef(new Animated.Value(30)).current;
+  const mascotScale = useRef(new Animated.Value(0.85)).current;
 
   // Text entrance
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(10);
-  const taglineOpacity = useSharedValue(0);
-  const taglineTranslateY = useSharedValue(10);
-  const dotsOpacity = useSharedValue(0);
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleTranslateY = useRef(new Animated.Value(10)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const taglineTranslateY = useRef(new Animated.Value(10)).current;
+  const dotsOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Mascot entrance
-    mascotOpacity.value = withTiming(1, { duration: 800 });
-    mascotTranslateY.value = withSpring(0, { damping: 16, stiffness: 140 });
-    mascotScale.value = withSpring(1, { damping: 16, stiffness: 140 });
+    Animated.timing(mascotOpacity, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    Animated.spring(mascotTranslateY, { toValue: 0, damping: 16, stiffness: 140, useNativeDriver: true }).start();
+    Animated.spring(mascotScale, { toValue: 1, damping: 16, stiffness: 140, useNativeDriver: true }).start();
 
-    // Title
-    titleOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
-    titleTranslateY.value = withDelay(400, withTiming(0, { duration: 500 }));
+    // Title (delay 400ms)
+    Animated.timing(titleOpacity, { toValue: 1, duration: 500, delay: 400, useNativeDriver: true }).start();
+    Animated.timing(titleTranslateY, { toValue: 0, duration: 500, delay: 400, useNativeDriver: true }).start();
 
-    // Tagline
-    taglineOpacity.value = withDelay(600, withTiming(1, { duration: 500 }));
-    taglineTranslateY.value = withDelay(600, withTiming(0, { duration: 500 }));
+    // Tagline (delay 600ms)
+    Animated.timing(taglineOpacity, { toValue: 1, duration: 500, delay: 600, useNativeDriver: true }).start();
+    Animated.timing(taglineTranslateY, { toValue: 0, duration: 500, delay: 600, useNativeDriver: true }).start();
 
-    // Dots
-    dotsOpacity.value = withDelay(900, withTiming(1, { duration: 400 }));
+    // Dots (delay 900ms)
+    Animated.timing(dotsOpacity, { toValue: 1, duration: 400, delay: 900, useNativeDriver: true }).start();
   }, [
     mascotOpacity, mascotTranslateY, mascotScale,
     titleOpacity, titleTranslateY,
@@ -112,36 +108,25 @@ export default function SplashScreen() {
       hasNavigated.current = true;
 
       if (session) {
-        router.replace('/(app)/dashboard');
+        // Priorité aux invitations en attente
+        if (pendingInviteToken) {
+          router.replace(`/join/${pendingInviteToken}` as `/${string}`);
+        } else if (pendingInviteCode) {
+          router.replace(`/(auth)/join-code?code=${pendingInviteCode}`);
+        } else {
+          router.replace('/(app)/dashboard');
+        }
       } else {
-        router.replace('/(auth)/login');
+        if (pendingInviteCode) {
+          router.replace(`/(auth)/join-code?code=${pendingInviteCode}`);
+        } else {
+          router.replace('/(auth)/login');
+        }
       }
     }, remaining);
 
     return () => clearTimeout(timer);
-  }, [isInitialized, session, router, pathname]);
-
-  const mascotStyle = useAnimatedStyle(() => ({
-    opacity: mascotOpacity.value,
-    transform: [
-      { translateY: mascotTranslateY.value },
-      { scale: mascotScale.value },
-    ],
-  }));
-
-  const titleStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-    transform: [{ translateY: titleTranslateY.value }],
-  }));
-
-  const taglineStyle = useAnimatedStyle(() => ({
-    opacity: taglineOpacity.value,
-    transform: [{ translateY: taglineTranslateY.value }],
-  }));
-
-  const dotsStyle = useAnimatedStyle(() => ({
-    opacity: dotsOpacity.value,
-  }));
+  }, [isInitialized, session, router, pathname, pendingInviteToken, pendingInviteCode]);
 
   return (
     <View style={styles.container}>
@@ -155,23 +140,44 @@ export default function SplashScreen() {
       {/* Center content */}
       <View style={styles.center}>
         {/* Mascot */}
-        <Animated.View style={mascotStyle}>
+        <Animated.View
+          style={{
+            opacity: mascotOpacity,
+            transform: [
+              { translateY: mascotTranslateY },
+              { scale: mascotScale },
+            ],
+          }}
+        >
           <KeurzenMascot expression="loading" size={150} animated />
         </Animated.View>
 
         {/* App name */}
-        <Animated.View style={[styles.titleWrap, titleStyle]}>
+        <Animated.View
+          style={[
+            styles.titleWrap,
+            {
+              opacity: titleOpacity,
+              transform: [{ translateY: titleTranslateY }],
+            },
+          ]}
+        >
           <Text style={styles.titleKeur}>Keur</Text>
           <Text style={styles.titleZen}>zen</Text>
         </Animated.View>
 
         {/* Tagline */}
-        <Animated.View style={taglineStyle}>
-          <Text style={styles.tagline}>Votre foyer, organisé ensemble</Text>
+        <Animated.View
+          style={{
+            opacity: taglineOpacity,
+            transform: [{ translateY: taglineTranslateY }],
+          }}
+        >
+          <Text style={styles.tagline}>Votre foyer, organise ensemble</Text>
         </Animated.View>
 
         {/* Loading dots */}
-        <Animated.View style={[styles.dotsRow, dotsStyle]}>
+        <Animated.View style={[styles.dotsRow, { opacity: dotsOpacity }]}>
           <LoadingDot delay={0} />
           <LoadingDot delay={200} />
           <LoadingDot delay={400} />

@@ -6,12 +6,16 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  Platform,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useGenerateInviteCode } from '../../../src/lib/queries/invitation-codes';
+import { useGenerateInviteCode, useRecentCodes } from '../../../src/lib/queries/invitation-codes';
 import { useHouseholdStore } from '../../../src/stores/household.store';
+import { useUiStore } from '../../../src/stores/ui.store';
 import {
   Colors,
   Spacing,
@@ -23,45 +27,62 @@ import { Text } from '../../../src/components/ui/Text';
 import { Avatar } from '../../../src/components/ui/Avatar';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 
-const PREVIEW_MEMBERS = [
-  { name: 'Julie', color: Colors.coral },
-  { name: 'Marc', color: Colors.mint },
-  { name: 'Eva', color: Colors.lavender },
-];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function InviteScreen() {
   const router = useRouter();
   const { currentHousehold, members } = useHouseholdStore();
+  const { showToast } = useUiStore();
   const generateCode = useGenerateInviteCode();
+  const { data: recentCodes } = useRecentCodes(currentHousehold?.id);
 
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [sentToEmail, setSentToEmail] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
-  const canSend = firstName.trim().length > 0 && email.trim().length > 0;
+  // Success state
+  const [sentResult, setSentResult] = useState<{
+    email: string;
+    code: string;
+    emailSent: boolean;
+  } | null>(null);
 
-  const handleSend = async () => {
+  const validateEmail = (value: string): boolean => {
+    if (!value.trim()) { setEmailError(null); return false; }
+    if (!EMAIL_REGEX.test(value.trim())) { setEmailError('Adresse email invalide'); return false; }
+    setEmailError(null);
+    return true;
+  };
+
+  const canSend =
+    firstName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    !emailError &&
+    EMAIL_REGEX.test(email.trim());
+
+  const checkDuplicate = (): boolean => {
+    if (!recentCodes) return false;
+    const trimmedEmail = email.trim().toLowerCase();
+    return recentCodes.some(
+      (c) => c.email?.toLowerCase() === trimmedEmail && !c.used && new Date(c.expires_at) > new Date(),
+    );
+  };
+
+  const doSend = async () => {
+    if (generateCode.isPending) return;
+
     const trimmedFirstName = firstName.trim();
     const trimmedEmail = email.trim().toLowerCase();
-
-    if (!trimmedFirstName) {
-      setError('Le prenom est requis');
-      return;
-    }
-    if (!trimmedEmail) {
-      setError('L\'adresse email est requise');
-      return;
-    }
+    if (!trimmedFirstName) { setError('Le prénom est requis'); return; }
+    if (!trimmedEmail) { setError("L'adresse email est requise"); return; }
+    if (!validateEmail(trimmedEmail)) return;
 
     setError(null);
     try {
-      await generateCode.mutateAsync({
-        email: trimmedEmail,
-        firstName: trimmedFirstName,
-      });
-
-      setSentToEmail(trimmedEmail);
+      const result = await generateCode.mutateAsync({ email: trimmedEmail, firstName: trimmedFirstName });
+      setSentResult({ email: trimmedEmail, code: result.code, emailSent: result.email_sent });
+      setCopied(false);
       setFirstName('');
       setEmail('');
     } catch (e) {
@@ -69,115 +90,126 @@ export default function InviteScreen() {
     }
   };
 
+  const handleSend = async () => {
+    if (checkDuplicate()) {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (Platform.OS === 'web') {
+        if (window.confirm(`Une invitation a déjà été envoyée à ${trimmedEmail}. Voulez-vous en envoyer une nouvelle ?`)) {
+          await doSend();
+        }
+      } else {
+        Alert.alert('Invitation existante', `Une invitation a déjà été envoyée à ${trimmedEmail}. Voulez-vous en envoyer une nouvelle ?`, [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Renvoyer', onPress: doSend },
+        ]);
+      }
+      return;
+    }
+    await doSend();
+  };
+
+  const handleCopyCode = async () => {
+    if (!sentResult) return;
+    await Share.share({ message: `Rejoins mon foyer sur Keurzen ! Mon code d'invitation : ${sentResult.code}\nhttps://app.keurzen.app/join-code?code=${sentResult.code}` });
+  };
+
   if (!currentHousehold) {
     return (
       <SafeAreaView style={styles.safe}>
-        <EmptyState
-          variant="household"
-          title="Pas de foyer"
-          subtitle="Creez ou rejoignez un foyer avant d'inviter des membres."
-        />
+        <EmptyState variant="household" title="Pas de foyer" subtitle="Créez ou rejoignez un foyer avant d'inviter des membres." />
       </SafeAreaView>
     );
   }
 
-  // Use real members if available, fallback to preview
-  const avatarData =
-    members.length > 0
-      ? members.slice(0, 3).map((m) => ({
-          name: (m as any).profile?.full_name ?? '?',
-          color: m.color,
-        }))
-      : PREVIEW_MEMBERS;
+  const avatarData = members.length > 0
+    ? members.slice(0, 3).map((m) => ({ name: m.profile?.full_name ?? '?', color: m.color }))
+    : [{ name: 'Julie', color: Colors.coral }, { name: 'Marc', color: Colors.mint }, { name: 'Eva', color: Colors.lavender }];
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Skip */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.skipBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.skipText}>Passer</Text>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {/* Back */}
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={styles.backText}>← Retour</Text>
         </TouchableOpacity>
 
-        {/* Hero title */}
+        {/* Hero */}
         <View style={styles.heroHeader}>
           <Ionicons name="people" size={28} color={Colors.coral} />
           <Text style={styles.heroTitle}>Inviter un proche</Text>
         </View>
+        <Text style={styles.heroSubtitle}>Ajoutez un membre à votre foyer. Il recevra un code par email pour rejoindre l'espace.</Text>
 
-        <Text style={styles.heroSubtitle}>
-          Ajoutez un membre a votre foyer. Il recevra un code par email pour
-          rejoindre l'espace.
-        </Text>
-
-        {/* Hero illustration card */}
+        {/* Hero card */}
         <View style={styles.heroCard}>
           <View style={styles.avatarRow}>
             {avatarData.map((a, i) => (
-              <View
-                key={i}
-                style={[styles.avatarWrap, i > 0 && { marginLeft: -12 }]}
-              >
+              <View key={i} style={[styles.avatarWrap, i > 0 && { marginLeft: -12 }]}>
                 <Avatar name={a.name} color={a.color} size="lg" />
               </View>
             ))}
           </View>
-          <Text style={styles.heroCardLabel}>
-            {currentHousehold.name}
-          </Text>
+          <Text style={styles.heroCardLabel}>{currentHousehold.name}</Text>
         </View>
 
-        {/* Success state */}
-        {sentToEmail ? (
+        {/* ── Success state ──────────────────────────────────────────── */}
+        {sentResult ? (
           <View style={styles.successCard}>
             <View style={styles.successIcon}>
-              <Ionicons name="checkmark-circle" size={48} color={Colors.mint} />
+              <Ionicons
+                name={sentResult.emailSent ? 'checkmark-circle' : 'alert-circle'}
+                size={48}
+                color={sentResult.emailSent ? Colors.mint : Colors.coral}
+              />
             </View>
-            <Text style={styles.successTitle}>Invitation envoyee !</Text>
-            <Text style={styles.successSubtitle}>
-              Un code a 6 chiffres a ete envoye a{' '}
-              <Text style={styles.successEmail}>{sentToEmail}</Text>
+
+            <Text style={styles.successTitle}>
+              {sentResult.emailSent ? 'Invitation envoyée !' : 'Code généré'}
             </Text>
-            <TouchableOpacity
-              style={styles.sendAnotherBtn}
-              onPress={() => setSentToEmail(null)}
-            >
+
+            <Text style={styles.successSubtitle}>
+              {sentResult.emailSent
+                ? 'Un code à 6 chiffres a été envoyé à '
+                : "L'email n'a pas pu être envoyé à "}
+              <Text style={styles.successEmail}>{sentResult.email}</Text>
+              {!sentResult.emailSent && '\nPartagez ce code manuellement :'}
+            </Text>
+
+            {/* Code display */}
+            <View style={styles.codeDisplay}>
+              <Text style={styles.codeText}>{sentResult.code}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode} activeOpacity={0.7}>
+              <Ionicons name="share-outline" size={16} color={Colors.navy} />
+              <Text style={styles.copyBtnText}>Partager le code</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.sendAnotherBtn} onPress={() => { setSentResult(null); }}>
               <Ionicons name="add-circle-outline" size={18} color={Colors.coral} />
               <Text style={styles.sendAnotherText}>Inviter une autre personne</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {/* Section header */}
+            {/* ── Form ───────────────────────────────────────────────── */}
             <View style={styles.sectionHeader}>
               <Ionicons name="person-add" size={20} color={Colors.navy} />
               <Text style={styles.sectionTitle}>Inviter un membre</Text>
             </View>
 
-            {/* Name input */}
             <TextInput
               style={[styles.input, error && !firstName.trim() && styles.inputError]}
-              placeholder="Prenom"
+              placeholder="Prénom"
               placeholderTextColor={Colors.textMuted}
               value={firstName}
-              onChangeText={(text) => {
-                setFirstName(text);
-                if (error) setError(null);
-              }}
+              onChangeText={(text) => { setFirstName(text); if (error) setError(null); }}
               autoCapitalize="words"
               returnKeyType="next"
             />
 
-            {/* Email input */}
             <TextInput
-              style={[styles.input, error && !email.trim() && styles.inputError]}
+              style={[styles.input, (emailError || (error && !email.trim())) && styles.inputError]}
               placeholder="Adresse email"
               placeholderTextColor={Colors.textMuted}
               keyboardType="email-address"
@@ -187,12 +219,21 @@ export default function InviteScreen() {
               onChangeText={(text) => {
                 setEmail(text);
                 if (error) setError(null);
+                if (text.trim().length > 3) validateEmail(text);
+                else setEmailError(null);
               }}
+              onBlur={() => { if (email.trim()) validateEmail(email); }}
               returnKeyType="send"
               onSubmitEditing={canSend ? handleSend : undefined}
             />
 
-            {/* Error */}
+            {emailError && (
+              <View style={styles.errorRow}>
+                <Ionicons name="alert-circle" size={14} color={Colors.error} />
+                <Text style={styles.errorText}>{emailError}</Text>
+              </View>
+            )}
+
             {error && (
               <View style={styles.errorRow}>
                 <Ionicons name="alert-circle" size={14} color={Colors.error} />
@@ -200,17 +241,10 @@ export default function InviteScreen() {
               </View>
             )}
 
-            {/* Helper text */}
-            <Text style={styles.helperText}>
-              Un code a 6 chiffres lui sera envoye par email.
-            </Text>
+            <Text style={styles.helperText}>Un code à 6 chiffres lui sera envoyé par email (valide 24h).</Text>
 
-            {/* CTA */}
             <TouchableOpacity
-              style={[
-                styles.ctaButton,
-                (!canSend || generateCode.isPending) && styles.ctaButtonDisabled,
-              ]}
+              style={[styles.ctaButton, (!canSend || generateCode.isPending) && styles.ctaButtonDisabled]}
               onPress={handleSend}
               disabled={!canSend || generateCode.isPending}
               activeOpacity={0.85}
@@ -224,196 +258,46 @@ export default function InviteScreen() {
           </>
         )}
 
-        {/* Bottom note */}
-        <Text style={styles.bottomNote}>
-          Vous pouvez inviter d'autres membres depuis les parametres du foyer.
-        </Text>
+        <Text style={styles.bottomNote}>Vous pouvez inviter d'autres membres depuis les paramètres du foyer.</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing['4xl'],
-  },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  scroll: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingBottom: Spacing['4xl'] },
+  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.base },
+  backText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.mint },
+  heroHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
+  heroTitle: { fontSize: Typography.fontSize['3xl'], fontWeight: '800', color: Colors.navy, letterSpacing: -0.5 },
+  heroSubtitle: { fontSize: Typography.fontSize.base, color: Colors.navy + '99', lineHeight: 22, marginBottom: Spacing.xl },
+  heroCard: { backgroundColor: Colors.lavender + '26', borderRadius: BorderRadius.xl, height: 220, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing['2xl'], gap: Spacing.base },
+  avatarRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  avatarWrap: { borderWidth: 3, borderColor: Colors.background, borderRadius: BorderRadius.full, ...Shadows.sm },
+  heroCardLabel: { fontSize: Typography.fontSize.lg, fontWeight: '700', color: Colors.navy },
 
-  // Skip
-  skipBtn: {
-    alignSelf: 'flex-end',
-    paddingVertical: Spacing.base,
-  },
-  skipText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: '600',
-    color: Colors.navy,
-    textDecorationLine: 'underline',
-  },
+  successCard: { alignItems: 'center', paddingVertical: Spacing['2xl'], gap: Spacing.md },
+  successIcon: { marginBottom: Spacing.sm },
+  successTitle: { fontSize: Typography.fontSize.xl, fontWeight: '700', color: Colors.navy },
+  successSubtitle: { fontSize: Typography.fontSize.base, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  successEmail: { fontWeight: '700', color: Colors.navy },
+  codeDisplay: { backgroundColor: Colors.backgroundSubtle, borderWidth: 2, borderColor: Colors.mint, borderRadius: BorderRadius.lg, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['2xl'], marginTop: Spacing.sm },
+  codeText: { fontSize: 32, fontWeight: '800', color: Colors.navy, letterSpacing: 8, textAlign: 'center' },
+  copyBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base, marginTop: Spacing.xs },
+  copyBtnText: { fontSize: Typography.fontSize.sm, fontWeight: '600', color: Colors.navy },
+  sendAnotherBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.base, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base },
+  sendAnotherText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.coral },
 
-  // Hero
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  heroTitle: {
-    fontSize: Typography.fontSize['3xl'],
-    fontWeight: '800',
-    color: Colors.navy,
-    letterSpacing: -0.5,
-  },
-  heroSubtitle: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.navy + '99', // 60% opacity
-    lineHeight: 22,
-    marginBottom: Spacing.xl,
-  },
-
-  // Hero card
-  heroCard: {
-    backgroundColor: Colors.lavender + '26', // 15% opacity
-    borderRadius: BorderRadius.xl,
-    height: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing['2xl'],
-    gap: Spacing.base,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarWrap: {
-    borderWidth: 3,
-    borderColor: Colors.background,
-    borderRadius: BorderRadius.full,
-    ...Shadows.sm,
-  },
-  heroCardLabel: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
-    color: Colors.navy,
-  },
-
-  // Success state
-  successCard: {
-    alignItems: 'center',
-    paddingVertical: Spacing['2xl'],
-    gap: Spacing.md,
-  },
-  successIcon: {
-    marginBottom: Spacing.sm,
-  },
-  successTitle: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: '700',
-    color: Colors.navy,
-  },
-  successSubtitle: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  successEmail: {
-    fontWeight: '700',
-    color: Colors.navy,
-  },
-  sendAnotherBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.base,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-  },
-  sendAnotherText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: '600',
-    color: Colors.coral,
-  },
-
-  // Section
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
-    color: Colors.navy,
-  },
-
-  // Inputs
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.navy + '33', // 20% opacity
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.backgroundCard,
-    marginBottom: Spacing.md,
-  },
-  inputError: {
-    borderColor: Colors.error,
-  },
-
-  // Error
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  errorText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.error,
-  },
-
-  // Helper
-  helperText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.navy + '80', // 50% opacity
-    marginBottom: Spacing.xl,
-  },
-
-  // CTA
-  ctaButton: {
-    backgroundColor: Colors.coral,
-    borderRadius: 30,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.md,
-    marginBottom: Spacing.xl,
-  },
-  ctaButtonDisabled: {
-    opacity: 0.5,
-  },
-  ctaText: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: '700',
-    color: Colors.textInverse,
-    letterSpacing: 0.3,
-  },
-
-  // Bottom note
-  bottomNote: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.navy + '66', // 40% opacity
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.lg },
+  sectionTitle: { fontSize: Typography.fontSize.lg, fontWeight: '700', color: Colors.navy },
+  input: { borderWidth: 1, borderColor: Colors.navy + '33', borderRadius: BorderRadius.md, paddingHorizontal: Spacing.base, paddingVertical: Spacing.base, fontSize: Typography.fontSize.base, color: Colors.textPrimary, backgroundColor: Colors.backgroundCard, marginBottom: Spacing.md },
+  inputError: { borderColor: Colors.error },
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
+  errorText: { fontSize: Typography.fontSize.sm, color: Colors.error },
+  helperText: { fontSize: Typography.fontSize.sm, color: Colors.navy + '80', marginBottom: Spacing.xl },
+  ctaButton: { backgroundColor: Colors.coral, borderRadius: 30, height: 56, alignItems: 'center', justifyContent: 'center', ...Shadows.md, marginBottom: Spacing.xl },
+  ctaButtonDisabled: { opacity: 0.5 },
+  ctaText: { fontSize: Typography.fontSize.md, fontWeight: '700', color: Colors.textInverse, letterSpacing: 0.3 },
+  bottomNote: { fontSize: Typography.fontSize.sm, color: Colors.navy + '66', textAlign: 'center', lineHeight: 20 },
 });

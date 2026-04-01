@@ -81,7 +81,7 @@ export default function AuthCallbackScreen() {
 
       // Recovery ou confirmation → redirect based on pending invite
       if (pendingInviteToken) {
-        router.replace(`/join/${pendingInviteToken}`);
+        router.replace(`/join/${pendingInviteToken}` as `/${string}`);
       } else {
         router.replace('/(app)/dashboard');
       }

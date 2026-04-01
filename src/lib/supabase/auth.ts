@@ -4,8 +4,27 @@ import type { Profile } from '../../types';
 // ─── Send OTP ─────────────────────────────────────────────────────────────────
 
 /**
- * Envoie un code OTP à l'email donné.
- * shouldCreateUser: true → crée le compte si inexistant (login + signup).
+ * Envoie un code OTP pour la connexion (compte existant uniquement).
+ * Si l'email n'existe pas, retourne une erreur explicite.
+ */
+export async function sendOtpForLogin(email: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false },
+  });
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('signups not allowed') || msg.includes('user not found')) {
+      return { error: 'Aucun compte trouvé avec cette adresse. Créez un compte.' };
+    }
+    return { error: error.message };
+  }
+  return { error: null };
+}
+
+/**
+ * Envoie un code OTP en créant le compte si nécessaire (signup + resend après signup).
  */
 export async function sendOtp(email: string): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.signInWithOtp({

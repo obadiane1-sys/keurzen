@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, ViewStyle, Animated } from 'react-native';
 import KeurzenMascot, { type MascotExpression } from './KeurzenMascot';
 import { Colors, Spacing, Typography } from '../../constants/tokens';
 import { Text } from './Text';
@@ -83,9 +82,41 @@ export function EmptyState({
   const actionLabel = action?.label ?? ctaLabel ?? defaults.ctaLabel;
   const actionOnPress = action?.onPress ?? onCta;
 
+  // ZoomIn animation for mascot
+  const mascotScale = useRef(new Animated.Value(0)).current;
+  // FadeIn animation for text
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  // FadeIn animation for CTA
+  const ctaOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mascot zoom in (350ms)
+    Animated.timing(mascotScale, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+
+    // Text fade in (delay 200ms, duration 300ms)
+    Animated.timing(textOpacity, {
+      toValue: 1,
+      duration: 300,
+      delay: 200,
+      useNativeDriver: true,
+    }).start();
+
+    // CTA fade in (delay 400ms, duration 300ms)
+    Animated.timing(ctaOpacity, {
+      toValue: 1,
+      duration: 300,
+      delay: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [mascotScale, textOpacity, ctaOpacity]);
+
   return (
     <View style={[styles.container, style]}>
-      <Animated.View entering={ZoomIn.duration(350)}>
+      <Animated.View style={{ transform: [{ scale: mascotScale }] }}>
         <KeurzenMascot
           expression={displayExpression}
           size={140}
@@ -93,7 +124,7 @@ export function EmptyState({
         />
       </Animated.View>
 
-      <Animated.View entering={FadeIn.delay(200).duration(300)} style={styles.textWrap}>
+      <Animated.View style={[styles.textWrap, { opacity: textOpacity }]}>
         <Text style={styles.title}>{displayTitle}</Text>
         {displaySubtitle ? (
           <Text style={styles.subtitle}>{displaySubtitle}</Text>
@@ -101,7 +132,7 @@ export function EmptyState({
       </Animated.View>
 
       {actionLabel && actionOnPress ? (
-        <Animated.View entering={FadeIn.delay(400).duration(300)}>
+        <Animated.View style={{ opacity: ctaOpacity }}>
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={actionOnPress}

@@ -101,7 +101,7 @@ export function useRedeemInviteCode() {
 
   return useMutation({
     mutationFn: async (code: string): Promise<RedeemResult> => {
-      const { data, error } = await (supabase.rpc as any)('redeem_invitation_code', {
+      const { data, error } = await supabase.rpc('redeem_invitation_code', {
         p_code: code.trim(),
       });
 
@@ -132,6 +132,31 @@ export function useRedeemInviteCode() {
 
         queryClient.invalidateQueries({
           queryKey: householdKeys.myHousehold(user.id),
+        });
+      }
+    },
+  });
+}
+
+// ─── Delete invitation code ─────────────────────────────────────────────
+
+export function useDeleteInviteCode() {
+  const queryClient = useQueryClient();
+  const { currentHousehold } = useHouseholdStore();
+
+  return useMutation({
+    mutationFn: async (codeId: string) => {
+      const { error } = await supabase
+        .from('invitation_codes')
+        .delete()
+        .eq('id', codeId);
+
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      if (currentHousehold) {
+        queryClient.invalidateQueries({
+          queryKey: inviteCodeKeys.recent(currentHousehold.id),
         });
       }
     },

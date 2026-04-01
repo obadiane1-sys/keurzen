@@ -108,7 +108,7 @@ function buildCodeEmailHtml(
               </table>
 
               <p style="margin:0;font-size:13px;color:#94A3B8;text-align:center;">
-                Ce code est valide <strong>15 minutes</strong>.
+                Ce code est valide <strong>24 heures</strong>.
               </p>
             </td>
           </tr>
@@ -220,7 +220,7 @@ serve(async (req: Request) => {
 
   let code: string = '';
   let inserted = false;
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
   for (let attempt = 0; attempt < 5; attempt++) {
     code = generateCode();

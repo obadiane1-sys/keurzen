@@ -1,16 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
+  Easing,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Text';
 
@@ -27,13 +23,13 @@ interface DatePickerProps {
 
 const DAY_NAMES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+  'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre',
 ];
 const SHORT_DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const SHORT_MONTHS = [
-  'janv.', 'fév.', 'mars', 'avr.', 'mai', 'juin',
-  'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+  'janv.', 'fev.', 'mars', 'avr.', 'mai', 'juin',
+  'juil.', 'aout', 'sept.', 'oct.', 'nov.', 'dec.',
 ];
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -135,7 +131,7 @@ type Period = 'matin' | 'apres-midi' | 'soir';
 
 const PERIODS: { key: Period; label: string; emoji: string; hours: number[] }[] = [
   { key: 'matin', label: 'Matin', emoji: '🌅', hours: [6, 7, 8, 9, 10, 11, 12] },
-  { key: 'apres-midi', label: 'Après-midi', emoji: '☀️', hours: [12, 13, 14, 15, 16, 17, 18] },
+  { key: 'apres-midi', label: 'Apres-midi', emoji: '☀️', hours: [12, 13, 14, 15, 16, 17, 18] },
   { key: 'soir', label: 'Soir', emoji: '🌙', hours: [18, 19, 20, 21, 22, 23] },
 ];
 
@@ -165,57 +161,67 @@ export function DatePicker({
   const today = useMemo(() => new Date(), []);
 
   // Animations — main panel
-  const chevronRotation = useSharedValue(0);
-  const panelOpacity = useSharedValue(0);
-  const panelTranslateY = useSharedValue(-12);
+  const chevronRotation = useRef(new Animated.Value(0)).current;
+  const panelOpacity = useRef(new Animated.Value(0)).current;
+  const panelTranslateY = useRef(new Animated.Value(-12)).current;
 
   // Animations — time panel
-  const timeOpacity = useSharedValue(0);
-  const timeTranslateY = useSharedValue(-8);
-  const timeChevronRotation = useSharedValue(0);
+  const timeOpacity = useRef(new Animated.Value(0)).current;
+  const timeTranslateY = useRef(new Animated.Value(-8)).current;
+  const timeChevronRotation = useRef(new Animated.Value(0)).current;
 
-  const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${chevronRotation.value}deg` }],
-  }));
-  const panelStyle = useAnimatedStyle(() => ({
-    opacity: panelOpacity.value,
-    transform: [{ translateY: panelTranslateY.value }],
-  }));
-  const timePanelStyle = useAnimatedStyle(() => ({
-    opacity: timeOpacity.value,
-    transform: [{ translateY: timeTranslateY.value }],
-  }));
-  const timeChevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${timeChevronRotation.value}deg` }],
-  }));
+  const chevronStyle = {
+    transform: [{
+      rotate: chevronRotation.interpolate({
+        inputRange: [0, 180],
+        outputRange: ['0deg', '180deg'],
+      }),
+    }],
+  };
+  const panelStyle = {
+    opacity: panelOpacity,
+    transform: [{ translateY: panelTranslateY }],
+  };
+  const timePanelStyle = {
+    opacity: timeOpacity,
+    transform: [{ translateY: timeTranslateY }],
+  };
+  const timeChevronStyle = {
+    transform: [{
+      rotate: timeChevronRotation.interpolate({
+        inputRange: [0, 180],
+        outputRange: ['0deg', '180deg'],
+      }),
+    }],
+  };
 
   const toggleOpen = useCallback(() => {
     const next = !open;
     setOpen(next);
-    chevronRotation.value = withSpring(next ? 180 : 0, { damping: 18, stiffness: 200 });
+    Animated.spring(chevronRotation, { toValue: next ? 180 : 0, damping: 18, stiffness: 200, useNativeDriver: true }).start();
     if (next) {
-      panelOpacity.value = withTiming(1, { duration: 200 });
-      panelTranslateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+      Animated.timing(panelOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+      Animated.spring(panelTranslateY, { toValue: 0, damping: 18, stiffness: 200, useNativeDriver: true }).start();
     } else {
-      panelOpacity.value = withTiming(0, { duration: 150 });
-      panelTranslateY.value = withTiming(-12, { duration: 150 });
+      Animated.timing(panelOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+      Animated.timing(panelTranslateY, { toValue: -12, duration: 150, useNativeDriver: true }).start();
       // Close time too
       setTimeOpen(false);
-      timeOpacity.value = withTiming(0, { duration: 100 });
-      timeChevronRotation.value = withTiming(0, { duration: 100 });
+      Animated.timing(timeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start();
+      Animated.timing(timeChevronRotation, { toValue: 0, duration: 100, useNativeDriver: true }).start();
     }
   }, [open, chevronRotation, panelOpacity, panelTranslateY, timeOpacity, timeChevronRotation]);
 
   const toggleTime = useCallback(() => {
     const next = !timeOpen;
     setTimeOpen(next);
-    timeChevronRotation.value = withSpring(next ? 180 : 0, { damping: 18, stiffness: 200 });
+    Animated.spring(timeChevronRotation, { toValue: next ? 180 : 0, damping: 18, stiffness: 200, useNativeDriver: true }).start();
     if (next) {
-      timeOpacity.value = withTiming(1, { duration: 200 });
-      timeTranslateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+      Animated.timing(timeOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+      Animated.spring(timeTranslateY, { toValue: 0, damping: 18, stiffness: 200, useNativeDriver: true }).start();
     } else {
-      timeOpacity.value = withTiming(0, { duration: 150 });
-      timeTranslateY.value = withTiming(-8, { duration: 150 });
+      Animated.timing(timeOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+      Animated.timing(timeTranslateY, { toValue: -8, duration: 150, useNativeDriver: true }).start();
     }
   }, [timeOpen, timeChevronRotation, timeOpacity, timeTranslateY]);
 

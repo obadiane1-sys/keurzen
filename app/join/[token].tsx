@@ -111,6 +111,9 @@ export default function JoinScreen() {
         router.replace('/(app)/dashboard');
       })
       .catch((err) => {
+        // Clear pending token to avoid circular redirect:
+        // error → auth/login → (auth)/_layout detects token → /join/TOKEN → error
+        setPendingInviteToken(null);
         setStatus('error');
         setErrorMsg((err as Error).message);
       });

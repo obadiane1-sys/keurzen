@@ -110,10 +110,20 @@ export function useCreateHousehold() {
       if (mError) throw new Error(mError.message);
 
       setHousehold(household as Household);
+
+      // Fetch members and hydrate store immediately
+      const { data: members } = await supabase
+        .from('household_members')
+        .select('*, profile:profiles(*)')
+        .eq('household_id', household.id);
+
+      if (members) setMembers(members as HouseholdMember[]);
+
       return household as Household;
     },
-    onSuccess: () => {
+    onSuccess: (household) => {
       qc.invalidateQueries({ queryKey: householdKeys.myHousehold(user!.id) });
+      qc.invalidateQueries({ queryKey: householdKeys.members(household.id) });
     },
   });
 }
@@ -123,7 +133,7 @@ export function useCreateHousehold() {
 export function useJoinHousehold() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
-  const { setHousehold } = useHouseholdStore();
+  const { setHousehold, setMembers } = useHouseholdStore();
 
   return useMutation({
     mutationFn: async (code: string) => {
@@ -166,10 +176,20 @@ export function useJoinHousehold() {
       if (joinError) throw new Error(joinError.message);
 
       setHousehold(household as Household);
+
+      // Fetch members and hydrate store immediately
+      const { data: freshMembers } = await supabase
+        .from('household_members')
+        .select('*, profile:profiles(*)')
+        .eq('household_id', household.id);
+
+      if (freshMembers) setMembers(freshMembers as HouseholdMember[]);
+
       return household as Household;
     },
-    onSuccess: () => {
+    onSuccess: (household) => {
       qc.invalidateQueries({ queryKey: householdKeys.myHousehold(user!.id) });
+      qc.invalidateQueries({ queryKey: householdKeys.members(household.id) });
     },
   });
 }

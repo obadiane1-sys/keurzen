@@ -6,14 +6,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { updateProfile, fetchProfile } from '../../../src/lib/supabase/auth';
+import { supabase } from '../../../src/lib/supabase/client';
 import { useAuthStore } from '../../../src/stores/auth.store';
 import { useUiStore } from '../../../src/stores/ui.store';
-import { Colors, Spacing } from '../../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Input } from '../../../src/components/ui/Input';
 import { Button } from '../../../src/components/ui/Button';
@@ -26,6 +30,80 @@ export default function ProfileScreen() {
   const { showToast } = useUiStore();
   const [fullName, setFullName] = React.useState(profile?.full_name ?? '');
   const [saving, setSaving] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = React.useState<string | null>(null);
+
+  const displayAvatarUrl = localAvatarUrl ?? profile?.avatar_url ?? null;
+
+  const pickAndUploadAvatar = async () => {
+    if (!user) return;
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      showToast('Permission requise pour accéder aux photos.', 'error');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    setUploading(true);
+
+    try {
+      const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      // Fetch the image as blob
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+
+      // Convert blob to ArrayBuffer for Supabase upload
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, arrayBuffer, {
+          contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      // Update profile in DB
+      const { error: profileError } = await updateProfile(user.id, {
+        avatar_url: publicUrl,
+      });
+
+      if (profileError) throw new Error(profileError);
+
+      setLocalAvatarUrl(publicUrl);
+
+      // Refresh profile in store
+      const updated = await fetchProfile(user.id);
+      if (updated) setProfile(updated);
+
+      showToast('Photo de profil mise à jour.', 'success');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur lors du téléchargement';
+      showToast(msg, 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user || !fullName.trim()) return;
@@ -61,8 +139,30 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Avatar name={profile?.full_name} avatarUrl={profile?.avatar_url} size="xl" />
+            {/* Avatar with edit overlay */}
+            <TouchableOpacity
+              onPress={pickAndUploadAvatar}
+              disabled={uploading}
+              activeOpacity={0.8}
+              style={styles.avatarContainer}
+            >
+              <Avatar
+                name={profile?.full_name}
+                avatarUrl={displayAvatarUrl}
+                size="xl"
+              />
+              <View style={styles.avatarOverlay}>
+                {uploading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="camera" size={16} color="#FFFFFF" />
+                )}
+              </View>
+            </TouchableOpacity>
             <Text variant="h2" style={styles.title}>Mon profil</Text>
+            <Text variant="caption" color="muted">
+              Appuyez sur la photo pour la modifier
+            </Text>
           </View>
 
           <View style={styles.form}>
@@ -116,5 +216,21 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   title: { marginTop: Spacing.base },
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: Colors.background,
+  },
   form: { gap: Spacing.base },
 });

@@ -4,12 +4,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMyHousehold, useHouseholdMembers, useCreateHousehold, useJoinHousehold } from '../../../src/lib/queries/household';
-import { useRecentCodes, useGenerateInviteCode } from '../../../src/lib/queries/invitation-codes';
+import { useRecentCodes, useGenerateInviteCode, useDeleteInviteCode } from '../../../src/lib/queries/invitation-codes';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { useUiStore } from '../../../src/stores/ui.store';
 import type { InvitationCode } from '../../../src/types';
@@ -31,6 +33,7 @@ export default function HouseholdScreen() {
   const createHousehold = useCreateHousehold();
   const joinHousehold = useJoinHousehold();
   const generateCode = useGenerateInviteCode();
+  const deleteCode = useDeleteInviteCode();
 
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -39,6 +42,15 @@ export default function HouseholdScreen() {
   const pendingInvites = (recentCodes ?? []).filter(
     (c) => !c.used && new Date(c.expires_at) > new Date(),
   );
+
+  const getInviteStatus = (invite: InvitationCode): { label: string; color: string } => {
+    const now = Date.now();
+    const created = new Date(invite.created_at).getTime();
+    const expires = new Date(invite.expires_at).getTime();
+    if (expires < now) return { label: 'Expiré', color: Colors.coral };
+    if (now - created < 5 * 60 * 1000) return { label: 'Envoyé ✓', color: Colors.mint };
+    return { label: 'En attente', color: Colors.warning };
+  };
 
   const handleResend = async (invite: InvitationCode) => {
     if (!invite.email) return;
@@ -53,6 +65,27 @@ export default function HouseholdScreen() {
       showToast((e as Error).message, 'error');
     } finally {
       setResendingId(null);
+    }
+  };
+
+  const handleDeleteInvite = (invite: InvitationCode) => {
+    const name = invite.invited_name ?? invite.email ?? 'cet invité';
+    const doDelete = async () => {
+      try {
+        await deleteCode.mutateAsync(invite.id);
+        showToast('Invitation supprimée', 'success');
+      } catch (e) {
+        showToast((e as Error).message, 'error');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Supprimer l'invitation pour ${name} ?`)) doDelete();
+    } else {
+      Alert.alert('Supprimer l\'invitation', `Supprimer l'invitation pour ${name} ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+      ]);
     }
   };
   const [name, setName] = useState('');
@@ -177,9 +210,21 @@ export default function HouseholdScreen() {
                           <Ionicons name="mail-outline" size={18} color={Colors.coral} />
                         </View>
                         <View style={styles.memberInfo}>
-                          <Text variant="body">
-                            {invite.invited_name ?? invite.email ?? 'Invité'}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                            <Text variant="body">
+                              {invite.invited_name ?? invite.email ?? 'Invité'}
+                            </Text>
+                            {(() => {
+                              const status = getInviteStatus(invite);
+                              return (
+                                <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
+                                  <Text style={[styles.statusBadgeText, { color: status.color }]}>
+                                    {status.label}
+                                  </Text>
+                                </View>
+                              );
+                            })()}
+                          </View>
                           <Text variant="caption" color="muted">
                             {invite.email ? invite.email : ''}
                             {invite.email && daysLeft > 0 ? '  ·  ' : ''}
@@ -202,6 +247,14 @@ export default function HouseholdScreen() {
                             )}
                           </TouchableOpacity>
                         )}
+                        <TouchableOpacity
+                          style={styles.deleteInviteBtn}
+                          onPress={() => handleDeleteInvite(invite)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="close" size={14} color={Colors.textMuted} />
+                        </TouchableOpacity>
                       </View>
                     );
                   })}
@@ -411,6 +464,24 @@ const styles = StyleSheet.create({
   inviteBtnText: {
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  deleteInviteBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.error + '12',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
   },
   noHousehold: { gap: Spacing.xl },
   actions: { gap: Spacing.base },

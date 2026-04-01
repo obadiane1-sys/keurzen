@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase/client';
+import { useUiStore } from '../../src/stores/ui.store';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
@@ -76,6 +77,14 @@ export default function JoinWebScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Pas de session dans le hash → stocker le token et rediriger vers signup
+  useEffect(() => {
+    if (pageState.kind === 'no-session' && token) {
+      useUiStore.getState().setPendingInviteToken(token);
+      router.replace(`/(auth)/signup?invite=${token}`);
+    }
+  }, [pageState.kind, token, router]);
+
   // ── Validation ────────────────────────────────────────────────────────────
 
   const isFormValid = firstName.trim().length > 0;
@@ -136,24 +145,10 @@ export default function JoinWebScreen() {
 
   // ── Rendu ─────────────────────────────────────────────────────────────────
 
-  if (pageState.kind === 'loading') {
+  if (pageState.kind === 'loading' || pageState.kind === 'no-session') {
     return (
       <View style={styles.page}>
         <ActivityIndicator size="large" color={Colors.mint} />
-      </View>
-    );
-  }
-
-  if (pageState.kind === 'no-session') {
-    return (
-      <View style={styles.page}>
-        <View style={styles.card}>
-          <BrandHeader />
-          <Text variant="h3" style={styles.title}>Lien invalide</Text>
-          <Text variant="body" color="secondary">
-            Ce lien n&apos;est plus valide. Demandez une nouvelle invitation.
-          </Text>
-        </View>
       </View>
     );
   }

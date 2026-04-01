@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,11 +11,11 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { sendOtp } from '../../src/lib/supabase/auth';
+import { sendOtpForLogin } from '../../src/lib/supabase/auth';
 import { signInSchema } from '../../src/utils/validation';
 import { useUiStore } from '../../src/stores/ui.store';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing } from '../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
@@ -35,15 +35,22 @@ export default function LoginScreen() {
     defaultValues: { email: '' },
   });
 
+  const [notFound, setNotFound] = useState(false);
+
   const onSubmit = async (values: SignInFormValues) => {
-    const { error } = await sendOtp(values.email);
+    setNotFound(false);
+    const { error } = await sendOtpForLogin(values.email);
     if (error) {
-      showToast(error, 'error');
+      if (error.includes('Aucun compte')) {
+        setNotFound(true);
+      } else {
+        showToast(error, 'error');
+      }
       return;
     }
     router.replace({
       pathname: '/(auth)/verify-email',
-      params: { email: values.email },
+      params: { email: values.email, mode: 'login' },
     });
   };
 
@@ -98,6 +105,25 @@ export default function LoginScreen() {
               size="lg"
               style={{ marginTop: Spacing.sm }}
             />
+
+            {notFound && (
+              <View style={styles.notFoundBanner}>
+                <Ionicons name="alert-circle-outline" size={16} color={Colors.coral} />
+                <View style={styles.notFoundContent}>
+                  <Text variant="bodySmall" style={{ color: Colors.textPrimary }}>
+                    Aucun compte trouve avec cette adresse.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push('/(auth)/signup')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text variant="bodySmall" color="mint" style={{ fontWeight: '600' }}>
+                      Creer un compte
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Join code */}
@@ -166,6 +192,20 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.xl,
     paddingVertical: Spacing.sm,
+  },
+  notFoundBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    backgroundColor: Colors.coral + '18',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.coral + '40',
+  },
+  notFoundContent: {
+    flex: 1,
+    gap: Spacing.xs,
   },
   signupLink: {
     alignItems: 'center',

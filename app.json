@@ -32,7 +32,19 @@
             {
               "scheme": "https",
               "host": "app.keurzen.app",
-              "pathPrefix": "/join"
+              "pathPrefix": "/join/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "app.keurzen.app",
+              "pathPrefix": "/join-code"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

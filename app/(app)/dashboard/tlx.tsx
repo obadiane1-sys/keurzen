@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ScrollView,
   StyleSheet,
   View,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
@@ -26,6 +26,20 @@ import {
   computeTlxScore,
 } from '../../../src/lib/queries/tlx';
 import type { TlxFormValues } from '../../../src/types';
+
+// ─── FadeInView helper ──────────────────────────────────────────────────────
+
+function FadeInView({ children, style }: { children: React.ReactNode; style?: any }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [opacity]);
+  return <Animated.View style={[style, { opacity }]}>{children}</Animated.View>;
+}
 
 // ─── Dimension config ────────────────────────────────────────────────────────
 
@@ -121,11 +135,7 @@ export default function TlxScreen() {
           const config = LEVEL_CONFIG[level];
           return (
             <Card padding="md" style={styles.scoreCard}>
-              <Animated.View
-                key={level}
-                entering={FadeIn.duration(300).springify()}
-                style={styles.mascotSection}
-              >
+              <FadeInView key={level} style={styles.mascotSection}>
                 <KeurzenMascot
                   expression={config.expression}
                   size={100}
@@ -136,7 +146,7 @@ export default function TlxScreen() {
                     {config.label}
                   </Text>
                 </View>
-              </Animated.View>
+              </FadeInView>
 
               <Text variant="caption" color="muted">Score prevu</Text>
               <Text variant="h1" style={{ color: tlxColor(previewScore) }}>

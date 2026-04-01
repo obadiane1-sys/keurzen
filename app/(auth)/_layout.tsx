@@ -17,7 +17,9 @@ export default function AuthLayout() {
 
   if (isInitialized && session && !isJoinPage) {
     if (pendingInviteToken) {
-      return <Redirect href={`/join/${pendingInviteToken}`} />;
+      // Redirect to root-level /join/[token] — must NOT use group prefix
+      // as this route lives outside (auth)
+      return <Redirect href={`/join/${pendingInviteToken}` as `/${string}`} />;
     }
     if (pendingInviteCode) {
       return <Redirect href={`/(auth)/join-code?code=${pendingInviteCode}`} />;

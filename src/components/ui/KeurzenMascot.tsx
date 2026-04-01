@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { ViewStyle, Animated, Easing } from 'react-native';
 import Svg, {
   Rect,
   Circle,
@@ -11,15 +11,6 @@ import Svg, {
   ClipPath,
   Text as SvgText,
 } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -306,109 +297,152 @@ const FACE_MAP: Record<MascotExpression, React.FC> = {
 // ─── Animation hooks ────────────────────────────────────────────────────────
 
 function useBreathingStyle() {
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.03, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1.0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.03,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1.0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
     );
+    animation.start();
+    return () => animation.stop();
   }, [scale]);
-  return useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return { transform: [{ scale }] };
 }
 
 function useBounceStyle() {
-  const translateY = useSharedValue(0);
+  const translateY = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    translateY.value = withSequence(
-      withTiming(-12, { duration: 300, easing: Easing.out(Easing.ease) }),
-      withTiming(0, { duration: 400, easing: Easing.bounce }),
-    );
+    Animated.sequence([
+      Animated.timing(translateY, {
+        toValue: -12,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 400,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [translateY]);
-  return useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+  return { transform: [{ translateY }] };
 }
 
 function useSwayStyle() {
-  const rotate = useSharedValue(0);
+  const rotate = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    rotate.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(3, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotate, {
+          toValue: -1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotate, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
     );
+    animation.start();
+    return () => animation.stop();
   }, [rotate]);
-  return useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotate.value}deg` }],
-  }));
+  const rotateInterpolation = rotate.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-3deg', '3deg'],
+  });
+  return { transform: [{ rotate: rotateInterpolation }] };
 }
 
 function usePopStyle() {
-  const scale = useSharedValue(0.85);
+  const scale = useRef(new Animated.Value(0.85)).current;
   useEffect(() => {
-    scale.value = withSequence(
-      withTiming(1.05, { duration: 250, easing: Easing.out(Easing.ease) }),
-      withTiming(1.0, { duration: 250, easing: Easing.inOut(Easing.ease) }),
-    );
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 1.05,
+        duration: 250,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1.0,
+        duration: 250,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [scale]);
-  return useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return { transform: [{ scale }] };
 }
 
 function useShakeStyle() {
-  const rotate = useSharedValue(0);
+  const rotate = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    rotate.value = withSequence(
-      withTiming(-4, { duration: 100 }),
-      withTiming(4, { duration: 100 }),
-      withTiming(-4, { duration: 100 }),
-      withTiming(4, { duration: 100 }),
-      withTiming(0, { duration: 200, easing: Easing.out(Easing.ease) }),
-    );
+    Animated.sequence([
+      Animated.timing(rotate, { toValue: -1, duration: 100, useNativeDriver: true }),
+      Animated.timing(rotate, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(rotate, { toValue: -1, duration: 100, useNativeDriver: true }),
+      Animated.timing(rotate, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(rotate, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [rotate]);
-  return useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotate.value}deg` }],
-  }));
+  const rotateInterpolation = rotate.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-4deg', '4deg'],
+  });
+  return { transform: [{ rotate: rotateInterpolation }] };
 }
 
 function useLoadingDotsStyle() {
-  const opacity1 = useSharedValue(0.3);
-  const opacity2 = useSharedValue(0.3);
-  const opacity3 = useSharedValue(0.3);
+  const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    const pulse = (duration: number) =>
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration, easing: Easing.inOut(Easing.ease) }),
-        ),
-        -1,
-        false,
-      );
-    opacity1.value = pulse(600);
-    opacity2.value = withDelay(300, pulse(600));
-    opacity3.value = withDelay(600, pulse(600));
-  }, [opacity1, opacity2, opacity3]);
-  // Loading uses breathing as the wrapper animation
-  const scale = useSharedValue(1);
-  useEffect(() => {
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.02, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1.0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.02,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1.0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
     );
+    animation.start();
+    return () => animation.stop();
   }, [scale]);
-  return useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return { transform: [{ scale }] };
 }
 
-const ANIMATION_MAP: Record<MascotExpression, () => ReturnType<typeof useAnimatedStyle>> = {
+type AnimatedStyleResult = { transform: { [key: string]: Animated.Value | Animated.AnimatedInterpolation<string> }[] };
+
+const ANIMATION_MAP: Record<MascotExpression, () => AnimatedStyleResult> = {
   normal: useBreathingStyle,
   happy: useBounceStyle,
   tired: useSwayStyle,
@@ -419,8 +453,8 @@ const ANIMATION_MAP: Record<MascotExpression, () => ReturnType<typeof useAnimate
 
 // ─── Static wrapper (no animation) ─────────────────────────────────────────
 
-function useStaticStyle() {
-  return useAnimatedStyle(() => ({}));
+function useStaticStyle(): AnimatedStyleResult {
+  return { transform: [] };
 }
 
 // ─── Main component ─────────────────────────────────────────────────────────

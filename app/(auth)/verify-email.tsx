@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { verifyOtp, sendOtp } from '../../src/lib/supabase/auth';
+import { verifyOtp, sendOtp, sendOtpForLogin } from '../../src/lib/supabase/auth';
 import { useUiStore } from '../../src/stores/ui.store';
 import { Colors, Spacing } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
@@ -22,7 +22,7 @@ const RESEND_COOLDOWN = 30;
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email?: string }>();
+  const { email, mode } = useLocalSearchParams<{ email?: string; mode?: string }>();
   const { showToast } = useUiStore();
 
   const resolvedEmail: string =
@@ -72,7 +72,8 @@ export default function VerifyEmailScreen() {
     if (!resolvedEmail || cooldown > 0) return;
     setIsResending(true);
 
-    const { error } = await sendOtp(resolvedEmail);
+    const resendFn = mode === 'signup' ? sendOtp : sendOtpForLogin;
+    const { error } = await resendFn(resolvedEmail);
 
     setIsResending(false);
 

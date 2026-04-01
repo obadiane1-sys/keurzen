@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:web": "npx expo export -p web && node scripts/inject-fonts.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -18,11 +19,14 @@
     "@react-native-community/slider": "^5.1.2",
     "@supabase/supabase-js": "^2.100.1",
     "@tanstack/react-query": "^5.95.2",
+    "babel-preset-expo": "~55.0.8",
     "dayjs": "^1.11.20",
     "expo": "~55.0.8",
+    "expo-clipboard": "~55.0.9",
     "expo-constants": "~55.0.9",
     "expo-dev-client": "^55.0.20-canary-20260327-0789fbc",
     "expo-device": "^55.0.11-canary-20260327-0789fbc",
+    "expo-image-picker": "~55.0.14",
     "expo-linking": "~55.0.9",
     "expo-notifications": "^55.0.15-canary-20260327-0789fbc",
     "expo-router": "~55.0.8",
@@ -32,7 +36,7 @@
     "react-hook-form": "^7.72.0",
     "react-native": "0.83.2",
     "react-native-gesture-handler": "~2.30.0",
-    "react-native-reanimated": "^4.2.1",
+    "react-native-reanimated": "^4.3.0",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
     "react-native-svg": "^15.15.3",
