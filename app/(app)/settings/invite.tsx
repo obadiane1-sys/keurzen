@@ -82,7 +82,6 @@ export default function InviteScreen() {
     try {
       const result = await generateCode.mutateAsync({ email: trimmedEmail, firstName: trimmedFirstName });
       setSentResult({ email: trimmedEmail, code: result.code, emailSent: result.email_sent });
-      setCopied(false);
       setFirstName('');
       setEmail('');
     } catch (e) {
@@ -172,18 +171,24 @@ export default function InviteScreen() {
                 ? 'Un code à 6 chiffres a été envoyé à '
                 : "L'email n'a pas pu être envoyé à "}
               <Text style={styles.successEmail}>{sentResult.email}</Text>
-              {!sentResult.emailSent && '\nPartagez ce code manuellement :'}
+              {sentResult.emailSent
+                ? '\nIl pourra rejoindre votre foyer en saisissant ce code.'
+                : '\nPartagez-lui le code ci-dessous.'}
             </Text>
 
-            {/* Code display */}
-            <View style={styles.codeDisplay}>
-              <Text style={styles.codeText}>{sentResult.code}</Text>
-            </View>
+            {/* Show code only when email failed – the guest needs it manually */}
+            {!sentResult.emailSent && (
+              <>
+                <View style={styles.codeDisplay}>
+                  <Text style={styles.codeText}>{sentResult.code}</Text>
+                </View>
 
-            <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode} activeOpacity={0.7}>
-              <Ionicons name="share-outline" size={16} color={Colors.navy} />
-              <Text style={styles.copyBtnText}>Partager le code</Text>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode} activeOpacity={0.7}>
+                  <Ionicons name="share-outline" size={16} color={Colors.navy} />
+                  <Text style={styles.copyBtnText}>Partager le code</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
             <TouchableOpacity style={styles.sendAnotherBtn} onPress={() => { setSentResult(null); }}>
               <Ionicons name="add-circle-outline" size={18} color={Colors.coral} />
