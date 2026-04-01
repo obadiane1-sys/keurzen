@@ -5,19 +5,27 @@ import type { Profile } from '../../types';
 
 /**
  * Envoie un code OTP pour la connexion (compte existant uniquement).
- * Si l'email n'existe pas, retourne une erreur explicite.
+ * Vérifie d'abord qu'un profil complet (full_name renseigné) existe —
+ * les ghost users créés par signInWithOtp n'ont pas de full_name.
  */
 export async function sendOtpForLogin(email: string): Promise<{ error: string | null }> {
+  // Vérifier qu'un profil complet existe (seuls les vrais inscrits ont un full_name)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('email', email.toLowerCase().trim())
+    .maybeSingle();
+
+  if (!profile || !profile.full_name) {
+    return { error: 'Aucun compte trouvé avec cette adresse. Créez un compte.' };
+  }
+
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { shouldCreateUser: false },
   });
 
   if (error) {
-    const msg = error.message.toLowerCase();
-    if (msg.includes('signups not allowed') || msg.includes('user not found')) {
-      return { error: 'Aucun compte trouvé avec cette adresse. Créez un compte.' };
-    }
     return { error: error.message };
   }
   return { error: null };
