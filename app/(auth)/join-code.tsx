@@ -27,6 +27,7 @@ export default function JoinCodeScreen() {
   const { session } = useAuthStore();
   const { showToast, setPendingInviteCode } = useUiStore();
   const [isJoining, setIsJoining] = useState(false);
+  const [alreadyMemberHousehold, setAlreadyMemberHousehold] = useState<string | null>(null);
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
@@ -197,14 +198,14 @@ export default function JoinCodeScreen() {
         }
       }
 
-      setPendingInviteCode(null);
-
       if (payload.already_member) {
-        showToast('Vous faites deja partie de ce foyer', 'info');
-      } else {
-        showToast('Bienvenue dans le foyer !', 'success');
+        setAlreadyMemberHousehold((payload.household as { name?: string })?.name ?? 'ce foyer');
+        setIsJoining(false);
+        return;
       }
 
+      showToast('Bienvenue dans le foyer !', 'success');
+      setPendingInviteCode(null);
       router.replace('/(app)/dashboard');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -217,6 +218,37 @@ export default function JoinCodeScreen() {
       setIsJoining(false);
     }
   };
+
+  if (alreadyMemberHousehold) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.alreadyMemberContainer}>
+          <Mascot size={100} expression="thinking" />
+          <Text variant="h3" style={styles.alreadyMemberTitle}>
+            Deja membre
+          </Text>
+          <Text variant="body" color="secondary" style={styles.alreadyMemberSubtitle}>
+            Vous faites deja partie de {alreadyMemberHousehold}.
+          </Text>
+          <Button
+            label="Aller au dashboard"
+            onPress={() => router.replace('/(app)/dashboard')}
+            fullWidth
+            style={styles.alreadyMemberBtn}
+          />
+          <Button
+            label="Retour"
+            variant="ghost"
+            onPress={() => {
+              setAlreadyMemberHousehold(null);
+              setDigits(Array(CODE_LENGTH).fill(''));
+            }}
+            fullWidth
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -388,6 +420,24 @@ const styles = StyleSheet.create({
   },
   autoCreateHint: {
     textAlign: 'center',
+    marginTop: Spacing.lg,
+  },
+  alreadyMemberContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.base,
+  },
+  alreadyMemberTitle: {
+    textAlign: 'center',
+    marginTop: Spacing.base,
+  },
+  alreadyMemberSubtitle: {
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  alreadyMemberBtn: {
     marginTop: Spacing.lg,
   },
 });

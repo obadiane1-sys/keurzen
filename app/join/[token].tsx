@@ -29,8 +29,9 @@ export default function JoinScreen() {
   const { showToast, setPendingInviteToken } = useUiStore();
   const joinByToken = useJoinByToken();
 
-  const [status, setStatus] = useState<'waiting' | 'joining' | 'error'>('waiting');
+  const [status, setStatus] = useState<'waiting' | 'joining' | 'error' | 'already_member'>('waiting');
   const [errorMsg, setErrorMsg] = useState('');
+  const [householdName, setHouseholdName] = useState('');
   const hasAttempted = useRef(false);
   const [linkChecked, setLinkChecked] = useState(false);
   const [linkSession, setLinkSession] = useState<Session | null>(null);
@@ -101,14 +102,15 @@ export default function JoinScreen() {
     setStatus('joining');
     joinByToken
       .mutateAsync(token)
-      .then(({ alreadyMember }) => {
+      .then(({ alreadyMember, household }) => {
         setPendingInviteToken(null);
         if (alreadyMember) {
-          showToast('Vous etes deja membre de ce foyer', 'info');
+          setStatus('already_member');
+          setHouseholdName(household?.name ?? 'ce foyer');
         } else {
           showToast('Bienvenue dans le foyer !', 'success');
+          router.replace('/(app)/dashboard');
         }
-        router.replace('/(app)/dashboard');
       })
       .catch((err) => {
         // Clear pending token to avoid circular redirect:
@@ -128,6 +130,32 @@ export default function JoinScreen() {
         fullScreen
         label={status === 'joining' ? 'Rejoindre le foyer...' : "Traitement de l'invitation..."}
       />
+    );
+  }
+
+  if (status === 'already_member') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centered}>
+          <Mascot size={100} expression="thinking" />
+          <Text variant="h3" style={styles.title}>Deja membre</Text>
+          <Text variant="body" color="secondary" style={styles.subtitle}>
+            Vous faites deja partie de {householdName}.
+          </Text>
+          <Button
+            label="Aller au dashboard"
+            variant="primary"
+            onPress={() => router.replace('/(app)/dashboard')}
+            style={styles.btn}
+          />
+          <Button
+            label="Retour a l'accueil"
+            variant="ghost"
+            onPress={() => router.replace('/(auth)/login')}
+            style={{ width: '100%' }}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
