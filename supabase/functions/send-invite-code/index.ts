@@ -216,6 +216,21 @@ serve(async (req: Request) => {
   const householdName = household?.name ?? 'un foyer';
   const inviterName = profile?.full_name ?? 'Un membre de Keurzen';
 
+  // ── Expire any existing active codes for this email + household ───────
+
+  const { error: expireError } = await adminClient
+    .from('invitation_codes')
+    .update({ expires_at: new Date().toISOString() })
+    .eq('email', email)
+    .eq('household_id', household_id)
+    .eq('used', false)
+    .gt('expires_at', new Date().toISOString());
+
+  if (expireError) {
+    console.error('Failed to expire old codes:', expireError.message);
+    // Non-blocking — continue with new code generation
+  }
+
   // ── Générer le code (avec retry sur collision) ────────────────────────────
 
   let code: string = '';
