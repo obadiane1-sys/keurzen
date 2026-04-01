@@ -108,8 +108,13 @@ export default function JoinScreen() {
           setStatus('already_member');
           setHouseholdName(household?.name ?? 'ce foyer');
         } else {
-          showToast('Bienvenue dans le foyer !', 'success');
-          router.replace('/(app)/dashboard');
+          const { completedJoinOnboardingForHouseholds } = useUiStore.getState();
+          if (household && completedJoinOnboardingForHouseholds.includes(household.id)) {
+            showToast('Bienvenue dans le foyer !', 'success');
+            router.replace('/(app)/dashboard');
+          } else {
+            router.replace('/(app)/onboarding/post-join');
+          }
         }
       })
       .catch((err) => {

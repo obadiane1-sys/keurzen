@@ -204,9 +204,20 @@ export default function JoinCodeScreen() {
         return;
       }
 
-      showToast('Bienvenue dans le foyer !', 'success');
       setPendingInviteCode(null);
-      router.replace('/(app)/dashboard');
+
+      // Navigate to post-join onboarding (or dashboard if already completed)
+      const householdId = (payload.household as { id?: string })?.id;
+      if (householdId) {
+        const { completedJoinOnboardingForHouseholds } = useUiStore.getState();
+        if (completedJoinOnboardingForHouseholds.includes(householdId)) {
+          router.replace('/(app)/dashboard');
+        } else {
+          router.replace('/(app)/onboarding/post-join');
+        }
+      } else {
+        router.replace('/(app)/dashboard');
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes('aborted') || msg.includes('abort')) {
