@@ -9,14 +9,12 @@ import type { Profile } from '../../types';
  * les ghost users créés par signInWithOtp n'ont pas de full_name.
  */
 export async function sendOtpForLogin(email: string): Promise<{ error: string | null }> {
-  // Vérifier qu'un profil complet existe (seuls les vrais inscrits ont un full_name)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('email', email.toLowerCase().trim())
-    .maybeSingle();
+  // Vérifier qu'un profil complet existe via RPC (bypass RLS, safe côté anonyme)
+  const { data: isRegistered } = await supabase.rpc('check_email_registered', {
+    p_email: email,
+  });
 
-  if (!profile || !profile.full_name) {
+  if (!isRegistered) {
     return { error: 'Aucun compte trouvé avec cette adresse. Créez un compte.' };
   }
 
