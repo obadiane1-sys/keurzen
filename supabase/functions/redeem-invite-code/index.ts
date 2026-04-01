@@ -105,11 +105,14 @@ async function handleRequest(req: Request): Promise<Response> {
   if (createError) {
     const msg = createError.message.toLowerCase();
     if (msg.includes('already registered') || msg.includes('already exists')) {
-      // Utilisateur existant — recuperer son ID
-      const { data: { users } } = await adminClient.auth.admin.listUsers();
-      const existing = users?.find((u: { email?: string }) => u.email === email);
-      if (!existing) return json({ error: 'Utilisateur introuvable' }, 500);
-      userId = existing.id;
+      // Utilisateur existant — recuperer son ID via la table profiles
+      const { data: existingProfile } = await adminClient
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+      if (!existingProfile) return json({ error: 'Utilisateur introuvable' }, 500);
+      userId = existingProfile.id;
 
       // Mettre a jour le profil si le nom est vide
       if (invitedName) {

@@ -17,6 +17,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Mascot } from '../../src/components/ui/Mascot';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useUiStore } from '../../src/stores/ui.store';
+import { useHouseholdStore } from '../../src/stores/household.store';
 import { supabase, supabaseAnonKey, supabaseUrl } from '../../src/lib/supabase/client';
 
 const CODE_LENGTH = 6;
@@ -202,6 +203,21 @@ export default function JoinCodeScreen() {
         setAlreadyMemberHousehold((payload.household as { name?: string })?.name ?? 'ce foyer');
         setIsJoining(false);
         return;
+      }
+
+      // Hydrate household store
+      if (payload.household) {
+        const { setHousehold, setMembers } = useHouseholdStore.getState();
+        setHousehold(payload.household as any);
+
+        const householdIdForHydration = (payload.household as { id?: string })?.id;
+        if (householdIdForHydration) {
+          const { data: members } = await supabase
+            .from('household_members')
+            .select('*, profile:profiles(*)')
+            .eq('household_id', householdIdForHydration);
+          if (members) setMembers(members as any);
+        }
       }
 
       setPendingInviteCode(null);

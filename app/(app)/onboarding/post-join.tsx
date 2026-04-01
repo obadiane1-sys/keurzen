@@ -27,7 +27,7 @@ export default function PostJoinOnboardingScreen() {
   const router = useRouter();
   const { currentHousehold, members } = useHouseholdStore();
   const { user } = useAuthStore();
-  const { markJoinOnboardingComplete } = useUiStore();
+  const { markJoinOnboardingComplete, showToast } = useUiStore();
   const updateProfile = useUpdateMemberProfile();
 
   const [step, setStep] = useState<Step>('welcome');
@@ -59,7 +59,7 @@ export default function PostJoinOnboardingScreen() {
       await updateProfile.mutateAsync({ fullName: trimmedName, color: selectedColor });
       setStep('orientation');
     } catch {
-      // Silently continue — profile can be updated later in settings
+      showToast('Profil non sauvegarde. Modifiez-le depuis les parametres.', 'error');
       setStep('orientation');
     }
   };

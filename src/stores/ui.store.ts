@@ -109,6 +109,7 @@ export const useUiStore = create<UiState>((set) => ({
   completedJoinOnboardingForHouseholds: readOnboardingFromStorage(),
   markJoinOnboardingComplete: (householdId) => {
     set((state) => {
+      if (state.completedJoinOnboardingForHouseholds.includes(householdId)) return state;
       const updated = [...state.completedJoinOnboardingForHouseholds, householdId];
       writeOnboardingToStorage(updated);
       return { completedJoinOnboardingForHouseholds: updated };
