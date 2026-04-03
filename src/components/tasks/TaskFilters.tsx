@@ -61,10 +61,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     borderWidth: 1,
     borderColor: Colors.border,
+    minHeight: 44,
+    justifyContent: 'center' as const,
   },
   chipActive: {
-    backgroundColor: Colors.navy,
-    borderColor: Colors.navy,
+    backgroundColor: Colors.terracotta,
+    borderColor: Colors.terracotta,
   },
   chipText: {
     color: Colors.textSecondary,

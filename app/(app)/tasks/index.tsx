@@ -11,13 +11,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 
-import { Colors, Spacing, BorderRadius, Shadows, TouchTarget } from '../../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius, TouchTarget } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Loader } from '../../../src/components/ui/Loader';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { TaskCard } from '../../../src/components/tasks/TaskCard';
 import { TaskFilters } from '../../../src/components/tasks/TaskFilters';
 import { TaskCompletionToast } from '../../../src/components/tasks/TaskCompletionToast';
+import { CompletionRatingSheet } from '../../../src/components/tasks/CompletionRatingSheet';
 import { useTasks, useUpdateTaskStatus } from '../../../src/lib/queries/tasks';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import type { Task, TaskStatus } from '../../../src/types';
@@ -30,6 +31,7 @@ export default function TasksScreen() {
 
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [completedTaskName, setCompletedTaskName] = useState<string | null>(null);
+  const [ratingTask, setRatingTask] = useState<{ id: string; title: string } | null>(null);
 
   // ─── Filter & sort ─────────────────────────────────────────────────────────
 
@@ -73,6 +75,12 @@ export default function TasksScreen() {
 
   const handleToggleStatus = useCallback(
     (task: Task) => {
+      if (task.status !== 'done' && (task.task_type ?? 'household') === 'household') {
+        // Household task → open rating sheet instead of direct toggle
+        setRatingTask({ id: task.id, title: task.title });
+        return;
+      }
+      // Personal task or unchecking → direct toggle
       const newStatus: TaskStatus = task.status === 'done' ? 'todo' : 'done';
       updateStatus.mutate({ id: task.id, status: newStatus });
       if (newStatus === 'done') {
@@ -159,8 +167,8 @@ export default function TasksScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.mint}
-              colors={[Colors.mint]}
+              tintColor={Colors.terracotta}
+              colors={[Colors.terracotta]}
             />
           }
         />
@@ -176,6 +184,17 @@ export default function TasksScreen() {
       >
         <Ionicons name="add" size={28} color={Colors.textInverse} />
       </TouchableOpacity>
+
+      {/* Completion rating sheet */}
+      <CompletionRatingSheet
+        visible={!!ratingTask}
+        taskId={ratingTask?.id ?? ''}
+        taskTitle={ratingTask?.title ?? ''}
+        onComplete={() => {
+          setCompletedTaskName(ratingTask?.title ?? '');
+          setRatingTask(null);
+        }}
+      />
 
       {/* Completion celebration */}
       <TaskCompletionToast
@@ -214,10 +233,9 @@ const styles = StyleSheet.create({
     bottom: Spacing['2xl'],
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.coral,
+    borderRadius: BorderRadius.button,
+    backgroundColor: Colors.terracotta,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.lg,
   },
 });

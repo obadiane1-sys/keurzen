@@ -1,20 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Pressable, View, Animated } from 'react-native';
+import { StyleSheet, Pressable, View, Animated, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import KeurzenMascot from '../ui/KeurzenMascot';
 import { Text } from '../ui/Text';
+import { Colors, Spacing, BorderRadius, Typography } from '../../constants/tokens';
 
 // ─── Confetti dots ──────────────────────────────────────────────────────────
 
 const CONFETTI = [
-  { color: '#7DCCC3', x: -30, y: -70, size: 10 },
-  { color: '#F0A898', x: 20, y: -80, size: 8 },
-  { color: '#AFA9EC', x: 45, y: -60, size: 12 },
-  { color: '#FAC775', x: -45, y: -55, size: 9 },
-  { color: '#9FE1CB', x: 60, y: -75, size: 10 },
-  { color: '#F5C4B3', x: -15, y: -85, size: 8 },
-  { color: '#CECBF6', x: 35, y: -65, size: 11 },
-  { color: '#5DCAA5', x: -55, y: -70, size: 9 },
+  { color: Colors.sauge, x: -30, y: -70, size: 10 },
+  { color: Colors.terracotta, x: 20, y: -80, size: 8 },
+  { color: Colors.prune, x: 45, y: -60, size: 12 },
+  { color: Colors.miel, x: -45, y: -55, size: 9 },
+  { color: Colors.sauge, x: 60, y: -75, size: 10 },
+  { color: Colors.terracotta, x: -15, y: -85, size: 8 },
+  { color: Colors.prune, x: 35, y: -65, size: 11 },
+  { color: Colors.sauge, x: -55, y: -70, size: 9 },
 ];
 
 function ConfettiDot({
@@ -203,44 +204,41 @@ export default TaskCompletionToast;
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250, 248, 244, 0.72)',
+    backgroundColor: Colors.overlayLight,
     zIndex: 999,
   },
   bottom: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.base,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingTop: 20,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.card,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.base,
+    paddingHorizontal: Spacing.lg,
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.sm + 2,
     overflow: 'visible',
-    shadowColor: '#1E293B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1a1a2e',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
   },
   taskName: {
-    fontSize: 13,
-    color: '#6b6b8a',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   bar: {
     width: 40,
     height: 3,
-    backgroundColor: '#e0ddd6',
-    borderRadius: 4,
-    marginTop: 4,
+    backgroundColor: Colors.border,
+    borderRadius: Spacing.xs,
+    marginTop: Spacing.xs,
   },
 });

@@ -15,7 +15,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 
-import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../../src/constants/tokens';
+import { CompletionRatingSheet } from '../../../src/components/tasks/CompletionRatingSheet';
+import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Input } from '../../../src/components/ui/Input';
 import { Button } from '../../../src/components/ui/Button';
@@ -50,10 +51,10 @@ const zoneLabels: Record<string, string> = {
 
 const recurrenceLabels: Record<string, string> = {
   none: 'Aucune',
-  daily: 'Quotidienne',
-  weekly: 'Hebdomadaire',
-  biweekly: 'Bimensuelle',
-  monthly: 'Mensuelle',
+  daily: 'Chaque jour',
+  weekly: 'Chaque semaine',
+  biweekly: 'Toutes les 2 sem.',
+  monthly: 'Chaque mois',
 };
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
@@ -69,6 +70,7 @@ export default function TaskDetailScreen() {
   const deleteTask = useDeleteTask();
 
   const [isEditing, setIsEditing] = React.useState(false);
+  const [showRatingSheet, setShowRatingSheet] = React.useState(false);
 
   const {
     control,
@@ -115,6 +117,10 @@ export default function TaskDetailScreen() {
   // ─── Handlers ────────────────────────────────────────────────────────────
 
   const handleToggleStatus = () => {
+    if (!isDone && (task.task_type ?? 'household') === 'household') {
+      setShowRatingSheet(true);
+      return;
+    }
     const newStatus: TaskStatus = isDone ? 'todo' : 'done';
     updateStatus.mutate({ id: task.id, status: newStatus });
   };
@@ -133,6 +139,39 @@ export default function TaskDetailScreen() {
         { text: 'Annuler', style: 'cancel' },
         { text: 'Supprimer', style: 'destructive', onPress: doDelete },
       ]);
+    }
+  };
+
+  const handleReassign = () => {
+    const options = members.map(m => ({
+      text: m.profile?.full_name ?? 'Membre',
+      onPress: () => updateTask.mutate({ id: task.id, updates: { assigned_to: m.user_id } }),
+    }));
+
+    // Add "Personne" option to unassign
+    options.unshift({
+      text: 'Personne (retirer l\'assignation)',
+      onPress: () => updateTask.mutate({ id: task.id, updates: { assigned_to: null } }),
+    });
+
+    if (Platform.OS === 'web') {
+      const names = members.map(m => m.profile?.full_name ?? 'Membre');
+      const choice = window.prompt(
+        `Réassigner "${task.title}" à :\n0. Personne\n${names.map((n, i) => `${i + 1}. ${n}`).join('\n')}\n\nNuméro :`
+      );
+      if (choice === null) return;
+      const idx = parseInt(choice, 10);
+      if (idx === 0) {
+        updateTask.mutate({ id: task.id, updates: { assigned_to: null } });
+      } else if (idx > 0 && idx <= members.length) {
+        updateTask.mutate({ id: task.id, updates: { assigned_to: members[idx - 1].user_id } });
+      }
+    } else {
+      Alert.alert(
+        'Réassigner la tâche',
+        `Qui doit s'en occuper ?`,
+        [...options.map(o => ({ text: o.text, onPress: o.onPress })), { text: 'Annuler', style: 'cancel' as const }]
+      );
     }
   };
 
@@ -273,7 +312,7 @@ export default function TaskDetailScreen() {
             <Ionicons
               name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
               size={28}
-              color={isDone ? Colors.mint : Colors.gray300}
+              color={isDone ? Colors.sauge : Colors.gray300}
             />
           </TouchableOpacity>
         </View>
@@ -329,13 +368,51 @@ export default function TaskDetailScreen() {
               label="Récurrence"
               value={recurrenceLabels[task.recurrence] ?? task.recurrence}
             />
-            {assignee && (
-              <InfoRow
-                icon="person-outline"
-                label="Assigné à"
-                value={assignee.profile?.full_name ?? 'Membre'}
-              />
+            {task.recurrence !== 'none' && (
+              <TouchableOpacity
+                style={styles.cancelRecurrenceBtn}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    if (window.confirm('Annuler la récurrence de cette tâche ?')) {
+                      updateTask.mutate({ id: task.id, updates: { recurrence: 'none' } });
+                    }
+                  } else {
+                    Alert.alert(
+                      'Annuler la récurrence',
+                      `Cette tâche ne se répétera plus (${recurrenceLabels[task.recurrence]}).`,
+                      [
+                        { text: 'Non', style: 'cancel' },
+                        {
+                          text: 'Annuler la récurrence',
+                          style: 'destructive',
+                          onPress: () => updateTask.mutate({ id: task.id, updates: { recurrence: 'none' } }),
+                        },
+                      ]
+                    );
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={Colors.rose} />
+                <Text style={styles.cancelRecurrenceText}>Annuler la récurrence</Text>
+              </TouchableOpacity>
             )}
+            <TouchableOpacity
+              style={styles.reassignRow}
+              onPress={handleReassign}
+              activeOpacity={0.6}
+            >
+              <View style={styles.infoRowLeft}>
+                <Ionicons name="person-outline" size={16} color={Colors.textMuted} />
+                <Text variant="caption" color="muted">Assigné à</Text>
+              </View>
+              <View style={styles.reassignRight}>
+                <Text variant="label" style={styles.reassignValue}>
+                  {assignee ? (assignee.profile?.full_name ?? 'Membre') : 'Personne'}
+                </Text>
+                <Ionicons name="swap-horizontal-outline" size={16} color={Colors.prune} />
+              </View>
+            </TouchableOpacity>
             {task.completed_at && (
               <InfoRow
                 icon="checkmark-done-outline"
@@ -352,7 +429,7 @@ export default function TaskDetailScreen() {
             <Text variant="label" style={styles.sectionTitle}>
               Temps enregistré
             </Text>
-            <Text variant="h4" color="mint">
+            <Text variant="h4" color="sauge">
               {task.time_logs.reduce((sum, tl) => sum + tl.minutes, 0)} min
             </Text>
             <Text variant="caption" color="muted">
@@ -372,7 +449,7 @@ export default function TaskDetailScreen() {
               <Ionicons
                 name={isDone ? 'refresh-outline' : 'checkmark-circle-outline'}
                 size={18}
-                color={isDone ? Colors.coral : Colors.navy}
+                color={isDone ? Colors.rose : Colors.textPrimary}
               />
             }
           />
@@ -388,11 +465,30 @@ export default function TaskDetailScreen() {
           />
         </View>
       </ScrollView>
+
+      {task && (
+        <CompletionRatingSheet
+          visible={showRatingSheet}
+          taskId={task.id}
+          taskTitle={task.title}
+          onComplete={() => {
+            setShowRatingSheet(false);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 // ─── Info Row ────────────────────────────────────────────────────────────────
+
+const INFO_ROW_ICON_COLORS: Record<string, string> = {
+  'location-outline': Colors.miel,
+  'calendar-outline': Colors.terracotta,
+  'time-outline': Colors.prune,
+  'repeat-outline': Colors.sauge,
+  'checkmark-done-outline': Colors.sauge,
+};
 
 function InfoRow({
   icon,
@@ -405,9 +501,12 @@ function InfoRow({
   value: string;
   valueColor?: string;
 }) {
+  const iconColor = INFO_ROW_ICON_COLORS[icon] ?? Colors.textMuted;
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={16} color={Colors.textMuted} />
+      <View style={[styles.infoRowIconBox, { backgroundColor: `${iconColor}22` }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
       <Text variant="bodySmall" color="muted" style={{ width: 100 }}>
         {label}
       </Text>
@@ -456,8 +555,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
+  infoRowIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionTitle: {
     marginBottom: Spacing.xs,
+  },
+  cancelRecurrenceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  cancelRecurrenceText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.rose,
+  },
+  reassignRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    minHeight: 44,
+  },
+  infoRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  reassignRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  reassignValue: {
+    color: Colors.textPrimary,
   },
   actions: {
     gap: Spacing.md,

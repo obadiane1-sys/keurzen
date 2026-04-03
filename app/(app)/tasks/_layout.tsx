@@ -8,6 +8,15 @@ export default function TasksLayout() {
         headerShown: false,
         contentStyle: { backgroundColor: Colors.background },
       }}
-    />
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="[id]" />
+      <Stack.Screen
+        name="create"
+        options={{
+          animation: 'slide_from_bottom',
+        }}
+      />
+    </Stack>
   );
 }

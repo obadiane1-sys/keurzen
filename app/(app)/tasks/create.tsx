@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -8,44 +8,46 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
-  LayoutChangeEvent,
   TextStyle,
   Animated,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../../src/components/ui/Text';
-import { useCreateTask } from '../../../src/lib/queries/tasks';
+import { useCreateTask, useTasks } from '../../../src/lib/queries/tasks';
+import { TaskSuggestions } from '../../../src/components/tasks/TaskSuggestions';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { categoryLabels } from '../../../src/components/tasks/TaskCard';
-import type { TaskFormValues, TaskCategory, TaskPriority } from '../../../src/types';
+import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
+import type { TaskFormValues, TaskCategory, TaskPriority, RecurrenceType } from '../../../src/types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
 
-const MINT = '#7DCCC3';
-const BORDER_COLOR = '#f0ede8';
-const TEXT_PRIMARY = '#1a1a2e';
-const TEXT_PLACEHOLDER = '#d0cdd8';
-const TEXT_MUTED = '#c0bdb8';
-const TEXT_SUBTLE = '#6b6b8a';
-
-const ROW_ICON = {
-  date:     { bg: '#E1F5EE', stroke: '#0F6E56' },
-  assignee: { bg: '#EEEDFE', stroke: '#534AB7' },
-  category: { bg: '#FAEEDA', stroke: '#854F0B' },
-  priority: { bg: '#FAECE7', stroke: '#993C1D' },
-  note:     { bg: '#F1EFE8', stroke: '#5F5E5A' },
-};
-
-const PRIORITY_CONFIG: { value: TaskPriority; label: string; dot: string; labelColor: string; bg: string; border: string; text: string }[] = [
-  { value: 'low',    label: 'Faible',  dot: '#1D9E75', labelColor: '#0F6E56', bg: '#E1F5EE', border: '#9FE1CB', text: '#0F6E56' },
-  { value: 'medium', label: 'Moyenne', dot: '#EF9F27', labelColor: '#854F0B', bg: '#FAEEDA', border: '#FAC775', text: '#854F0B' },
-  { value: 'high',   label: 'Élevée',  dot: '#D85A30', labelColor: '#993C1D', bg: '#FAECE7', border: '#F5C4B3', text: '#993C1D' },
+const PRIORITY_CONFIG: {
+  value: TaskPriority;
+  label: string;
+  description: string;
+  dot: string;
+  bg: string;
+  border: string;
+  text: string;
+}[] = [
+  { value: 'low',    label: 'Faible',  description: 'Rapide et simple',          dot: Colors.sauge,       bg: `${Colors.sauge}14`, border: `${Colors.sauge}40`, text: Colors.greenStrong },
+  { value: 'medium', label: 'Moyenne', description: 'Effort modéré',             dot: Colors.miel,        bg: `${Colors.miel}14`, border: `${Colors.miel}40`, text: Colors.orangeStrong },
+  { value: 'high',   label: 'Haute',   description: "Demande de l'attention",    dot: Colors.rose,        bg: `${Colors.rose}14`, border: `${Colors.rose}40`, text: Colors.redStrong },
 ];
 
-const MEMBER_COLORS = ['#F0A898', '#AFA9EC', '#7DCCC3', '#F5C4B3', '#9FE1CB', '#CECBF6'];
+const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string; icon: string }[] = [
+  { value: 'none',     label: 'Aucune',       icon: 'close-circle-outline' },
+  { value: 'daily',    label: 'Chaque jour',   icon: 'today-outline' },
+  { value: 'weekly',   label: 'Chaque semaine', icon: 'calendar-outline' },
+  { value: 'biweekly', label: 'Toutes les 2 sem.', icon: 'calendar-outline' },
+  { value: 'monthly',  label: 'Chaque mois',   icon: 'repeat-outline' },
+];
 
 // ─── Date helpers ───────────────────────────────────────────────────────────
 
@@ -86,85 +88,294 @@ function endOfWeek(): Date {
   return fri;
 }
 
-// Quick chips for date
 const QUICK_DATE_CHIPS = [
-  { label: "Aujourd'hui", bg: '#E1F5EE', border: '#9FE1CB', text: '#0F6E56', getDate: () => new Date() },
-  { label: 'Demain', bg: '#F1EFE8', border: '#D3D1C7', text: '#444441', getDate: () => { const d = new Date(); d.setDate(d.getDate() + 1); return d; } },
-  { label: 'Vendredi', bg: '#EEEDFE', border: '#CECBF6', text: '#3C3489', getDate: () => endOfWeek() },
+  { label: "Aujourd'hui", getDate: () => new Date() },
+  { label: 'Demain', getDate: () => { const d = new Date(); d.setDate(d.getDate() + 1); return d; } },
+  { label: 'Vendredi', getDate: () => endOfWeek() },
 ];
 
-// Time periods
 type Period = 'matin' | 'apres-midi' | 'soir';
 const PERIODS: { key: Period; label: string; emoji: string; hours: number[] }[] = [
-  { key: 'matin', label: 'Matin', emoji: '🌅', hours: [6, 7, 8, 9, 10, 11, 12] },
-  { key: 'apres-midi', label: 'Après-midi', emoji: '☀️', hours: [12, 13, 14, 15, 16, 17, 18] },
-  { key: 'soir', label: 'Soir', emoji: '🌙', hours: [18, 19, 20, 21, 22, 23] },
+  { key: 'matin', label: 'Matin', emoji: '\u{1F305}', hours: [6, 7, 8, 9, 10, 11, 12] },
+  { key: 'apres-midi', label: 'Apres-midi', emoji: '\u{2600}\u{FE0F}', hours: [12, 13, 14, 15, 16, 17, 18] },
+  { key: 'soir', label: 'Soir', emoji: '\u{1F319}', hours: [18, 19, 20, 21, 22, 23] },
 ];
 const MINUTES = ['00', '15', '30', '45'];
 
-// ─── Expandable Row wrapper ─────────────────────────────────────────────────
+// ─── Estimated time chips ─────────────────────────────────────────────────
 
-type RowKey = 'date' | 'assignee' | 'category' | 'priority' | 'note';
+const TIME_CHIPS: { value: number; label: string }[] = [
+  { value: 5, label: '5 min' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1h' },
+  { value: 120, label: '2h' },
+];
 
-function ExpandablePanel({ expanded, children }: { expanded: boolean; children: React.ReactNode }) {
-  const [contentHeight, setContentHeight] = useState(0);
-  const animatedHeight = useRef(new Animated.Value(0)).current;
-  const [measured, setMeasured] = useState(false);
+// ─── Sheet type ───────────────────────────────────────────────────────────
 
-  const onLayout = useCallback((e: LayoutChangeEvent) => {
-    const h = e.nativeEvent.layout.height;
-    if (h > 0 && !measured) {
-      setContentHeight(h);
-      setMeasured(true);
-    } else if (h > 0 && Math.abs(h - contentHeight) > 1) {
-      setContentHeight(h);
+type SheetKey = 'date' | 'assignee' | 'time' | 'category' | 'priority' | 'recurrence' | 'note' | null;
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// ─── BottomSheet component ────────────────────────────────────────────────
+
+function BottomSheet({
+  visible,
+  onClose,
+  title,
+  children,
+  renderContent,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  children?: React.ReactNode;
+  renderContent?: () => React.ReactNode;
+}) {
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const [modalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          damping: 20,
+          stiffness: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: SCREEN_HEIGHT,
+          damping: 20,
+          stiffness: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalVisible(false);
+      });
     }
-  }, [measured, contentHeight]);
+  }, [visible, translateY, overlayOpacity]);
 
-  React.useEffect(() => {
-    if (!measured && expanded) {
-      // First expansion — wait for measure, then animate
-      return;
-    }
-    Animated.spring(animatedHeight, {
-      toValue: expanded ? contentHeight : 0,
-      damping: 18,
-      stiffness: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [expanded, contentHeight, animatedHeight, measured]);
-
-  // When first measured and expanded, animate immediately
-  React.useEffect(() => {
-    if (measured && expanded && contentHeight > 0) {
-      Animated.spring(animatedHeight, {
-        toValue: contentHeight,
-        damping: 18,
-        stiffness: 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [measured, contentHeight, expanded, animatedHeight]);
+  if (!modalVisible && !visible) return null;
 
   return (
-    <Animated.View style={{ height: animatedHeight, overflow: 'hidden' as const }}>
-      <View
-        onLayout={onLayout}
-        style={{ position: measured ? 'relative' : 'absolute', width: '100%' }}
-      >
-        {children}
+    <Modal transparent visible={modalVisible} animationType="none" statusBarTranslucent>
+      <View style={sheetStyles.wrapper}>
+        <Animated.View
+          style={[
+            sheetStyles.overlay,
+            { opacity: overlayOpacity },
+          ]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            sheetStyles.sheet,
+            { transform: [{ translateY }] },
+          ]}
+        >
+          <View style={sheetStyles.handleContainer}>
+            <View style={sheetStyles.handle} />
+          </View>
+
+          <Text style={sheetStyles.title}>{title}</Text>
+
+          <ScrollView
+            style={sheetStyles.content}
+            contentContainerStyle={sheetStyles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            {renderContent ? renderContent() : children}
+          </ScrollView>
+
+          <SafeAreaView edges={['bottom']} style={sheetStyles.validateSafe}>
+            <TouchableOpacity
+              style={sheetStyles.validateBtn}
+              onPress={onClose}
+              activeOpacity={0.85}
+            >
+              <Text style={sheetStyles.validateText}>Valider</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </Animated.View>
       </View>
-    </Animated.View>
+    </Modal>
   );
 }
 
-// ─── Screen ─────────────────────────────────────────────────────────────────
+const sheetStyles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.overlay,
+  },
+  sheet: {
+    backgroundColor: Colors.backgroundCard,
+    borderTopLeftRadius: BorderRadius['2xl'],
+    borderTopRightRadius: BorderRadius['2xl'],
+    maxHeight: SCREEN_HEIGHT * 0.7,
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingTop: Spacing.sm,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.gray300,
+  },
+  title: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    paddingVertical: Spacing.base,
+  },
+  content: {
+    flexShrink: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.base,
+  },
+  validateSafe: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.base,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  validateBtn: {
+    backgroundColor: Colors.terracotta,
+    height: 56,
+    borderRadius: BorderRadius.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  validateText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textInverse,
+  },
+});
+
+// ─── OptionRow component ──────────────────────────────────────────────────
+
+function OptionRow({
+  icon,
+  iconColor,
+  label,
+  value,
+  valueColor,
+  onPress,
+  isLast,
+}: {
+  icon: string;
+  iconColor: string;
+  label: string;
+  value: string;
+  valueColor?: string;
+  onPress: () => void;
+  isLast?: boolean;
+}) {
+  return (
+    <>
+      <TouchableOpacity style={rowStyles.optionRow} onPress={onPress} activeOpacity={0.6}>
+        <View style={[rowStyles.optionIcon, { backgroundColor: `${iconColor}22` }]}>
+          <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={iconColor} />
+        </View>
+        <View style={rowStyles.optionContent}>
+          <Text style={rowStyles.optionLabel}>{label}</Text>
+          <Text
+            style={[rowStyles.optionValue, valueColor ? { color: valueColor } : undefined]}
+            numberOfLines={1}
+          >
+            {value}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+      </TouchableOpacity>
+      {!isLast && <View style={rowStyles.optionDivider} />}
+    </>
+  );
+}
+
+const rowStyles = StyleSheet.create({
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 56,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionContent: {
+    flex: 1,
+    gap: 2,
+  },
+  optionLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+  },
+  optionValue: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textMuted,
+  },
+  optionDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginLeft: Spacing.lg + 40 + Spacing.md,
+  },
+});
+
+// ─── Screen ────────────────────────────────────────────────────────────────
 
 export default function CreateTaskScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const createTask = useCreateTask();
   const { members } = useHouseholdStore();
+  const { data: existingTasks = [] } = useTasks();
+
+  // Unique task titles for autocomplete suggestions
+  const taskSuggestions = useMemo(
+    () => [...new Set(existingTasks.map(t => t.title))],
+    [existingTasks]
+  );
 
   // Form state
   const [taskName, setTaskName] = useState('');
@@ -174,57 +385,23 @@ export default function CreateTaskScreen() {
   const [category, setCategory] = useState<TaskCategory>('cleaning');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [notes, setNotes] = useState('');
+  const [estimatedMinutes, setEstimatedMinutes] = useState<string>('');
+  const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
 
-  // Expansion state — one panel at a time
-  const [expandedRow, setExpandedRow] = useState<RowKey | null>(null);
+  // Input focus state
+  const [inputFocused, setInputFocused] = useState(false);
+
+  // Sheet state
+  const [activeSheet, setActiveSheet] = useState<SheetKey>(null);
 
   // Date picker state
   const [displayMonth, setDisplayMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [timeOpen, setTimeOpen] = useState(false);
   const [selPeriod, setSelPeriod] = useState<Period>('matin');
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const effectiveMin = useMemo(() => startOfDay(new Date()), []);
-
-  // Fix #3: reset timeOpen when changing rows
-  const toggleRow = useCallback((key: RowKey) => {
-    setExpandedRow(prev => {
-      if (prev === 'date' && key !== 'date') {
-        setTimeOpen(false);
-      }
-      return prev === key ? null : key;
-    });
-  }, []);
-
-  // Chevron rotation per row
-  const chevronDate = useRef(new Animated.Value(0)).current;
-  const chevronAssignee = useRef(new Animated.Value(0)).current;
-  const chevronCategory = useRef(new Animated.Value(0)).current;
-  const chevronPriority = useRef(new Animated.Value(0)).current;
-
-  const chevronMap: Record<string, Animated.Value> = useMemo(() => ({
-    date: chevronDate,
-    assignee: chevronAssignee,
-    category: chevronCategory,
-    priority: chevronPriority,
-  }), [chevronDate, chevronAssignee, chevronCategory, chevronPriority]);
-
-  React.useEffect(() => {
-    const keys = ['date', 'assignee', 'category', 'priority'];
-    keys.forEach(k => {
-      Animated.spring(chevronMap[k], {
-        toValue: expandedRow === k ? 90 : 0,
-        damping: 18,
-        stiffness: 200,
-        useNativeDriver: true,
-      }).start();
-    });
-  }, [expandedRow, chevronMap]);
-
-  const chevronStyleDate = { transform: [{ rotate: chevronDate.interpolate({ inputRange: [0, 90], outputRange: ['0deg', '90deg'] }) }] };
-  const chevronStyleAssignee = { transform: [{ rotate: chevronAssignee.interpolate({ inputRange: [0, 90], outputRange: ['0deg', '90deg'] }) }] };
-  const chevronStyleCategory = { transform: [{ rotate: chevronCategory.interpolate({ inputRange: [0, 90], outputRange: ['0deg', '90deg'] }) }] };
-  const chevronStylePriority = { transform: [{ rotate: chevronPriority.interpolate({ inputRange: [0, 90], outputRange: ['0deg', '90deg'] }) }] };
 
   // ─── Calendar grid ────────────────────────────────────────────────────────
 
@@ -244,19 +421,10 @@ export default function CreateTaskScreen() {
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
-  const handleDayPress = (day: Date) => {
-    setDueDate(day);
-  };
+  const handleDayPress = (day: Date) => setDueDate(day);
+  const handleQuickDateChip = (getDate: () => Date) => setDueDate(getDate());
+  const handleHourSelect = (hour: number) => setDueTime({ hour, minute: dueTime?.minute ?? '00' });
 
-  const handleQuickDateChip = (getDate: () => Date) => {
-    setDueDate(getDate());
-  };
-
-  const handleHourSelect = (hour: number) => {
-    setDueTime({ hour, minute: dueTime?.minute ?? '00' });
-  };
-
-  // Fix #2: allow minute selection even without hour — auto-select first available hour
   const handleMinuteSelect = (minute: string) => {
     if (dueTime) {
       setDueTime({ ...dueTime, minute });
@@ -267,11 +435,11 @@ export default function CreateTaskScreen() {
   };
 
   const isHourPast = useCallback((hour: number) => {
-    if (!dueDate || !isSameDay(dueDate, today)) return false;
-    return hour < today.getHours();
-  }, [dueDate, today]);
+    const now = new Date();
+    if (!dueDate || !isSameDay(dueDate, now)) return false;
+    return hour < now.getHours();
+  }, [dueDate]);
 
-  // Fix #4: single assignee selection (toggle on/off)
   const toggleAssignee = (userId: string) => {
     setAssignedTo(prev => prev === userId ? null : userId);
   };
@@ -282,9 +450,7 @@ export default function CreateTaskScreen() {
     let dueDateStr: string | undefined;
     if (dueDate) {
       const d = new Date(dueDate);
-      if (dueTime) {
-        d.setHours(dueTime.hour, parseInt(dueTime.minute, 10), 0, 0);
-      }
+      if (dueTime) d.setHours(dueTime.hour, parseInt(dueTime.minute, 10), 0, 0);
       dueDateStr = d.toISOString().split('T')[0];
     }
 
@@ -294,10 +460,11 @@ export default function CreateTaskScreen() {
       category,
       zone: 'general',
       priority,
-      recurrence: 'none',
+      recurrence,
       assigned_to: assignedTo ?? '',
       due_date: dueDateStr,
-      estimated_minutes: undefined,
+      estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes, 10) : undefined,
+      task_type: 'household',
     };
 
     try {
@@ -313,7 +480,7 @@ export default function CreateTaskScreen() {
     }
   };
 
-  // ─── Category options ─────────────────────────────────────────────────────
+  // ─── Derived data ─────────────────────────────────────────────────────────
 
   const categoryOptions = useMemo(() =>
     Object.entries(categoryLabels).map(([key, val]) => ({
@@ -323,12 +490,6 @@ export default function CreateTaskScreen() {
     })),
   []);
 
-  // ─── Priority display ────────────────────────────────────────────────────
-
-  const currentPriority = PRIORITY_CONFIG.find(p => p.value === priority) ?? PRIORITY_CONFIG[1];
-
-  // ─── Assignee display ─────────────────────────────────────────────────────
-
   const getInitials = (name?: string | null) => {
     if (!name) return '?';
     const parts = name.trim().split(' ').filter(Boolean);
@@ -337,132 +498,254 @@ export default function CreateTaskScreen() {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const getMemberColor = (index: number) => MEMBER_COLORS[index % MEMBER_COLORS.length];
-
-  const assignedMember = assignedTo ? members.find(m => m.user_id === assignedTo) : null;
-
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const getMemberColor = (index: number) => Colors.memberColors[index % Colors.memberColors.length];
 
   const currentPeriodHours = PERIODS.find(p => p.key === selPeriod)!.hours;
   const isDisabled = !taskName.trim();
-  // Fix #6: dynamic spacer based on CTA height + insets
-  const ctaHeight = 50 + 12 + 12 + insets.bottom;
+
+  // ─── Value previews ───────────────────────────────────────────────────────
+
+  const datePreview = useMemo(() => {
+    if (!dueDate) return 'Non définie';
+    let text = formatDatePill(dueDate);
+    if (dueTime) text += ` \u00B7 ${dueTime.hour.toString().padStart(2, '0')}:${dueTime.minute}`;
+    return text;
+  }, [dueDate, dueTime]);
+
+  const assigneePreview = useMemo(() => {
+    if (!assignedTo) return 'Personne';
+    const member = members.find(m => m.user_id === assignedTo);
+    if (!member) return 'Personne';
+    return member.profile?.full_name?.split(' ')[0] ?? 'Membre';
+  }, [assignedTo, members]);
+
+  const timePreview = useMemo(() => {
+    if (!estimatedMinutes) return 'Non défini';
+    const mins = parseInt(estimatedMinutes, 10);
+    if (mins >= 60) return `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}` : ''}`;
+    return `${estimatedMinutes} min`;
+  }, [estimatedMinutes]);
+
+  const categoryPreview = useMemo(() => {
+    return categoryLabels[category]?.label ?? category;
+  }, [category]);
+
+  const currentPriority = PRIORITY_CONFIG.find(p => p.value === priority)!;
+
+  const recurrencePreview = useMemo(() => {
+    return RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Aucune';
+  }, [recurrence]);
+
+  const notePreview = useMemo(() => {
+    if (!notes.trim()) return 'Aucune';
+    return notes.trim().length > 30 ? notes.trim().substring(0, 30) + '...' : notes.trim();
+  }, [notes]);
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <View style={styles.container}>
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+    <View style={styles.screen}>
+      {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerSafe}>
         <View style={styles.header}>
-          {/* Fix #5: 44px touch targets */}
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn} activeOpacity={0.7}>
-            <Ionicons name="close" size={16} color="#FFFFFF" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBackBtn}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={22} color={Colors.textSecondary} />
           </TouchableOpacity>
+
           <Text style={styles.headerTitle}>Nouvelle tâche</Text>
+
           <TouchableOpacity
             onPress={handleSubmit}
-            style={styles.headerBtn}
-            activeOpacity={0.7}
             disabled={isDisabled || createTask.isPending}
+            activeOpacity={0.7}
+            style={styles.headerCreateBtn}
           >
             {createTask.isPending ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={Colors.terracotta} />
             ) : (
-              <Ionicons name="checkmark" size={18} color="#FFFFFF" style={{ opacity: isDisabled ? 0.45 : 1 }} />
+              <Text style={[styles.headerCreateText, isDisabled && styles.headerCreateTextDisabled]}>
+                Créer
+              </Text>
             )}
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      {/* ── TASK NAME ──────────────────────────────────────────────────── */}
-      <View style={styles.taskNameContainer}>
-        <TextInput
-          style={styles.taskNameInput}
-          placeholder="Nom de la tâche…"
-          placeholderTextColor={TEXT_PLACEHOLDER}
-          value={taskName}
-          onChangeText={setTaskName}
-          autoFocus
-          returnKeyType="done"
-        />
-      </View>
-
-      {/* ── ROWS ───────────────────────────────────────────────────────── */}
+      {/* Scrollable form */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ── ROW 1: DATE LIMITE ─────────────────────────────────────── */}
-        <TouchableOpacity style={styles.row} onPress={() => toggleRow('date')} activeOpacity={0.7}>
-          <View style={[styles.rowIcon, { backgroundColor: ROW_ICON.date.bg }]}>
-            <Ionicons name="calendar-outline" size={16} color={ROW_ICON.date.stroke} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Date limite</Text>
-          </View>
-          <View style={styles.rowRight}>
-            {dueDate && (
-              <View style={styles.datePill}>
-                <Text style={styles.datePillText}>{formatDatePill(dueDate)}</Text>
-              </View>
-            )}
-            {dueTime && (
-              <View style={styles.timePill}>
-                <Text style={styles.timePillText}>
-                  {dueTime.hour.toString().padStart(2, '0')}:{dueTime.minute}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Animated.View style={chevronStyleDate}>
-            <Text style={styles.chevron}>›</Text>
-          </Animated.View>
-        </TouchableOpacity>
+        {/* Title input */}
+        <View style={styles.titleSection}>
+          <TextInput
+            style={[
+              styles.taskNameInput,
+              inputFocused && styles.taskNameInputFocused,
+            ]}
+            placeholder="Que faut-il faire ?"
+            placeholderTextColor={Colors.textMuted}
+            value={taskName}
+            onChangeText={setTaskName}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
+            autoFocus
+            returnKeyType="done"
+          />
+          <TaskSuggestions
+            query={taskName}
+            suggestions={taskSuggestions}
+            visible={inputFocused}
+            onSelect={(title) => {
+              setTaskName(title);
+              setInputFocused(false);
+            }}
+          />
+        </View>
 
-        <ExpandablePanel expanded={expandedRow === 'date'}>
-          <View style={styles.expandedContent}>
+        {/* Option rows card */}
+        <View style={styles.optionsCard}>
+          <OptionRow
+            icon="calendar-outline"
+            iconColor={Colors.terracotta}
+            label="Date limite"
+            value={datePreview}
+            valueColor={dueDate ? Colors.terracotta : undefined}
+            onPress={() => setActiveSheet('date')}
+          />
+          <OptionRow
+            icon="person-outline"
+            iconColor={Colors.prune}
+            label="Assigné à"
+            value={assigneePreview}
+            valueColor={assignedTo ? Colors.prune : undefined}
+            onPress={() => setActiveSheet('assignee')}
+          />
+          <OptionRow
+            icon="time-outline"
+            iconColor={Colors.miel}
+            label="Temps estimé"
+            value={timePreview}
+            valueColor={estimatedMinutes ? Colors.miel : undefined}
+            onPress={() => setActiveSheet('time')}
+          />
+          <OptionRow
+            icon="pricetag-outline"
+            iconColor={Colors.miel}
+            label="Catégorie"
+            value={categoryPreview}
+            valueColor={Colors.miel}
+            onPress={() => setActiveSheet('category')}
+          />
+          <OptionRow
+            icon="flag-outline"
+            iconColor={Colors.terracotta}
+            label="Priorité"
+            value={currentPriority.label}
+            valueColor={currentPriority.dot}
+            onPress={() => setActiveSheet('priority')}
+          />
+          <OptionRow
+            icon="repeat-outline"
+            iconColor={Colors.prune}
+            label="Récurrence"
+            value={recurrencePreview}
+            valueColor={recurrence !== 'none' ? Colors.prune : undefined}
+            onPress={() => setActiveSheet('recurrence')}
+          />
+          <OptionRow
+            icon="document-text-outline"
+            iconColor={Colors.gray400}
+            label="Note"
+            value={notePreview}
+            valueColor={notes.trim() ? Colors.textPrimary : undefined}
+            onPress={() => setActiveSheet('note')}
+            isLast
+          />
+        </View>
+      </ScrollView>
+
+      {/* CTA fixed bottom */}
+      <SafeAreaView edges={['bottom']} style={styles.ctaSafe}>
+        <TouchableOpacity
+          style={[styles.ctaButton, isDisabled && styles.ctaButtonDisabled]}
+          onPress={handleSubmit}
+          activeOpacity={0.85}
+          disabled={isDisabled || createTask.isPending}
+        >
+          {createTask.isPending ? (
+            <ActivityIndicator size="small" color={Colors.textInverse} />
+          ) : (
+            <>
+              <Ionicons name="add-circle-outline" size={20} color={Colors.textInverse} />
+              <Text style={styles.ctaText}>Ajouter la tâche</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      {/* ─── Bottom Sheets ─────────────────────────────────────────────────── */}
+
+      {/* Date Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'date'}
+        onClose={() => setActiveSheet(null)}
+        title="Date limite"
+        renderContent={() => (
+          <>
             {/* Quick chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChipsRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               {QUICK_DATE_CHIPS.map(chip => {
                 const active = dueDate ? isSameDay(chip.getDate(), dueDate) : false;
                 return (
                   <TouchableOpacity
                     key={chip.label}
                     onPress={() => handleQuickDateChip(chip.getDate)}
-                    style={[
-                      styles.quickChip,
-                      { backgroundColor: chip.bg, borderColor: chip.border },
-                      active && { transform: [{ scale: 1.04 }], borderWidth: 2, borderColor: chip.text },
-                    ]}
-                    activeOpacity={0.8}
+                    style={[styles.dateChip, active && styles.dateChipActive]}
+                    activeOpacity={0.7}
                   >
-                    <Text style={[styles.quickChipText, { color: chip.text }]}>{chip.label}</Text>
+                    <Text style={[styles.dateChipText, active ? styles.dateChipTextActive as TextStyle : undefined]}>
+                      {chip.label}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
+              {dueDate && (
+                <TouchableOpacity
+                  onPress={() => { setDueDate(null); setDueTime(null); }}
+                  style={styles.dateChipClear}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.dateChipClearText}>Effacer</Text>
+                </TouchableOpacity>
+              )}
             </ScrollView>
 
             {/* Mini calendar */}
             <View style={styles.calendarContainer}>
               <View style={styles.monthHeader}>
-                {/* Fix #5: 44px touch targets for month nav */}
                 <TouchableOpacity
                   onPress={() => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() - 1, 1))}
-                  style={styles.monthBtn}
-                  hitSlop={{ top: 7, bottom: 7, left: 7, right: 7 }}
+                  style={styles.monthNavBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.monthBtnText}>‹</Text>
+                  <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
                 <Text style={styles.monthTitle}>
                   {MONTH_NAMES[displayMonth.getMonth()]} {displayMonth.getFullYear()}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1))}
-                  style={styles.monthBtn}
-                  hitSlop={{ top: 7, bottom: 7, left: 7, right: 7 }}
+                  style={styles.monthNavBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.monthBtnText}>›</Text>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -496,30 +779,32 @@ export default function CreateTaskScreen() {
                       ]}>
                         {day.getDate()}
                       </Text>
-                      {isToday && <View style={[styles.todayDot, isSelected && { backgroundColor: '#FFFFFF' }]} />}
+                      {isToday && !isSelected && <View style={styles.todayDot} />}
                     </TouchableOpacity>
                   );
                 })}
               </View>
             </View>
 
-            {/* Time toggle */}
-            <TouchableOpacity style={styles.timeToggle} onPress={() => setTimeOpen(prev => !prev)} activeOpacity={0.8}>
+            {/* Time section */}
+            <TouchableOpacity style={styles.timeToggle} onPress={() => setTimeOpen(prev => !prev)} activeOpacity={0.7}>
               <View style={styles.timeToggleLeft}>
-                <View style={[styles.timeToggleIcon, { backgroundColor: '#EEEDFE' }]}>
-                  <Ionicons name="time-outline" size={14} color="#3C3489" />
-                </View>
+                <Ionicons name="time-outline" size={16} color={Colors.prune} />
                 <Text style={styles.timeToggleLabel}>Heure limite</Text>
               </View>
               <View style={styles.timeToggleRight}>
                 {dueTime && (
-                  <View style={styles.timeActiveBadge}>
-                    <Text style={styles.timeActiveBadgeText}>
+                  <View style={styles.pillMint}>
+                    <Text style={styles.pillMintText}>
                       {dueTime.hour.toString().padStart(2, '0')}:{dueTime.minute}
                     </Text>
                   </View>
                 )}
-                <Ionicons name={timeOpen ? 'chevron-up' : 'chevron-down'} size={14} color={TEXT_SUBTLE} />
+                <Ionicons
+                  name={timeOpen ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={Colors.textMuted}
+                />
               </View>
             </TouchableOpacity>
 
@@ -534,10 +819,12 @@ export default function CreateTaskScreen() {
                         key={p.key}
                         style={[styles.periodBtn, active && styles.periodBtnActive]}
                         onPress={() => setSelPeriod(p.key)}
-                        activeOpacity={0.8}
+                        activeOpacity={0.7}
                       >
                         <Text style={styles.periodEmoji}>{p.emoji}</Text>
-                        <Text style={[styles.periodText, active ? styles.periodTextActive as TextStyle : undefined]}>{p.label}</Text>
+                        <Text style={[styles.periodText, active ? styles.periodTextActive as TextStyle : undefined]}>
+                          {p.label}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -556,7 +843,11 @@ export default function CreateTaskScreen() {
                         disabled={past}
                         activeOpacity={0.7}
                       >
-                        <Text style={[styles.hourText, active ? styles.hourTextActive as TextStyle : undefined, past ? styles.hourTextDisabled as TextStyle : undefined]}>
+                        <Text style={[
+                          styles.hourText,
+                          active ? styles.hourTextActive as TextStyle : undefined,
+                          past ? styles.hourTextDisabled as TextStyle : undefined,
+                        ]}>
                           {hour.toString().padStart(2, '0')}h
                         </Text>
                       </TouchableOpacity>
@@ -566,7 +857,7 @@ export default function CreateTaskScreen() {
 
                 {/* Minutes */}
                 <View style={styles.minuteSection}>
-                  <Text style={styles.minuteLabel}>MINUTES</Text>
+                  <Text style={styles.minuteSectionLabel}>MINUTES</Text>
                   <View style={styles.minuteRow}>
                     {MINUTES.map(m => {
                       const active = dueTime?.minute === m;
@@ -577,7 +868,9 @@ export default function CreateTaskScreen() {
                           onPress={() => handleMinuteSelect(m)}
                           activeOpacity={0.7}
                         >
-                          <Text style={[styles.minuteText, active ? styles.minuteTextActive as TextStyle : undefined]}>:{m}</Text>
+                          <Text style={[styles.minuteText, active ? styles.minuteTextActive as TextStyle : undefined]}>
+                            :{m}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -585,153 +878,164 @@ export default function CreateTaskScreen() {
                 </View>
               </View>
             )}
-          </View>
-        </ExpandablePanel>
+          </>
+        )}
+      />
 
-        {/* ── ROW 2: ASSIGNÉ À ───────────────────────────────────────── */}
-        <TouchableOpacity style={styles.row} onPress={() => toggleRow('assignee')} activeOpacity={0.7}>
-          <View style={[styles.rowIcon, { backgroundColor: ROW_ICON.assignee.bg }]}>
-            <Ionicons name="person-outline" size={16} color={ROW_ICON.assignee.stroke} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Assigné à</Text>
-          </View>
-          <View style={styles.rowRight}>
-            {!assignedMember && (
-              <Text style={styles.rowPlaceholder}>Personne</Text>
-            )}
-            {assignedMember && (
-              <View style={[styles.miniAvatar, { backgroundColor: assignedMember.color ?? getMemberColor(0) }]}>
-                <Text style={styles.miniAvatarText}>
-                  {getInitials(assignedMember.profile?.full_name)}
-                </Text>
+      {/* Assignee Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'assignee'}
+        onClose={() => setActiveSheet(null)}
+        title="Assigné à"
+        renderContent={() => (
+          <>
+            {/* Aucun option */}
+            <TouchableOpacity
+              style={styles.sheetListRow}
+              onPress={() => setAssignedTo(null)}
+              activeOpacity={0.6}
+            >
+              <View style={[styles.sheetAvatar, { backgroundColor: Colors.gray100 }]}>
+                <Ionicons name="person-outline" size={18} color={Colors.textMuted} />
               </View>
-            )}
-          </View>
-          <Animated.View style={chevronStyleAssignee}>
-            <Text style={styles.chevron}>›</Text>
-          </Animated.View>
-        </TouchableOpacity>
+              <Text style={styles.sheetListLabel}>Personne</Text>
+              {!assignedTo && (
+                <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+              )}
+            </TouchableOpacity>
+            <View style={styles.sheetDivider} />
 
-        <ExpandablePanel expanded={expandedRow === 'assignee'}>
-          <View style={styles.expandedContent}>
-            {/* Fix #7: empty state for no members */}
             {members.length === 0 ? (
-              <Text style={styles.emptyAssignee}>Aucun membre dans le foyer</Text>
+              <Text style={styles.emptyText}>Aucun membre dans le foyer</Text>
             ) : (
-              <View style={styles.assigneeGrid}>
-                {members.map((m, i) => {
-                  const selected = assignedTo === m.user_id;
-                  const color = m.color ?? getMemberColor(i);
-                  return (
+              members.map((m, i) => {
+                const selected = assignedTo === m.user_id;
+                const color = m.color ?? getMemberColor(i);
+                const fullName = m.profile?.full_name ?? 'Membre';
+                return (
+                  <React.Fragment key={m.user_id}>
                     <TouchableOpacity
-                      key={m.user_id}
+                      style={styles.sheetListRow}
                       onPress={() => toggleAssignee(m.user_id)}
-                      style={styles.assigneeItem}
-                      activeOpacity={0.7}
+                      activeOpacity={0.6}
                     >
-                      <View style={[
-                        styles.assigneeAvatar,
-                        {
-                          backgroundColor: selected ? color : '#F1F5F9',
-                          borderColor: selected ? MINT : 'transparent',
-                          borderWidth: selected ? 2 : 0,
-                          transform: [{ scale: selected ? 1.1 : 1 }],
-                        },
-                      ]}>
+                      <View style={[styles.sheetAvatar, { backgroundColor: selected ? color : Colors.gray100 }]}>
                         <Text style={[
-                          styles.assigneeInitials,
-                          { color: selected ? '#FFFFFF' : TEXT_SUBTLE },
+                          styles.sheetAvatarText,
+                          { color: selected ? Colors.textInverse : Colors.textSecondary },
                         ]}>
                           {getInitials(m.profile?.full_name)}
                         </Text>
                       </View>
-                      <Text style={styles.assigneeName} numberOfLines={1}>
-                        {m.profile?.full_name ?? 'Membre'}
+                      <Text style={[
+                        styles.sheetListLabel,
+                        selected && { fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                      ]}>
+                        {fullName}
                       </Text>
+                      {selected && (
+                        <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                      )}
                     </TouchableOpacity>
-                  );
-                })}
-              </View>
+                    {i < members.length - 1 && <View style={styles.sheetDivider} />}
+                  </React.Fragment>
+                );
+              })
             )}
-          </View>
-        </ExpandablePanel>
+          </>
+        )}
+      />
 
-        {/* ── ROW 3: CATÉGORIE ───────────────────────────────────────── */}
-        <TouchableOpacity style={styles.row} onPress={() => toggleRow('category')} activeOpacity={0.7}>
-          <View style={[styles.rowIcon, { backgroundColor: ROW_ICON.category.bg }]}>
-            <Ionicons name="grid-outline" size={16} color={ROW_ICON.category.stroke} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Catégorie</Text>
-          </View>
-          <View style={styles.rowRight}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>
-                {categoryLabels[category]?.label ?? 'Aucune'}
-              </Text>
+      {/* Estimated Time Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'time'}
+        onClose={() => setActiveSheet(null)}
+        title="Temps estimé"
+        renderContent={() => (
+          <>
+            <View style={styles.timeInputCenter}>
+              <TextInput
+                style={styles.timeInputLarge}
+                placeholder="0"
+                placeholderTextColor={Colors.textMuted}
+                value={estimatedMinutes}
+                onChangeText={setEstimatedMinutes}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
+              <Text style={styles.timeInputSuffix}>min</Text>
             </View>
-          </View>
-          <Animated.View style={chevronStyleCategory}>
-            <Text style={styles.chevron}>›</Text>
-          </Animated.View>
-        </TouchableOpacity>
 
-        <ExpandablePanel expanded={expandedRow === 'category'}>
-          <View style={styles.expandedContent}>
-            <View style={styles.categoryGrid}>
-              {categoryOptions.map(opt => {
-                const active = category === opt.value;
+            <View style={styles.timeChipsRow}>
+              {TIME_CHIPS.map(chip => {
+                const active = estimatedMinutes === String(chip.value);
                 return (
                   <TouchableOpacity
-                    key={opt.value}
-                    onPress={() => setCategory(opt.value)}
-                    style={[
-                      styles.categoryChip,
-                      active && styles.categoryChipActive,
-                    ]}
-                    activeOpacity={0.8}
+                    key={chip.value}
+                    onPress={() => setEstimatedMinutes(active ? '' : String(chip.value))}
+                    style={[styles.timeChip, active && styles.timeChipActive]}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons
-                      name={opt.icon as keyof typeof Ionicons.glyphMap}
-                      size={14}
-                      color={active ? '#3C3489' : TEXT_SUBTLE}
-                    />
-                    <Text style={[styles.categoryChipText, active ? styles.categoryChipTextActive as TextStyle : undefined]}>
-                      {opt.label}
+                    <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>
+                      {chip.label}
                     </Text>
-                    {active && <Ionicons name="checkmark" size={14} color="#3C3489" />}
                   </TouchableOpacity>
                 );
               })}
             </View>
-          </View>
-        </ExpandablePanel>
+          </>
+        )}
+      />
 
-        {/* ── ROW 4: PRIORITÉ ────────────────────────────────────────── */}
-        <TouchableOpacity style={styles.row} onPress={() => toggleRow('priority')} activeOpacity={0.7}>
-          <View style={[styles.rowIcon, { backgroundColor: ROW_ICON.priority.bg }]}>
-            <Ionicons name="flag-outline" size={16} color={ROW_ICON.priority.stroke} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Priorité</Text>
-          </View>
-          <View style={styles.rowRight}>
-            <View style={styles.priorityDisplay}>
-              <View style={[styles.priorityDot, { backgroundColor: currentPriority.dot }]} />
-              <Text style={[styles.priorityDisplayText, { color: currentPriority.labelColor }]}>
-                {currentPriority.label}
-              </Text>
-            </View>
-          </View>
-          <Animated.View style={chevronStylePriority}>
-            <Text style={styles.chevron}>›</Text>
-          </Animated.View>
-        </TouchableOpacity>
+      {/* Category Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'category'}
+        onClose={() => setActiveSheet(null)}
+        title="Catégorie"
+        renderContent={() => (
+          <>
+            {categoryOptions.map((opt, i) => {
+              const active = category === opt.value;
+              return (
+                <React.Fragment key={opt.value}>
+                  <TouchableOpacity
+                    style={styles.sheetListRow}
+                    onPress={() => setCategory(opt.value)}
+                    activeOpacity={0.6}
+                  >
+                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.prune}22` : Colors.gray50 }]}>
+                      <Ionicons
+                        name={opt.icon as keyof typeof Ionicons.glyphMap}
+                        size={18}
+                        color={active ? Colors.prune : Colors.textMuted}
+                      />
+                    </View>
+                    <Text style={[
+                      styles.sheetListLabel,
+                      active && { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                    ]}>
+                      {opt.label}
+                    </Text>
+                    {active && (
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                    )}
+                  </TouchableOpacity>
+                  {i < categoryOptions.length - 1 && <View style={styles.sheetDivider} />}
+                </React.Fragment>
+              );
+            })}
+          </>
+        )}
+      />
 
-        <ExpandablePanel expanded={expandedRow === 'priority'}>
-          <View style={styles.expandedContent}>
-            <View style={styles.priorityRow}>
+      {/* Priority Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'priority'}
+        onClose={() => setActiveSheet(null)}
+        title="Priorité"
+        renderContent={() => (
+          <>
+            <View style={styles.priorityCards}>
               {PRIORITY_CONFIG.map(p => {
                 const active = priority === p.value;
                 return (
@@ -739,241 +1043,242 @@ export default function CreateTaskScreen() {
                     key={p.value}
                     onPress={() => setPriority(p.value)}
                     style={[
-                      styles.priorityChip,
-                      { backgroundColor: p.bg, borderColor: p.border },
-                      active && { transform: [{ scale: 1.04 }], borderWidth: 2, borderColor: p.text },
+                      styles.priorityCard,
+                      { borderColor: active ? p.dot : Colors.borderLight },
+                      active && { borderWidth: 2 },
                     ]}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                   >
-                    <View style={[styles.priorityChipDot, { backgroundColor: p.dot }]} />
-                    <Text style={[styles.priorityChipText, { color: p.text }]}>{p.label}</Text>
+                    <View style={[styles.priorityDot, { backgroundColor: p.dot }]} />
+                    <View style={styles.priorityCardContent}>
+                      <Text style={[styles.priorityCardLabel, { color: p.text }]}>{p.label}</Text>
+                      <Text style={styles.priorityCardDesc}>{p.description}</Text>
+                    </View>
+                    {active && (
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
-          </View>
-        </ExpandablePanel>
+          </>
+        )}
+      />
 
-        {/* ── ROW 5: NOTE ────────────────────────────────────────────── */}
-        <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]} onPress={() => toggleRow('note')} activeOpacity={0.7}>
-          <View style={[styles.rowIcon, { backgroundColor: ROW_ICON.note.bg }]}>
-            <Ionicons name="document-text-outline" size={16} color={ROW_ICON.note.stroke} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Note</Text>
-          </View>
-          {notes.trim() ? (
-            <Text style={styles.notePreview} numberOfLines={1}>{notes.trim()}</Text>
-          ) : (
-            <Text style={styles.rowPlaceholder}>Aucune</Text>
-          )}
-        </TouchableOpacity>
+      {/* Recurrence Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'recurrence'}
+        onClose={() => setActiveSheet(null)}
+        title="Récurrence"
+        renderContent={() => (
+          <>
+            {RECURRENCE_OPTIONS.map((opt, i) => {
+              const active = recurrence === opt.value;
+              return (
+                <React.Fragment key={opt.value}>
+                  <TouchableOpacity
+                    style={styles.sheetListRow}
+                    onPress={() => setRecurrence(opt.value)}
+                    activeOpacity={0.6}
+                  >
+                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.prune}22` : Colors.gray50 }]}>
+                      <Ionicons
+                        name={opt.icon as keyof typeof Ionicons.glyphMap}
+                        size={18}
+                        color={active ? Colors.prune : Colors.textMuted}
+                      />
+                    </View>
+                    <Text style={[
+                      styles.sheetListLabel,
+                      active && { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                    ]}>
+                      {opt.label}
+                    </Text>
+                    {active && (
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                    )}
+                  </TouchableOpacity>
+                  {i < RECURRENCE_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
+                </React.Fragment>
+              );
+            })}
+          </>
+        )}
+      />
 
-        <ExpandablePanel expanded={expandedRow === 'note'}>
-          <View style={[styles.expandedContent, { paddingBottom: 8 }]}>
+      {/* Note Sheet */}
+      <BottomSheet
+        visible={activeSheet === 'note'}
+        onClose={() => setActiveSheet(null)}
+        title="Note"
+        renderContent={() => (
+          <>
             <TextInput
               style={styles.noteInput}
-              placeholder="Ajouter une note…"
-              placeholderTextColor={TEXT_PLACEHOLDER}
+              placeholder="Ajouter une note..."
+              placeholderTextColor={Colors.textMuted}
               value={notes}
               onChangeText={setNotes}
               multiline
               textAlignVertical="top"
+              autoFocus={activeSheet === 'note'}
             />
-          </View>
-        </ExpandablePanel>
-
-        {/* Fix #6: dynamic spacer for bottom CTA */}
-        <View style={{ height: ctaHeight + 16 }} />
-      </ScrollView>
-
-      {/* ── CTA (fixed bottom) ─────────────────────────────────────── */}
-      <View style={[styles.ctaContainer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
-          style={[styles.ctaButton, isDisabled && styles.ctaButtonDisabled]}
-          onPress={handleSubmit}
-          activeOpacity={0.85}
-          disabled={isDisabled || createTask.isPending}
-        >
-          {createTask.isPending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.ctaText}>Ajouter la tâche</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          </>
+        )}
+      />
     </View>
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
 
-  // Header
+  // ── Header ──────────────────────────────────────────────────────────────
   headerSafe: {
-    backgroundColor: MINT,
+    backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: MINT,
+    paddingHorizontal: Spacing.base,
+    height: 52,
   },
-  // Fix #5: 44px minimum touch target
-  headerBtn: {
+  headerBackBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+  },
+  headerCreateBtn: {
+    paddingHorizontal: Spacing.sm,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCreateText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.terracotta,
+  },
+  headerCreateTextDisabled: {
+    opacity: 0.35,
   },
 
-  // Task name
-  taskNameContainer: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: BORDER_COLOR,
-  },
-  taskNameInput: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-
-  // Scroll
+  // ── ScrollView ──────────────────────────────────────────────────────────
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 100,
   },
 
-  // Row
-  row: {
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-    gap: 13,
-    borderBottomWidth: 0.5,
-    borderBottomColor: BORDER_COLOR,
+  // ── Title input ─────────────────────────────────────────────────────────
+  titleSection: {
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
-  rowIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
+  taskNameInput: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.input,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
   },
-  rowContent: {
-    flex: 1,
-  },
-  rowLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
-  },
-  rowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  rowPlaceholder: {
-    fontSize: 13,
-    color: TEXT_MUTED,
-  },
-  chevron: {
-    fontSize: 16,
-    color: TEXT_MUTED,
+  taskNameInputFocused: {
+    borderColor: Colors.borderFocus,
   },
 
-  // Expanded content
-  expandedContent: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    gap: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: BORDER_COLOR,
+  // ── Options card ────────────────────────────────────────────────────────
+  optionsCard: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    overflow: 'hidden',
   },
 
-  // ─── Date row expanded ────────────────────────────────────────────────────
-  datePill: {
-    backgroundColor: '#E1F5EE',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  datePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F6E56',
-  },
-  timePill: {
-    backgroundColor: '#F1EFE8',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  timePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#444441',
-  },
-
-  quickChipsRow: {
-    gap: 8,
+  // ── Date section (inside sheet) ─────────────────────────────────────────
+  chipRow: {
+    gap: Spacing.sm,
     paddingVertical: 2,
+    marginBottom: Spacing.base,
   },
-  quickChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
+  dateChip: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
   },
-  quickChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+  dateChipActive: {
+    backgroundColor: Colors.terracotta,
+    borderColor: Colors.terracotta,
+  },
+  dateChipText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
+  },
+  dateChipTextActive: {
+    color: Colors.textInverse,
+  },
+  dateChipClear: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1.5,
+    borderColor: Colors.rose,
+    backgroundColor: `${Colors.rose}14`,
+  },
+  dateChipClearText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.rose,
   },
 
   // Calendar
   calendarContainer: {
-    gap: 8,
+    gap: Spacing.sm + 2,
+    marginBottom: Spacing.sm,
   },
   monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  monthBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F1EFE8',
+  monthNavBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  monthBtnText: {
-    fontSize: 18,
-    color: TEXT_SUBTLE,
-    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   monthTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: TEXT_PRIMARY,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
   },
   dayNamesRow: {
     flexDirection: 'row',
@@ -983,9 +1288,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayNameText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#aaaaaa',
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
   },
   daysGrid: {
     flexDirection: 'row',
@@ -996,345 +1302,331 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    maxHeight: 36,
+    maxHeight: 38,
   },
   dayCellSelected: {
-    backgroundColor: MINT,
-    borderRadius: 18,
+    backgroundColor: Colors.terracotta,
+    borderRadius: BorderRadius.full,
   },
   dayText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: TEXT_PRIMARY,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
   },
   dayTextPast: {
-    color: '#d0cdc8',
+    color: Colors.gray300,
   },
   dayTextToday: {
-    fontWeight: '700',
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.terracotta,
   },
   dayTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: Colors.textInverse,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
   },
   todayDot: {
     position: 'absolute',
-    bottom: 2,
+    bottom: 3,
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: MINT,
+    backgroundColor: Colors.terracotta,
   },
 
-  // Time toggle
+  // Time
   timeToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   timeToggleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  timeToggleIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.sm,
   },
   timeToggleLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: TEXT_PRIMARY,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
   },
   timeToggleRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.xs,
   },
-  timeActiveBadge: {
-    backgroundColor: '#E1F5EE',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  timeActiveBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F6E56',
-  },
-
-  // Time panel
   timePanel: {
-    gap: 12,
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
   },
   periodRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.sm,
   },
   periodBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1.5,
-    borderColor: '#e0ddd6',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
   },
   periodBtnActive: {
-    backgroundColor: '#EEEDFE',
-    borderColor: '#CECBF6',
+    backgroundColor: `${Colors.prune}1A`,
+    borderColor: Colors.prune,
   },
   periodEmoji: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.sm,
   },
   periodText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: TEXT_SUBTLE,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
   },
   periodTextActive: {
-    color: '#3C3489',
+    color: Colors.prune,
   },
   hourGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: Spacing.sm,
   },
   hourCell: {
     width: '23%' as unknown as number,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1.5,
-    borderColor: '#e0ddd6',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
     alignItems: 'center',
   },
   hourCellActive: {
-    backgroundColor: MINT,
-    borderColor: MINT,
+    backgroundColor: Colors.terracotta,
+    borderColor: Colors.terracotta,
   },
   hourCellDisabled: {
-    borderColor: BORDER_COLOR,
+    borderColor: Colors.borderLight,
   },
   hourText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: TEXT_SUBTLE,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
   },
   hourTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   hourTextDisabled: {
-    color: '#d0cdc8',
+    color: Colors.gray300,
   },
   minuteSection: {
-    gap: 6,
+    gap: Spacing.xs,
   },
-  minuteLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#aaaaaa',
+  minuteSectionLabel: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textMuted,
     letterSpacing: 1,
   },
   minuteRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.sm,
   },
   minuteCell: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1.5,
-    borderColor: '#e0ddd6',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
     alignItems: 'center',
   },
   minuteCellActive: {
-    backgroundColor: MINT,
-    borderColor: MINT,
+    backgroundColor: Colors.terracotta,
+    borderColor: Colors.terracotta,
   },
   minuteText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: TEXT_SUBTLE,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
   },
   minuteTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
+  },
+  pillMint: {
+    backgroundColor: `${Colors.terracotta}1A`,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+  },
+  pillMintText: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.greenStrong,
   },
 
-  // ─── Assignee row expanded ────────────────────────────────────────────────
-  miniAvatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+  // ── Sheet list rows (assignee, category, recurrence) ────────────────────
+  sheetListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  sheetAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  miniAvatarText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  sheetAvatarText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
   },
-  assigneeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  assigneeItem: {
-    alignItems: 'center',
-    gap: 4,
-    width: 56,
-  },
-  assigneeAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  sheetIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  assigneeInitials: {
-    fontSize: 13,
-    fontWeight: '700',
+  sheetListLabel: {
+    flex: 1,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
   },
-  assigneeName: {
-    fontSize: 10,
-    color: TEXT_SUBTLE,
-    textAlign: 'center',
+  sheetDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
   },
-  emptyAssignee: {
-    fontSize: 13,
-    color: TEXT_MUTED,
+  emptyText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textMuted,
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: Spacing.lg,
   },
 
-  // ─── Category row expanded ────────────────────────────────────────────────
-  categoryBadge: {
-    backgroundColor: '#EEEDFE',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  categoryBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#3C3489',
-  },
-  categoryGrid: {
+  // ── Estimated time (inside sheet) ───────────────────────────────────────
+  timeInputCenter: {
     flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  timeInputLarge: {
+    fontSize: Typography.fontSize['4xl'],
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    minWidth: 80,
+    padding: 0,
+  },
+  timeInputSuffix: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
+  },
+  timeChipsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 8,
   },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e0ddd6',
-    backgroundColor: '#FFFFFF',
+  timeChip: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
   },
-  categoryChipActive: {
-    backgroundColor: '#EEEDFE',
-    borderColor: '#CECBF6',
+  timeChipActive: {
+    backgroundColor: Colors.terracotta,
+    borderColor: Colors.terracotta,
   },
-  categoryChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: TEXT_SUBTLE,
+  timeChipText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
   },
-  categoryChipTextActive: {
-    color: '#3C3489',
+  timeChipTextActive: {
+    color: Colors.textInverse,
   },
 
-  // ─── Priority row expanded ────────────────────────────────────────────────
-  priorityDisplay: {
+  // ── Priority (inside sheet) ─────────────────────────────────────────────
+  priorityCards: {
+    gap: Spacing.md,
+  },
+  priorityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    padding: Spacing.base,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.backgroundCard,
+    gap: Spacing.md,
   },
   priorityDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: BorderRadius.sm / 2,
   },
-  priorityDisplayText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  priorityChip: {
+  priorityCardContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    gap: 2,
   },
-  priorityChipDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  priorityCardLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
   },
-  priorityChipText: {
-    fontSize: 12,
-    fontWeight: '700',
+  priorityCardDesc: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textMuted,
   },
 
-  // ─── Note row ─────────────────────────────────────────────────────────────
-  notePreview: {
-    fontSize: 13,
-    color: TEXT_SUBTLE,
-    maxWidth: 150,
-  },
+  // ── Note (inside sheet) ─────────────────────────────────────────────────
   noteInput: {
-    fontSize: 13,
-    color: TEXT_PRIMARY,
-    minHeight: 60,
+    fontSize: Typography.fontSize.base,
+    color: Colors.textPrimary,
+    minHeight: 200,
     textAlignVertical: 'top',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 
-  // ─── CTA ──────────────────────────────────────────────────────────────────
-  ctaContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 0.5,
-    borderTopColor: BORDER_COLOR,
+  // ── CTA ─────────────────────────────────────────────────────────────────
+  ctaSafe: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
   },
   ctaButton: {
-    backgroundColor: MINT,
-    borderRadius: 24,
-    height: 50,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.terracotta,
+    height: 56,
+    borderRadius: BorderRadius.button,
   },
   ctaButtonDisabled: {
-    opacity: 0.45,
+    opacity: 0.35,
   },
   ctaText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textInverse,
   },
 });
