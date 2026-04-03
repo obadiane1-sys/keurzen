@@ -74,12 +74,6 @@ export const Colors = {
   backgroundSubtle: '#F0EAE2',
   placeholder: '#B8A99A',
 
-  // ─── DEPRECATED aliases (remove after full migration) ───
-  mint: '#8BA888',       // → use sauge or terracotta
-  coral: '#D4807A',      // → use rose
-  blue: '#D4A959',       // → use miel
-  lavender: '#9B8AA8',   // → use prune
-  navy: '#3D2C22',       // → use textPrimary
 } as const;
 
 export const Spacing = {

@@ -28,7 +28,7 @@ interface MascotProps {
 export function Mascot({
   size = 80,
   expression = 'calm',
-  color = Colors.mint,
+  color = Colors.sauge,
   style,
 }: MascotProps) {
   const s = size;
@@ -89,7 +89,7 @@ export function Mascot({
           cy={blushY}
           rx={blushR}
           ry={blushR * 0.55}
-          fill={Colors.coral}
+          fill={Colors.rose}
           opacity={0.35}
         />
         <Ellipse
@@ -97,7 +97,7 @@ export function Mascot({
           cy={blushY}
           rx={blushR}
           ry={blushR * 0.55}
-          fill={Colors.coral}
+          fill={Colors.rose}
           opacity={0.35}
         />
 
@@ -105,7 +105,7 @@ export function Mascot({
         {eyeConfig.sleepy ? (
           <Path
             d={`M ${eyeConfig.leftX - eyeConfig.r} ${eyeConfig.leftY} Q ${eyeConfig.leftX} ${eyeConfig.leftY - eyeConfig.r * 0.4} ${eyeConfig.leftX + eyeConfig.r} ${eyeConfig.leftY}`}
-            stroke={Colors.navy}
+            stroke={Colors.textPrimary}
             strokeWidth={s * 0.025}
             fill="none"
             strokeLinecap="round"
@@ -116,7 +116,7 @@ export function Mascot({
               cx={eyeConfig.leftX}
               cy={eyeConfig.leftY}
               r={eyeConfig.r}
-              fill={Colors.navy}
+              fill={Colors.textPrimary}
             />
             {/* Eye shine */}
             <Circle
@@ -140,7 +140,7 @@ export function Mascot({
         {eyeConfig.sleepy ? (
           <Path
             d={`M ${eyeConfig.rightX - eyeConfig.r} ${eyeConfig.rightY} Q ${eyeConfig.rightX} ${eyeConfig.rightY - eyeConfig.r * 0.4} ${eyeConfig.rightX + eyeConfig.r} ${eyeConfig.rightY}`}
-            stroke={Colors.navy}
+            stroke={Colors.textPrimary}
             strokeWidth={s * 0.025}
             fill="none"
             strokeLinecap="round"
@@ -151,7 +151,7 @@ export function Mascot({
               cx={eyeConfig.rightX}
               cy={eyeConfig.rightY}
               r={eyeConfig.r}
-              fill={Colors.navy}
+              fill={Colors.textPrimary}
             />
             <Circle
               cx={eyeConfig.rightX - eyeConfig.r * 0.35}
@@ -173,7 +173,7 @@ export function Mascot({
         {/* Smile */}
         <Path
           d={smilePath[expression]}
-          stroke={Colors.navy}
+          stroke={Colors.textPrimary}
           strokeWidth={s * 0.025}
           fill="none"
           strokeLinecap="round"
@@ -182,9 +182,9 @@ export function Mascot({
         {/* Celebrate sparkles */}
         {expression === 'celebrate' && (
           <>
-            <Circle cx={cx - s * 0.35} cy={cy - s * 0.3} r={s * 0.025} fill={Colors.coral} opacity={0.7} />
-            <Circle cx={cx + s * 0.35} cy={cy - s * 0.28} r={s * 0.02} fill={Colors.lavender} opacity={0.8} />
-            <Circle cx={cx + s * 0.3} cy={cy - s * 0.38} r={s * 0.015} fill={Colors.blue} opacity={0.7} />
+            <Circle cx={cx - s * 0.35} cy={cy - s * 0.3} r={s * 0.025} fill={Colors.rose} opacity={0.7} />
+            <Circle cx={cx + s * 0.35} cy={cy - s * 0.28} r={s * 0.02} fill={Colors.prune} opacity={0.8} />
+            <Circle cx={cx + s * 0.3} cy={cy - s * 0.38} r={s * 0.015} fill={Colors.miel} opacity={0.7} />
           </>
         )}
       </Svg>
