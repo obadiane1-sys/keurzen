@@ -1,0 +1,202 @@
+<h2>Ecran — Generation de liste de courses</h2>
+<p class="subtitle">Flux de generation + liste generee avec ingredients agreges</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Bottom sheet — Generer la liste</div>
+    <div class="mockup-body" style="padding:0; background:#FAF6F1; min-height:480px; display:flex; flex-direction:column; justify-content:flex-end;">
+      <!-- Overlay -->
+      <div style="flex:1; background:rgba(61,44,34,0.15);"></div>
+      <!-- Bottom sheet -->
+      <div style="background:#FFFDF9; border-radius:20px 20px 0 0; padding:20px;">
+        <!-- Handle -->
+        <div style="width:36px; height:4px; background:#E8DFD5; border-radius:2px; margin:0 auto 16px;"></div>
+
+        <div style="font-size:17px; font-weight:700; color:#3D2C22; margin-bottom:4px;">Generer la liste de courses</div>
+        <div style="font-size:12px; color:#7A6B5D; margin-bottom:16px;">Selectionnez la periode pour agreger les ingredients</div>
+
+        <!-- Periode -->
+        <div style="font-size:12px; font-weight:600; color:#3D2C22; margin-bottom:8px;">Periode</div>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <div style="flex:1; background:#C4846C; color:white; padding:10px; border-radius:10px; text-align:center; font-size:12px; font-weight:600;">Cette semaine</div>
+          <div style="flex:1; background:#F0EAE2; color:#3D2C22; padding:10px; border-radius:10px; text-align:center; font-size:12px;">Semaine proch.</div>
+          <div style="flex:1; background:#F0EAE2; color:#3D2C22; padding:10px; border-radius:10px; text-align:center; font-size:12px;">2 semaines</div>
+        </div>
+
+        <!-- Resume -->
+        <div style="background:#FAF6F1; border-radius:12px; padding:14px; margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:#3D2C22; margin-bottom:8px;">Repas inclus</div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+            <span style="color:#7A6B5D;">Lun — Poulet basquaise</span>
+            <span style="color:#B8A99A;">4 pers.</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+            <span style="color:#7A6B5D;">Lun — Soupe de lentilles</span>
+            <span style="color:#B8A99A;">4 pers.</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+            <span style="color:#7A6B5D;">Mar — Pates carbonara</span>
+            <span style="color:#B8A99A;">2 pers.</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:#C4846C; font-weight:600;">3 repas</span>
+            <span style="color:#C4846C; font-weight:600;">~22 ingredients</span>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:12px; color:#3D2C22;">Fusionner avec la liste en cours</div>
+          <div style="width:40px; height:22px; background:#C4846C; border-radius:11px; position:relative;">
+            <div style="width:18px; height:18px; background:white; border-radius:9px; position:absolute; top:2px; right:2px;"></div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <div style="font-size:12px; color:#3D2C22;">Exclure les basiques (sel, poivre, huile)</div>
+          <div style="width:40px; height:22px; background:#E8DFD5; border-radius:11px; position:relative;">
+            <div style="width:18px; height:18px; background:white; border-radius:9px; position:absolute; top:2px; left:2px;"></div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="background:#C4846C; color:white; padding:14px; border-radius:12px; text-align:center; font-size:14px; font-weight:600;">Generer la liste</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Liste de courses generee</div>
+    <div class="mockup-body" style="padding:0; background:#FAF6F1; min-height:480px;">
+      <!-- Header -->
+      <div style="background:#FFFDF9; padding:16px 20px; border-bottom:1px solid #E8DFD5;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="color:#7A6B5D; font-size:16px;">&#9664;</div>
+            <div>
+              <div style="font-size:17px; font-weight:700; color:#3D2C22;">Courses semaine</div>
+              <div style="font-size:11px; color:#7A6B5D;">7-13 avril · 3 repas · 22 articles</div>
+            </div>
+          </div>
+          <div style="font-size:12px; color:#C4846C; font-weight:600;">Modifier</div>
+        </div>
+        <!-- Progress -->
+        <div style="margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+            <span style="color:#7A6B5D;">3 / 22 achetes</span>
+            <span style="color:#8BA888; font-weight:600;">14%</span>
+          </div>
+          <div style="height:4px; background:#F0EAE2; border-radius:2px;">
+            <div style="height:4px; background:#8BA888; border-radius:2px; width:14%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div style="padding:12px 16px;">
+        <!-- Fruits & Legumes -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+            <div style="font-size:14px;">🥬</div>
+            <div style="font-size:13px; font-weight:600; color:#3D2C22;">Fruits & Legumes</div>
+            <div style="font-size:10px; color:#7A6B5D; background:#F0EAE2; padding:2px 6px; border-radius:8px;">6</div>
+          </div>
+
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5;">
+            <div style="display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #F0EAE2;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #8BA888; background:#8BA888; margin-right:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:11px;">✓</div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#B8A99A; text-decoration:line-through;">Tomates</span>
+              </div>
+              <span style="font-size:11px; color:#B8A99A;">600g</span>
+            </div>
+            <div style="display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #F0EAE2;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Poivrons</span>
+                <span style="font-size:10px; color:#B8A99A; margin-left:6px;">Poulet basquaise</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">3 pcs</span>
+            </div>
+            <div style="display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #F0EAE2;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Oignons</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">4 pcs</span>
+            </div>
+            <div style="display:flex; align-items:center; padding:10px 12px;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Lentilles vertes</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">300g</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Viandes -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+            <div style="font-size:14px;">🥩</div>
+            <div style="font-size:13px; font-weight:600; color:#3D2C22;">Viandes & Poissons</div>
+            <div style="font-size:10px; color:#7A6B5D; background:#F0EAE2; padding:2px 6px; border-radius:8px;">2</div>
+          </div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5;">
+            <div style="display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #F0EAE2;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Cuisses de poulet</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">4 pcs</span>
+            </div>
+            <div style="display:flex; align-items:center; padding:10px 12px;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #8BA888; background:#8BA888; margin-right:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:11px;">✓</div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#B8A99A; text-decoration:line-through;">Lardons</span>
+              </div>
+              <span style="font-size:11px; color:#B8A99A;">150g</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Epicerie -->
+        <div>
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+            <div style="font-size:14px;">🫙</div>
+            <div style="font-size:13px; font-weight:600; color:#3D2C22;">Epicerie</div>
+            <div style="font-size:10px; color:#7A6B5D; background:#F0EAE2; padding:2px 6px; border-radius:8px;">4</div>
+          </div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5;">
+            <div style="display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #F0EAE2;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Pates spaghetti</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">250g</span>
+            </div>
+            <div style="display:flex; align-items:center; padding:10px 12px;">
+              <div style="width:20px; height:20px; border-radius:6px; border:2px solid #E8DFD5; margin-right:10px;"></div>
+              <div style="flex:1;">
+                <span style="font-size:13px; color:#3D2C22;">Parmesan</span>
+              </div>
+              <span style="font-size:11px; color:#7A6B5D;">100g</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Points de design</h3>
+  <ul style="font-size:13px; color:#3D2C22; line-height:2;">
+    <li><strong>Bottom sheet de generation</strong> : choix de periode, resume des repas inclus, options (fusionner, exclure basiques)</li>
+    <li><strong>Fusion intelligente</strong> : "tomates" du poulet basquaise + "tomates" de la soupe = 600g tomates</li>
+    <li><strong>Groupement par categorie</strong> : emojis, compteurs, sections repliables</li>
+    <li><strong>Source visible</strong> : indication subtile de la recette d'origine a cote de l'ingredient</li>
+    <li><strong>Barre de progression</strong> : articles coches / total</li>
+    <li><strong>Reutilise SharedList</strong> : la liste generee est une SharedList type "shopping" standard — visible aussi dans le module Listes</li>
+    <li><strong>Option "Fusionner"</strong> : ajoute a une liste existante au lieu d'en creer une nouvelle</li>
+  </ul>
+</div>
