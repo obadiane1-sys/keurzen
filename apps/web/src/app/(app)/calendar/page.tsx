@@ -18,7 +18,7 @@ const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 export default function CalendarPage() {
   const { profile } = useAuthStore();
   const { members } = useHouseholdStore();
-  const { data: tasks = [] } = useTasks();
+  const { data: tasks = [], isLoading } = useTasks();
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -69,6 +69,14 @@ export default function CalendarPage() {
   }
 
   const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : [];
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <>
