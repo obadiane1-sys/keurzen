@@ -81,6 +81,7 @@ export type TaskZone =
   | 'outside'
   | 'other';
 export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+export type TaskType = 'household' | 'personal';
 
 export interface Task {
   id: string;
@@ -96,6 +97,7 @@ export interface Task {
   status: TaskStatus;
   recurrence: RecurrenceType;
   recurrence_parent_id: string | null;
+  task_type: TaskType;
   completed_at: string | null;
   created_by: string;
   created_at: string;
@@ -119,6 +121,17 @@ export interface TimeLog {
   // Joined
   profile?: Profile;
   task?: Task;
+}
+
+// ─── Task Completion Ratings ──────────────────────────────────────────────────
+
+export interface TaskCompletionRating {
+  id: string;
+  task_id: string;
+  user_id: string;
+  household_id: string;
+  rating: 1 | 2 | 3;
+  rated_at: string;
 }
 
 // ─── NASA-TLX ──────────────────────────────────────────────────────────────────
@@ -295,6 +308,200 @@ export interface InvitationCode {
   invited_name: string | null;
 }
 
+// ─── Shared Lists ─────────────────────────────────────────────────────────────
+
+export type SharedListType = 'shopping' | 'todo' | 'custom';
+
+export type ShoppingItemCategory =
+  | 'fruits_legumes'
+  | 'viandes_poissons'
+  | 'produits_laitiers'
+  | 'boulangerie'
+  | 'epicerie'
+  | 'surgeles'
+  | 'boissons'
+  | 'hygiene'
+  | 'entretien'
+  | 'autre';
+
+export interface SharedList {
+  id: string;
+  household_id: string;
+  title: string;
+  type: SharedListType;
+  icon: string | null;
+  color: string | null;
+  archived: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // Joined / computed
+  item_count?: number;
+  creator?: Profile;
+}
+
+export interface SharedListItem {
+  id: string;
+  list_id: string;
+  title: string;
+  checked: boolean;
+  checked_by: string | null;
+  checked_at: string | null;
+  quantity: string | null;
+  category: string | null;
+  assigned_to: string | null;
+  position: number;
+  created_by: string;
+  created_at: string;
+  // Joined
+  assigned_profile?: Profile;
+  checked_profile?: Profile;
+}
+
+export interface SharedListFormValues {
+  title: string;
+  type: SharedListType;
+  icon?: string;
+  color?: string;
+}
+
+export interface SharedListItemFormValues {
+  title: string;
+  quantity?: string;
+  category?: string;
+  assigned_to?: string;
+}
+
+// ─── Weekly Reports (AI) ──────────────────────────────────────────────────────
+
+export interface AttentionPoint {
+  icon: string;
+  text: string;
+  level: 'warning' | 'info';
+}
+
+export interface Insight {
+  text: string;
+  category: 'imbalance' | 'workload' | 'pattern' | 'improvement';
+}
+
+export interface Orientation {
+  text: string;
+  priority: 'high' | 'medium';
+}
+
+export interface WeeklyReport {
+  id: string;
+  household_id: string;
+  week_start: string;
+  summary: string;
+  attention_points: AttentionPoint[];
+  insights: Insight[];
+  orientations: Orientation[];
+  model: string;
+  generated_at: string;
+  created_at: string;
+}
+
+// ─── Meals & Recipes ──────────────────────────────────────────────────────────
+
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+export type RecipeSource = 'system' | 'user';
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export interface Ingredient {
+  id: string;
+  name: string;
+  category: ShoppingItemCategory;
+  default_unit: string;
+  created_at: string;
+}
+
+export interface Recipe {
+  id: string;
+  household_id: string | null;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  prep_time: number;
+  cook_time: number;
+  servings: number;
+  difficulty: RecipeDifficulty;
+  tags: string[];
+  steps: { order: number; text: string }[];
+  source: RecipeSource;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  ingredients?: RecipeIngredient[];
+  is_favorite?: boolean;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  recipe_id: string;
+  ingredient_id: string;
+  quantity: number;
+  unit: string;
+  optional: boolean;
+  note: string | null;
+  // Joined
+  ingredient?: Ingredient;
+}
+
+export interface MealPlanItem {
+  id: string;
+  household_id: string;
+  recipe_id: string;
+  date: string;
+  meal_type: MealType;
+  servings: number;
+  assigned_to: string | null;
+  task_id: string | null;
+  created_by: string;
+  created_at: string;
+  // Joined
+  recipe?: Recipe;
+  assigned_profile?: Profile;
+  task?: Task;
+}
+
+export interface RecipeFavorite {
+  id: string;
+  user_id: string;
+  recipe_id: string;
+  created_at: string;
+}
+
+// ─── Meal Form Types ──────────────────────────────────────────────────────────
+
+export interface RecipeFormValues {
+  title: string;
+  description?: string;
+  prep_time: number;
+  cook_time: number;
+  servings: number;
+  difficulty: RecipeDifficulty;
+  tags: string[];
+  steps: { order: number; text: string }[];
+  ingredients: {
+    ingredient_id: string;
+    quantity: number;
+    unit: string;
+    optional: boolean;
+    note?: string;
+  }[];
+}
+
+export interface MealPlanFormValues {
+  recipe_id: string;
+  date: string;
+  meal_type: MealType;
+  servings: number;
+  assigned_to?: string;
+}
+
 // ─── Utility Types ─────────────────────────────────────────────────────────────
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -323,6 +530,7 @@ export interface TaskFormValues {
   priority: TaskPriority;
   estimated_minutes?: number;
   recurrence: RecurrenceType;
+  task_type?: TaskType;
 }
 
 export interface TlxFormValues {
