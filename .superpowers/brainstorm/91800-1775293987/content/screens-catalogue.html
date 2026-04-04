@@ -1,0 +1,220 @@
+<h2>Ecran — Catalogue de recettes</h2>
+<p class="subtitle">Recherche, filtres et grille de recettes (publiques + foyer)</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Catalogue — Vue par defaut</div>
+    <div class="mockup-body" style="padding:0; background:#FAF6F1; min-height:520px;">
+      <!-- Header -->
+      <div style="background:#FFFDF9; padding:16px 20px; border-bottom:1px solid #E8DFD5;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="color:#7A6B5D; font-size:16px;">&#9664;</div>
+            <div style="font-size:18px; font-weight:700; color:#3D2C22;">Recettes</div>
+          </div>
+          <div style="width:32px; height:32px; border-radius:10px; background:#C4846C; display:flex; align-items:center; justify-content:center; color:white; font-size:16px;">+</div>
+        </div>
+        <!-- Search -->
+        <div style="background:#F0EAE2; border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+          <div style="color:#B8A99A; font-size:14px;">🔍</div>
+          <div style="color:#B8A99A; font-size:13px;">Rechercher une recette...</div>
+        </div>
+        <!-- Filters -->
+        <div style="display:flex; gap:6px; margin-top:10px; overflow-x:auto;">
+          <div style="background:#C4846C; color:white; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;">Toutes</div>
+          <div style="background:#FFFDF9; color:#7A6B5D; padding:6px 12px; border-radius:20px; font-size:11px; border:1px solid #E8DFD5; white-space:nowrap;">Rapide (&lt;30min)</div>
+          <div style="background:#FFFDF9; color:#7A6B5D; padding:6px 12px; border-radius:20px; font-size:11px; border:1px solid #E8DFD5; white-space:nowrap;">Vegetarien</div>
+          <div style="background:#FFFDF9; color:#7A6B5D; padding:6px 12px; border-radius:20px; font-size:11px; border:1px solid #E8DFD5; white-space:nowrap;">Familial</div>
+          <div style="background:#FFFDF9; color:#7A6B5D; padding:6px 12px; border-radius:20px; font-size:11px; border:1px solid #E8DFD5; white-space:nowrap;">Batch cooking</div>
+        </div>
+      </div>
+
+      <!-- Section Mes recettes -->
+      <div style="padding:16px 16px 8px;">
+        <div style="font-size:13px; font-weight:600; color:#3D2C22; margin-bottom:10px;">Nos recettes</div>
+        <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:4px;">
+          <div style="min-width:150px; background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:80px; background:linear-gradient(135deg, #D4A959 0%, #C4846C 100%); position:relative;">
+              <div style="position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#C4846C; font-weight:600;">Foyer</div>
+            </div>
+            <div style="padding:10px;">
+              <div style="font-size:13px; font-weight:500; color:#3D2C22;">Tajine d'agneau</div>
+              <div style="display:flex; gap:8px; margin-top:4px;">
+                <div style="font-size:10px; color:#7A6B5D;">⏱ 1h20</div>
+                <div style="font-size:10px; color:#7A6B5D;">👤 6 pers.</div>
+              </div>
+            </div>
+          </div>
+          <div style="min-width:150px; background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:80px; background:linear-gradient(135deg, #9B8AA8 0%, #C48BA0 100%); position:relative;">
+              <div style="position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#C4846C; font-weight:600;">Foyer</div>
+            </div>
+            <div style="padding:10px;">
+              <div style="font-size:13px; font-weight:500; color:#3D2C22;">Risotto champignons</div>
+              <div style="display:flex; gap:8px; margin-top:4px;">
+                <div style="font-size:10px; color:#7A6B5D;">⏱ 45min</div>
+                <div style="font-size:10px; color:#7A6B5D;">👤 4 pers.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Catalogue -->
+      <div style="padding:12px 16px;">
+        <div style="font-size:13px; font-weight:600; color:#3D2C22; margin-bottom:10px;">Catalogue</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:70px; background:linear-gradient(135deg, #8BA888 0%, #6BA08F 100%); position:relative;">
+              <div style="position:absolute; bottom:6px; left:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#8BA888; font-weight:600;">Facile</div>
+              <div style="position:absolute; top:6px; right:6px; font-size:14px; cursor:pointer;">♡</div>
+            </div>
+            <div style="padding:8px;">
+              <div style="font-size:12px; font-weight:500; color:#3D2C22;">Poulet basquaise</div>
+              <div style="font-size:10px; color:#7A6B5D; margin-top:2px;">⏱ 50min · 👤 4</div>
+            </div>
+          </div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:70px; background:linear-gradient(135deg, #C4846C 0%, #D4807A 100%); position:relative;">
+              <div style="position:absolute; bottom:6px; left:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#D4A959; font-weight:600;">Moyen</div>
+              <div style="position:absolute; top:6px; right:6px; font-size:14px; cursor:pointer;">♡</div>
+            </div>
+            <div style="padding:8px;">
+              <div style="font-size:12px; font-weight:500; color:#3D2C22;">Gratin dauphinois</div>
+              <div style="font-size:10px; color:#7A6B5D; margin-top:2px;">⏱ 1h10 · 👤 6</div>
+            </div>
+          </div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:70px; background:linear-gradient(135deg, #D4A959 0%, #D4807A 100%); position:relative;">
+              <div style="position:absolute; bottom:6px; left:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#8BA888; font-weight:600;">Facile</div>
+              <div style="position:absolute; top:6px; right:6px; font-size:14px; cursor:pointer;">❤️</div>
+            </div>
+            <div style="padding:8px;">
+              <div style="font-size:12px; font-weight:500; color:#3D2C22;">Quiche lorraine</div>
+              <div style="font-size:10px; color:#7A6B5D; margin-top:2px;">⏱ 55min · 👤 6</div>
+            </div>
+          </div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; overflow:hidden;">
+            <div style="height:70px; background:linear-gradient(135deg, #7EB3C4 0%, #9B8AA8 100%); position:relative;">
+              <div style="position:absolute; bottom:6px; left:6px; background:rgba(255,255,255,0.9); border-radius:6px; padding:2px 6px; font-size:9px; color:#8BA888; font-weight:600;">Facile</div>
+              <div style="position:absolute; top:6px; right:6px; font-size:14px; cursor:pointer;">♡</div>
+            </div>
+            <div style="padding:8px;">
+              <div style="font-size:12px; font-weight:500; color:#3D2C22;">Salade nicoise</div>
+              <div style="font-size:10px; color:#7A6B5D; margin-top:2px;">⏱ 20min · 👤 4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Fiche recette detaillee</div>
+    <div class="mockup-body" style="padding:0; background:#FAF6F1; min-height:520px;">
+      <!-- Hero -->
+      <div style="height:160px; background:linear-gradient(135deg, #D4A959 0%, #C4846C 100%); position:relative;">
+        <div style="position:absolute; top:12px; left:12px; width:32px; height:32px; background:rgba(255,255,255,0.9); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#3D2C22; font-size:14px;">&#9664;</div>
+        <div style="position:absolute; top:12px; right:12px; width:32px; height:32px; background:rgba(255,255,255,0.9); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px;">❤️</div>
+      </div>
+
+      <!-- Content -->
+      <div style="padding:16px 20px; margin-top:-20px; background:#FAF6F1; border-radius:16px 16px 0 0; position:relative;">
+        <div style="font-size:20px; font-weight:700; color:#3D2C22;">Poulet basquaise</div>
+        <div style="font-size:12px; color:#7A6B5D; margin-top:4px;">Plat traditionnel du Pays Basque, mijoté aux poivrons</div>
+
+        <!-- Meta -->
+        <div style="display:flex; gap:16px; margin-top:14px;">
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:#7A6B5D;">Prep</div>
+            <div style="font-size:14px; font-weight:600; color:#3D2C22;">15min</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:#7A6B5D;">Cuisson</div>
+            <div style="font-size:14px; font-weight:600; color:#3D2C22;">35min</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:#7A6B5D;">Portions</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="color:#C4846C; font-size:14px; cursor:pointer;">−</div>
+              <div style="font-size:14px; font-weight:600; color:#3D2C22;">4</div>
+              <div style="color:#C4846C; font-size:14px; cursor:pointer;">+</div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px; color:#7A6B5D;">Difficulte</div>
+            <div style="font-size:14px; font-weight:600; color:#8BA888;">Facile</div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
+          <div style="background:#C4846C22; color:#C4846C; padding:4px 10px; border-radius:20px; font-size:10px;">Familial</div>
+          <div style="background:#8BA88822; color:#8BA888; padding:4px 10px; border-radius:20px; font-size:10px;">Sans gluten</div>
+        </div>
+
+        <!-- Ingredients -->
+        <div style="margin-top:18px;">
+          <div style="font-size:14px; font-weight:600; color:#3D2C22; margin-bottom:8px;">Ingredients</div>
+          <div style="background:#FFFDF9; border-radius:12px; border:1px solid #E8DFD5; padding:12px;">
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #F0EAE2; font-size:12px;">
+              <span style="color:#3D2C22;">Cuisses de poulet</span>
+              <span style="color:#7A6B5D;">4 pieces</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #F0EAE2; font-size:12px;">
+              <span style="color:#3D2C22;">Poivrons</span>
+              <span style="color:#7A6B5D;">3 pieces</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #F0EAE2; font-size:12px;">
+              <span style="color:#3D2C22;">Oignon</span>
+              <span style="color:#7A6B5D;">2 pieces</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #F0EAE2; font-size:12px;">
+              <span style="color:#3D2C22;">Tomates</span>
+              <span style="color:#7A6B5D;">400g</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px;">
+              <span style="color:#3D2C22;">Huile d'olive</span>
+              <span style="color:#7A6B5D;">3 cs</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Steps -->
+        <div style="margin-top:16px;">
+          <div style="font-size:14px; font-weight:600; color:#3D2C22; margin-bottom:8px;">Etapes</div>
+          <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <div style="width:24px; height:24px; border-radius:12px; background:#C4846C; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0;">1</div>
+            <div style="font-size:12px; color:#3D2C22; line-height:1.5;">Couper les poivrons et l'oignon en lamelles.</div>
+          </div>
+          <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <div style="width:24px; height:24px; border-radius:12px; background:#C4846C; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0;">2</div>
+            <div style="font-size:12px; color:#3D2C22; line-height:1.5;">Faire dorer le poulet dans l'huile d'olive, puis reserver.</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="width:24px; height:24px; border-radius:12px; background:#C4846C; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0;">3</div>
+            <div style="font-size:12px; color:#3D2C22; line-height:1.5;">Faire revenir les legumes, ajouter les tomates, puis le poulet. Laisser mijoter 35 min.</div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="margin-top:20px;">
+          <div style="background:#C4846C; color:white; padding:14px; border-radius:12px; text-align:center; font-size:14px; font-weight:600;">Ajouter au planning</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Points de design</h3>
+  <ul style="font-size:13px; color:#3D2C22; line-height:2;">
+    <li><strong>Deux sections</strong> : "Nos recettes" (foyer, carousel horizontal) et "Catalogue" (grille 2 colonnes)</li>
+    <li><strong>Filtres horizontaux</strong> : chips scrollables par tags (rapide, vegetarien, familial...)</li>
+    <li><strong>Badge "Foyer"</strong> : distingue les recettes perso des recettes du dataset</li>
+    <li><strong>Coeur favori</strong> : toggle directement sur la card, rempli = favori</li>
+    <li><strong>Fiche recette</strong> : hero image, meta (temps, portions ajustables, difficulte), ingredients, etapes numerotees</li>
+    <li><strong>CTA principal</strong> : "Ajouter au planning" ouvre le bottom sheet d'ajout (date, type, cuisinier)</li>
+    <li><strong>Portions dynamiques</strong> : +/- recalcule les quantites d'ingredients en temps reel</li>
+  </ul>
+</div>

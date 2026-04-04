@@ -1,0 +1,112 @@
+<h2>Architecture des ecrans — Module Repas</h2>
+<p class="subtitle">7 ecrans principaux organises dans un nouvel onglet "Repas" de la tab bar</p>
+
+<div class="section">
+  <h3>Navigation principale</h3>
+  <div class="mockup">
+    <div class="mockup-header">Tab Bar — Nouvel onglet</div>
+    <div class="mockup-body" style="padding: 20px;">
+      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:24px;">
+        <div style="background:#E8DFD5; padding:10px 16px; border-radius:12px; font-size:13px; color:#7A6B5D;">Dashboard</div>
+        <div style="background:#E8DFD5; padding:10px 16px; border-radius:12px; font-size:13px; color:#7A6B5D;">Taches</div>
+        <div style="background:#C4846C; padding:10px 16px; border-radius:12px; font-size:13px; color:white; font-weight:600;">Repas</div>
+        <div style="background:#E8DFD5; padding:10px 16px; border-radius:12px; font-size:13px; color:#7A6B5D;">Calendrier</div>
+        <div style="background:#E8DFD5; padding:10px 16px; border-radius:12px; font-size:13px; color:#7A6B5D;">Menu</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Arborescence des ecrans</h3>
+  <div class="mockup">
+    <div class="mockup-header">app/(app)/meals/</div>
+    <div class="mockup-body" style="padding: 20px; font-family: monospace; font-size: 13px; line-height: 2.2;">
+      <div style="color:#3D2C22;">
+        <div><strong style="color:#C4846C;">meals/index.tsx</strong> — Planning hebdo (ecran principal)</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Vue semaine flexible, repas par jour, FAB pour ajouter</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/recipes/index.tsx</strong> — Catalogue de recettes</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Recherche, filtres (tags, difficulte, temps), grille de cards</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/recipes/[id].tsx</strong> — Fiche recette detaillee</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Photo, ingredients, etapes, portions ajustables, bouton "Planifier"</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/recipes/create.tsx</strong> — Creer une recette perso</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Formulaire : titre, ingredients (autocomplete), etapes, temps, tags</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/add.tsx</strong> — Ajouter un repas au planning</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Bottom sheet : choisir recette, date, type de repas, cuisinier, portions</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/history.tsx</strong> — Historique des repas</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Repas passes, frequence, dernier prepare le...</div>
+
+        <div style="margin-top:12px;"><strong style="color:#C4846C;">meals/favorites.tsx</strong> — Recettes favorites</div>
+        <div style="margin-left:20px; color:#7A6B5D;">Filtrable, acces rapide pour planifier</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Flux principaux</h3>
+  <div class="mockup">
+    <div class="mockup-header">Parcours utilisateur</div>
+    <div class="mockup-body" style="padding: 20px; font-size: 13px; line-height: 2;">
+      <div style="margin-bottom:16px;">
+        <div style="color:#C4846C; font-weight:600;">Flux 1 : Planifier un repas</div>
+        <div style="color:#3D2C22;">Planning → "+" → Choisir recette (catalogue) → Date + type + cuisinier → Confirmer</div>
+        <div style="color:#8BA888; font-size:12px;">→ Cree un meal_plan_item + une tache household "Cuisiner [recette]"</div>
+        <div style="color:#8BA888; font-size:12px;">→ Ingredients ajoutes automatiquement a la liste de courses active</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="color:#C4846C; font-weight:600;">Flux 2 : Generer la liste de courses</div>
+        <div style="color:#3D2C22;">Planning → Bouton "Liste de courses" → Choisir periode → Generer</div>
+        <div style="color:#8BA888; font-size:12px;">→ Cree/met a jour une SharedList "shopping" avec ingredients agreges</div>
+        <div style="color:#8BA888; font-size:12px;">→ Fusionne les quantites (300g tomate + 200g tomate = 500g tomate)</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="color:#C4846C; font-weight:600;">Flux 3 : Ajouter une recette perso</div>
+        <div style="color:#3D2C22;">Catalogue → "+" → Formulaire recette → Ingredients (autocomplete) → Sauvegarder</div>
+        <div style="color:#8BA888; font-size:12px;">→ Recette liee au household, visible par tous les membres</div>
+      </div>
+      <div>
+        <div style="color:#C4846C; font-weight:600;">Flux 4 : Suggestions depuis l'historique</div>
+        <div style="color:#3D2C22;">Planning → Section "Suggestions" → Recettes frequentes / pas cuisinees depuis longtemps</div>
+        <div style="color:#8BA888; font-size:12px;">→ Basees sur meal_plan_items passes du foyer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Quel positionnement pour l'onglet Repas dans la tab bar ?</h3>
+  <p class="subtitle">Actuellement : Dashboard | Taches | Calendrier | Listes | Menu</p>
+
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Remplacer "Listes"</h3>
+        <p>Dashboard | Taches | <strong>Repas</strong> | Calendrier | Menu<br/>
+        <span style="color:#7A6B5D; font-size:12px;">Les listes deviennent accessibles depuis le module Repas (liste de courses) et le Menu. Simplifie la tab bar.</span></p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Ajouter un 6e onglet</h3>
+        <p>Dashboard | Taches | <strong>Repas</strong> | Calendrier | Listes | Menu<br/>
+        <span style="color:#7A6B5D; font-size:12px;">Garde tout accessible mais 6 onglets = tab bar chargee sur mobile.</span></p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Sous le Menu</h3>
+        <p>Dashboard | Taches | Calendrier | Listes | Menu → <strong>Repas</strong><br/>
+        <span style="color:#7A6B5D; font-size:12px;">Pas d'onglet dedie, accessible depuis le menu. Moins visible mais tab bar legere.</span></p>
+      </div>
+    </div>
+  </div>
+</div>

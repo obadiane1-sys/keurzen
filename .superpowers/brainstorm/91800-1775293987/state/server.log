@@ -1,0 +1,7 @@
+{"type":"server-started","port":56457,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:56457","screen_dir":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content","state_dir":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/state"}
+{"type":"screen-added","file":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content/navigation-map.html"}
+{"type":"screen-added","file":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content/screens-planning.html"}
+{"type":"screen-added","file":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content/screens-catalogue.html"}
+{"type":"screen-added","file":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content/screens-grocery-generation.html"}
+{"type":"screen-added","file":"/Users/ouss/Keurzen/.superpowers/brainstorm/91800-1775293987/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}
