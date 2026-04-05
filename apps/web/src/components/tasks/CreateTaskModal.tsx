@@ -35,21 +35,6 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
     [allVariants, titleQuery],
   );
 
-  const handleVariantSelect = (variant: TaskVariant) => {
-    reset({
-      title: variant.title,
-      description: variant.description ?? '',
-      priority: variant.priority as TaskFormValues['priority'],
-      category: variant.category as TaskFormValues['category'],
-      zone: variant.zone as TaskFormValues['zone'],
-      recurrence: variant.recurrence as TaskFormValues['recurrence'],
-      estimated_minutes: variant.estimatedMinutes ?? undefined,
-      task_type: 'household',
-    });
-    setTitleQuery(variant.title);
-    setShowSuggestions(false);
-  };
-
   const {
     register,
     handleSubmit,
@@ -66,6 +51,21 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
       task_type: 'household',
     },
   });
+
+  const handleVariantSelect = (variant: TaskVariant) => {
+    reset({
+      title: variant.title,
+      description: variant.description ?? '',
+      priority: variant.priority as TaskFormValues['priority'],
+      category: variant.category as TaskFormValues['category'],
+      zone: variant.zone as TaskFormValues['zone'],
+      recurrence: variant.recurrence as TaskFormValues['recurrence'],
+      estimated_minutes: variant.estimatedMinutes ?? undefined,
+      task_type: 'household',
+    });
+    setTitleQuery(variant.title);
+    setShowSuggestions(false);
+  };
 
   const onSubmit = async (values: TaskFormValues) => {
     await createTask(values);
