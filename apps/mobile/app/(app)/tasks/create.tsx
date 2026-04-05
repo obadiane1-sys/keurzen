@@ -21,6 +21,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../../src/components/ui/Text';
 import { useCreateTask, useTasks } from '../../../src/lib/queries/tasks';
 import { TaskSuggestions } from '../../../src/components/tasks/TaskSuggestions';
+import { buildTaskVariants, filterVariants } from '../../../src/lib/utils/taskVariants';
+import type { TaskVariant } from '../../../src/lib/utils/taskVariants';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { categoryLabels } from '../../../src/components/tasks/TaskCard';
 import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
@@ -371,10 +373,15 @@ export default function CreateTaskScreen() {
   const { members } = useHouseholdStore();
   const { data: existingTasks = [] } = useTasks();
 
-  // Unique task titles for autocomplete suggestions
-  const taskSuggestions = useMemo(
-    () => [...new Set(existingTasks.map(t => t.title))],
+  // Build deduplicated task variants for suggestions
+  const allVariants = useMemo(
+    () => buildTaskVariants(existingTasks),
     [existingTasks]
+  );
+
+  const filteredVariants = useMemo(
+    () => filterVariants(allVariants, taskName),
+    [allVariants, taskName]
   );
 
   // Form state
@@ -479,6 +486,16 @@ export default function CreateTaskScreen() {
       }
     }
   };
+
+  const handleVariantSelect = useCallback((variant: TaskVariant) => {
+    setTaskName(variant.title);
+    setCategory(variant.category);
+    setPriority(variant.priority);
+    setRecurrence(variant.recurrence);
+    setEstimatedMinutes(variant.estimatedMinutes != null ? String(variant.estimatedMinutes) : '');
+    setNotes(variant.description ?? '');
+    setInputFocused(false);
+  }, []);
 
   // ─── Derived data ─────────────────────────────────────────────────────────
 
@@ -600,12 +617,9 @@ export default function CreateTaskScreen() {
           />
           <TaskSuggestions
             query={taskName}
-            suggestions={taskSuggestions}
+            variants={filteredVariants}
             visible={inputFocused}
-            onSelect={(title) => {
-              setTaskName(title);
-              setInputFocused(false);
-            }}
+            onSelect={handleVariantSelect}
           />
         </View>
 
