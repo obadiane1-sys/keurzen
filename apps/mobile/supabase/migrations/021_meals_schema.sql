@@ -5,6 +5,10 @@
 --         meal_plan_items, recipe_favorites
 -- ============================================================
 
+-- ─── Enable pg_trgm for ingredient fuzzy search ────────────────────────────
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- ─── Table : ingredients ────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.ingredients (
@@ -99,10 +103,6 @@ CREATE TABLE IF NOT EXISTS public.recipe_favorites (
 
 CREATE INDEX IF NOT EXISTS idx_recipe_favorites_user
   ON public.recipe_favorites (user_id);
-
--- ─── Enable pg_trgm for ingredient fuzzy search ────────────────────────────
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ─── RLS : ingredients ──────────────────────────────────────────────────────
 
