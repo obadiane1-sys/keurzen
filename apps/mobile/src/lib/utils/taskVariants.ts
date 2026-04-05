@@ -17,40 +17,35 @@ function variantKey(t: { title: string; category: string; priority: string; recu
 }
 
 export function buildTaskVariants(tasks: Task[]): TaskVariant[] {
-  const map = new Map<string, { variant: TaskVariant; count: number }>();
+  const map = new Map<string, TaskVariant>();
 
   for (const t of tasks) {
     const key = variantKey(t);
     const existing = map.get(key);
     if (existing) {
       existing.count += 1;
-      existing.variant.count = existing.count;
     } else {
       map.set(key, {
+        title: t.title,
+        category: t.category,
+        priority: t.priority,
+        recurrence: t.recurrence,
+        estimatedMinutes: t.estimated_minutes,
+        description: t.description,
+        zone: t.zone,
         count: 1,
-        variant: {
-          title: t.title,
-          category: t.category,
-          priority: t.priority,
-          recurrence: t.recurrence,
-          estimatedMinutes: t.estimated_minutes,
-          description: t.description,
-          zone: t.zone,
-          count: 1,
-        },
       });
     }
   }
 
-  return Array.from(map.values())
-    .map((entry) => entry.variant)
-    .sort((a, b) => b.count - a.count);
+  return Array.from(map.values()).sort((a, b) => b.count - a.count);
 }
 
 export function filterVariants(variants: TaskVariant[], query: string, maxResults = 5): TaskVariant[] {
   if (query.length < 2) return [];
   const q = query.toLowerCase();
   return variants
+    // Exclude exact title matches — don't suggest what's already typed
     .filter((v) => v.title.toLowerCase().includes(q) && v.title.toLowerCase() !== q)
     .slice(0, maxResults);
 }
@@ -78,6 +73,7 @@ export function formatVariantSubtitle(v: TaskVariant, categoryLabels: Record<str
     }
   }
 
+  // medium is intentionally omitted — it's the default priority, no need to show it in subtitle
   const priorityLabels: Record<string, string> = { low: 'Faible', high: 'Haute', urgent: 'Urgente' };
   if (priorityLabels[v.priority]) {
     parts.push(priorityLabels[v.priority]);
