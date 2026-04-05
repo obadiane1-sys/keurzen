@@ -91,3 +91,59 @@ export function useRegenerateReport() {
     },
   });
 }
+
+// ─── Weekly Review — Full Report with Metrics ────────────────────────────────
+
+export function useWeeklyReview(weekStart?: string) {
+  const { currentHousehold } = useHouseholdStore();
+  const defaultWeek = useMemo(() => getCurrentWeekStart(), []);
+  const week = weekStart ?? defaultWeek;
+
+  return useQuery({
+    queryKey: ['weekly-review', currentHousehold?.id ?? '', week] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_reports')
+        .select('*')
+        .eq('household_id', currentHousehold!.id)
+        .eq('week_start', week)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      return data as WeeklyReport | null;
+    },
+    enabled: !!currentHousehold?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ─── Weekly Review History ───────────────────────────────────────────────────
+
+export interface WeeklyReviewSummary {
+  id: string;
+  week_start: string;
+  balance_score: number | null;
+  total_tasks_completed: number;
+  generated_at: string;
+}
+
+export function useWeeklyReviewHistory(limit = 8) {
+  const { currentHousehold } = useHouseholdStore();
+
+  return useQuery({
+    queryKey: ['weekly-review-history', currentHousehold?.id ?? '', limit] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_reports')
+        .select('id, week_start, balance_score, total_tasks_completed, generated_at')
+        .eq('household_id', currentHousehold!.id)
+        .order('week_start', { ascending: false })
+        .limit(limit);
+
+      if (error) throw new Error(error.message);
+      return (data ?? []) as WeeklyReviewSummary[];
+    },
+    enabled: !!currentHousehold?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
