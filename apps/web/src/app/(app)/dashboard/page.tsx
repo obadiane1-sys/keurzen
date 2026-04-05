@@ -96,20 +96,20 @@ export default function DashboardPage() {
             value={currentTlx?.score ?? 0}
             max={100}
             color="var(--color-prune)"
-            label="TLX"
+            label="Charge mentale"
             subtitle="/ 100"
           />
           <CircularGauge
             value={balancePercent}
             max={100}
             color="var(--color-sauge)"
-            label="Balance"
+            label="Mon equilibre"
           />
           <CircularGauge
             value={weeklyProgress}
             max={100}
             color="var(--color-miel)"
-            label="Semaine"
+            label="Progression"
           />
         </div>
       </Card>

@@ -228,20 +228,20 @@ export default function DashboardScreen() {
               value={currentTlx?.score ?? 0}
               max={100}
               color={Colors.prune}
-              label="TLX"
+              label="Charge mentale"
               subtitle="/ 100"
             />
             <CircularGauge
               value={balancePercent}
               max={100}
               color={Colors.sauge}
-              label="Balance"
+              label="Mon equilibre"
             />
             <CircularGauge
               value={weeklyProgress}
               max={100}
               color={Colors.miel}
-              label="Semaine"
+              label="Progression"
             />
           </View>
         </FadeSection>
