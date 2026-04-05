@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarCheck, AlertTriangle, ListChecks, ChevronRight } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@keurzen/stores';
 import {
   useTasks,
@@ -10,33 +11,58 @@ import {
   useWeeklyBalance,
   useCurrentTlx,
   useTlxDelta,
-  useUnreadCount,
 } from '@keurzen/queries';
-import { getGreeting } from '@keurzen/shared';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { StatCard } from '@/components/ui/StatCard';
+import { formatDate } from '@keurzen/shared';
+import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
-import { BalanceCard } from '@/components/dashboard/BalanceCard';
-import { TlxCard } from '@/components/dashboard/TlxCard';
-import { TodayTasks } from '@/components/dashboard/TodayTasks';
-import { RecentlyDone } from '@/components/dashboard/RecentlyDone';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { CircularGauge } from '@/components/dashboard/CircularGauge';
+import { StatusPillsRow } from '@/components/dashboard/StatusPills';
+import { NarrativeCard } from '@/components/dashboard/NarrativeCard';
+import { TlxDetailCard } from '@/components/dashboard/TlxDetailCard';
 import { WeeklyReportSection } from '@/components/dashboard/WeeklyReportSection';
+
+const priorityColors: Record<string, string> = {
+  high: 'var(--color-rose)',
+  urgent: 'var(--color-rose)',
+  medium: 'var(--color-miel)',
+  low: 'var(--color-sauge)',
+};
+
+function formatDateHeader(): string {
+  const months = [
+    'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
+  ];
+  const now = new Date();
+  return `Aujourd'hui, ${now.getDate()} ${months[now.getMonth()]}`;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { profile } = useAuthStore();
+  const { profile, household } = useAuthStore();
   const { data: allTasks = [], isLoading } = useTasks();
   const overdueTasks = useOverdueTasks();
   const todayTasks = useTodayTasks();
   const { members: balanceMembers } = useWeeklyBalance();
   const { data: currentTlx } = useCurrentTlx();
   const { data: tlxDelta } = useTlxDelta();
-  const { data: unreadCount = 0 } = useUnreadCount();
 
-  const firstName = profile?.full_name?.split(' ')[0] ?? '';
-  const greeting = getGreeting();
-  const activeTasks = allTasks.filter((t) => t.status !== 'done');
-  const doneTasks = allTasks.filter((t) => t.status === 'done');
+  const { activeTasks, doneTasks } = useMemo(() => {
+    const active: typeof allTasks = [];
+    const done: typeof allTasks = [];
+    for (const t of allTasks) {
+      if (t.status === 'done') done.push(t);
+      else active.push(t);
+    }
+    return { activeTasks: active, doneTasks: done };
+  }, [allTasks]);
+
+  const myBalance = balanceMembers.find((m) => m.userId === profile?.id);
+  const balancePercent = myBalance ? Math.round(myBalance.tasksShare * 100) : 0;
+  const weeklyProgress = allTasks.length > 0
+    ? Math.round((doneTasks.length / allTasks.length) * 100)
+    : 0;
 
   if (isLoading) {
     return (
@@ -48,77 +74,166 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting}, ${firstName}`}
-        userName={profile?.full_name || undefined}
-        avatarUrl={profile?.avatar_url}
-        unreadCount={unreadCount}
-      />
+      {/* 1. Header */}
+      <div className="mb-2 flex items-center justify-between">
+        <h1 className="font-heading text-2xl font-bold">{formatDateHeader()}</h1>
+        <Avatar src={profile?.avatar_url} name={profile?.full_name || undefined} size={38} />
+      </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-3 mb-6 max-sm:grid-cols-1">
-        <StatCard
-          label="Aujourd'hui"
-          value={todayTasks.length.toString()}
-          icon={CalendarCheck}
-          color="var(--color-sauge)"
-          onClick={() => router.push('/tasks')}
-        />
-        <StatCard
-          label="En retard"
-          value={overdueTasks.length.toString()}
-          icon={AlertTriangle}
-          color={overdueTasks.length > 0 ? 'var(--color-rose)' : 'var(--color-text-muted)'}
-          onClick={() => router.push('/tasks')}
-        />
-        <StatCard
-          label="Total actif"
-          value={activeTasks.length.toString()}
-          icon={ListChecks}
-          color="var(--color-miel)"
-          onClick={() => router.push('/tasks')}
+      {/* 2. Status Pills */}
+      <div className="mb-6">
+        <StatusPillsRow
+          householdName={household?.name ?? 'Mon foyer'}
+          todayCount={todayTasks.length}
+          overdueCount={overdueTasks.length}
         />
       </div>
 
-      {/* Overdue Alert */}
-      {overdueTasks.length > 0 && (
-        <Card
-          hoverable
-          onClick={() => router.push('/tasks')}
-          className="mb-6 flex items-center gap-3 border border-rose/20 bg-rose/5"
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-rose/15">
-            <AlertTriangle size={18} className="text-rose" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-text-primary">
-              {overdueTasks.length} tache{overdueTasks.length > 1 ? 's' : ''} en retard
-            </p>
-            <p className="text-xs text-text-muted truncate">
-              {overdueTasks
-                .slice(0, 2)
-                .map((t) => t.title)
-                .join(', ')}
-              {overdueTasks.length > 2 ? '...' : ''}
-            </p>
-          </div>
-          <ChevronRight size={16} className="text-text-muted shrink-0" />
-        </Card>
-      )}
+      {/* 3. Three Gauges */}
+      <Card className="mb-6">
+        <div className="flex justify-around items-center py-2">
+          <CircularGauge
+            value={currentTlx?.score ?? 0}
+            max={100}
+            color="var(--color-prune)"
+            label="TLX"
+            subtitle="/ 100"
+          />
+          <CircularGauge
+            value={balancePercent}
+            max={100}
+            color="var(--color-sauge)"
+            label="Balance"
+          />
+          <CircularGauge
+            value={weeklyProgress}
+            max={100}
+            color="var(--color-miel)"
+            label="Semaine"
+          />
+        </div>
+      </Card>
 
-      {/* Balance + TLX — 2 columns */}
+      {/* 4. Narrative Card */}
+      <div className="mb-6">
+        <NarrativeCard
+          doneTasks={doneTasks.length}
+          overdueTasks={overdueTasks.length}
+          tlxDelta={tlxDelta?.delta ?? null}
+          hasTlx={!!currentTlx}
+        />
+      </div>
+
+      {/* 5. Charge Mentale + 6. Taches du jour — 2 columns on desktop */}
       <div className="grid grid-cols-2 gap-4 mb-6 max-md:grid-cols-1">
-        <BalanceCard members={balanceMembers} />
-        <TlxCard currentTlx={currentTlx} tlxDelta={tlxDelta} />
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Charge mentale
+          </p>
+          <TlxDetailCard currentTlx={currentTlx} tlxDelta={tlxDelta} />
+        </div>
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+              Taches du jour
+            </p>
+            {todayTasks.length > 0 && (
+              <button
+                onClick={() => router.push('/tasks')}
+                className="text-xs font-medium text-terracotta hover:underline"
+              >
+                Tout voir
+              </button>
+            )}
+          </div>
+          <Card>
+            {todayTasks.length > 0 ? (
+              <div className="divide-y divide-border-light">
+                {todayTasks.slice(0, 4).map((t) => (
+                  <div key={t.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: priorityColors[t.priority] || priorityColors.medium }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{t.title}</p>
+                      <p className="text-xs text-text-muted">
+                        {t.assigned_profile?.full_name?.split(' ')[0] ?? 'Non assigne'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-sm text-text-muted">
+                Aucune tache prevue aujourd&apos;hui
+              </p>
+            )}
+          </Card>
+        </div>
       </div>
 
-      {/* Today Tasks + Recently Done — 2 columns */}
+      {/* 7. Repartition + 8. Termine recemment — 2 columns */}
       <div className="grid grid-cols-2 gap-4 mb-6 max-md:grid-cols-1">
-        <TodayTasks tasks={todayTasks} />
-        <RecentlyDone tasks={doneTasks} />
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Repartition cette semaine
+          </p>
+          <Card>
+            {balanceMembers.length > 0 ? (
+              <div className="space-y-3">
+                {balanceMembers.map((m) => (
+                  <div key={m.userId} className="flex items-center gap-3">
+                    <div
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: m.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">{m.name.split(' ')[0]}</p>
+                      <ProgressBar value={Math.round(m.tasksShare * 100)} color={m.color} />
+                    </div>
+                    <span className="text-sm font-bold tabular-nums min-w-[36px] text-right">
+                      {Math.round(m.tasksShare * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-sm text-text-muted">
+                Pas encore de donnees cette semaine
+              </p>
+            )}
+          </Card>
+        </div>
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Termine recemment
+          </p>
+          <Card>
+            {doneTasks.length > 0 ? (
+              <div className="divide-y divide-border-light">
+                {doneTasks.slice(0, 5).map((t) => (
+                  <div key={t.id} className="flex items-center gap-2.5 py-2.5 first:pt-0 last:pb-0">
+                    <CheckCircle size={16} className="text-sauge shrink-0" />
+                    <p className="flex-1 text-sm text-text-secondary truncate">{t.title}</p>
+                    {t.completed_at && (
+                      <span className="text-xs text-text-muted shrink-0">
+                        {formatDate(t.completed_at, 'DD/MM')}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-sm text-text-muted">
+                Aucune tache terminee cette semaine
+              </p>
+            )}
+          </Card>
+        </div>
       </div>
 
-      {/* Weekly Report — full width */}
+      {/* 9. Rapport hebdo */}
       <WeeklyReportSection />
     </>
   );
