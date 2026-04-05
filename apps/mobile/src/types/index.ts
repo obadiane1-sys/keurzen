@@ -1,6 +1,6 @@
 /**
  * Keurzen — Global TypeScript Types
- * Correspond exactement au schéma Supabase
+ * Correspond exactement au schema Supabase
  */
 
 // ─── Auth & Profile ────────────────────────────────────────────────────────────
@@ -390,6 +390,15 @@ export interface Orientation {
   priority: 'high' | 'medium';
 }
 
+export interface MemberMetric {
+  user_id: string;
+  name: string;
+  tasks_count: number;
+  minutes: number;
+  tlx_score: number | null;
+  tasks_share: number; // 0-1
+}
+
 export interface WeeklyReport {
   id: string;
   household_id: string;
@@ -401,6 +410,12 @@ export interface WeeklyReport {
   model: string;
   generated_at: string;
   created_at: string;
+  // Computed metrics (nullable for older reports)
+  total_tasks_completed: number;
+  total_minutes_logged: number;
+  avg_tlx_score: number | null;
+  balance_score: number | null;
+  member_metrics: MemberMetric[];
 }
 
 // ─── Meals & Recipes ──────────────────────────────────────────────────────────
