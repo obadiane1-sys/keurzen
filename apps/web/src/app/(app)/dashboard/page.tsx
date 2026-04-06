@@ -11,6 +11,7 @@ import {
   useWeeklyBalance,
   useCurrentTlx,
   useTlxDelta,
+  useWeeklyObjective,
 } from '@keurzen/queries';
 import { formatDate } from '@keurzen/shared';
 import { Avatar } from '@/components/ui/Avatar';
@@ -21,6 +22,8 @@ import { StatusPillsRow } from '@/components/dashboard/StatusPills';
 import { NarrativeCard } from '@/components/dashboard/NarrativeCard';
 import { TlxDetailCard } from '@/components/dashboard/TlxDetailCard';
 import { WeeklyReportSection } from '@/components/dashboard/WeeklyReportSection';
+import { WeeklyTipCard } from '@/components/dashboard/WeeklyTipCard';
+import { ObjectiveProgressSection } from '@/components/dashboard/ObjectiveProgressSection';
 
 const priorityColors: Record<string, string> = {
   high: 'var(--color-rose)',
@@ -47,6 +50,7 @@ export default function DashboardPage() {
   const { members: balanceMembers } = useWeeklyBalance();
   const { data: currentTlx } = useCurrentTlx();
   const { data: tlxDelta } = useTlxDelta();
+  const { objective, progress, isAchieved } = useWeeklyObjective();
 
   const { activeTasks, doneTasks } = useMemo(() => {
     const active: typeof allTasks = [];
@@ -88,6 +92,32 @@ export default function DashboardPage() {
           overdueCount={overdueTasks.length}
         />
       </div>
+
+      {/* 2b. Weekly Tip */}
+      <div className="mb-6">
+        <WeeklyTipCard />
+      </div>
+
+      {/* 2c. Weekly Objective */}
+      {objective && (
+        <div className="mb-6">
+          <Card>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-lg">🎯</span>
+              <span className="font-heading text-base font-bold">Objectif de la semaine</span>
+            </div>
+            <ObjectiveProgressSection
+              label={objective.label}
+              type={objective.type}
+              currentValue={objective.current_value}
+              targetValue={objective.target_value}
+              baselineValue={objective.baseline_value}
+              progress={progress}
+              achieved={isAchieved}
+            />
+          </Card>
+        </div>
+      )}
 
       {/* 3. Three Gauges */}
       <Card className="mb-6">
