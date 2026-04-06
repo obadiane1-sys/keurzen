@@ -34,11 +34,13 @@ export function ObjectiveProgressSection({
   achieved,
 }: ObjectiveProgressSectionProps) {
   const color = achieved ? Colors.sauge : typeColors[type];
-  const isInverted = type === 'balance' || type === 'tlx';
 
   const displayCurrent = Math.round(currentValue);
   const displayTarget = Math.round(targetValue);
   const displayBaseline = Math.round(baselineValue);
+
+  // Unit suffix varies by type
+  const unit = type === 'completion' || type === 'balance' ? '%' : type === 'streak' ? 'j' : '';
 
   return (
     <View style={styles.container}>
@@ -77,12 +79,12 @@ export function ObjectiveProgressSection({
       {/* Bottom labels */}
       <View style={styles.bottomRow}>
         <Text variant="caption" color="muted">
-          Sem. derniere : {displayBaseline}{isInverted ? '' : '%'}
+          Sem. derniere : {displayBaseline}{unit}
         </Text>
         <Text variant="caption" weight="semibold" style={{ color }}>
           {achieved
-            ? `${displayCurrent}${isInverted ? '' : '%'}`
-            : `${displayCurrent} / ${displayTarget}${isInverted ? '' : '%'}`}
+            ? `${displayCurrent}${unit}`
+            : `${displayCurrent} / ${displayTarget}${unit}`}
         </Text>
       </View>
     </View>
@@ -117,6 +119,6 @@ const styles = StyleSheet.create({
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
 });

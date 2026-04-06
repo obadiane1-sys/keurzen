@@ -21,7 +21,7 @@ interface ObjectiveResult {
 serve(async (req: Request) => {
   // Validate cron secret
   const cronSecret = Deno.env.get('CRON_SECRET');
-  if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+  if (!cronSecret || req.headers.get('x-cron-secret') !== cronSecret) {
     return new Response(
       JSON.stringify({ success: false, error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -54,10 +54,10 @@ serve(async (req: Request) => {
   for (const household of households ?? []) {
     const objective = await computeObjective(supabase, household.id, prevWeekStartStr);
 
-    // Insert (idempotent)
-    const { error: insertErr } = await supabase
+    // Upsert (idempotent — ignoreDuplicates skips if already exists)
+    const { data: inserted, error: insertErr } = await supabase
       .from('weekly_objectives')
-      .insert({
+      .upsert({
         household_id: household.id,
         week_start: weekStartStr,
         type: objective.type,
@@ -65,16 +65,17 @@ serve(async (req: Request) => {
         baseline_value: objective.baseline_value,
         current_value: objective.baseline_value,
         label: objective.label,
-      })
+      }, { onConflict: 'household_id,week_start', ignoreDuplicates: true })
       .select()
       .maybeSingle();
 
-    // ON CONFLICT → skip (objective already exists)
-    if (insertErr?.code === '23505') continue;
     if (insertErr) {
       console.error(`Insert error for ${household.id}:`, insertErr);
       continue;
     }
+
+    // ignoreDuplicates returns null when skipped
+    if (!inserted) continue;
 
     created++;
 
@@ -128,7 +129,7 @@ async function computeObjective(
   const totalTasks = stats?.[0]?.total_tasks_week ?? 0;
   const totalCompleted = stats?.reduce((sum: number, s: any) =>
     sum + Math.round(s.tasks_share * s.total_tasks_week), 0) ?? 0;
-  const completion = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 100;
+  const completion = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
 
   const maxImbalance = stats?.length > 0
     ? Math.max(...stats.map((s: any) => Math.abs(s.tasks_delta)))

@@ -37,7 +37,7 @@ export function useWeeklyObjective() {
     queryKey: objectiveKeys.current(householdId),
     queryFn: () => fetchAndRefreshObjective(householdId),
     enabled: !!householdId,
-    staleTime: 1000 * 60 * 2, // 2 min — refreshed on pull-to-refresh anyway
+    staleTime: 1000 * 60 * 5, // 5 min — refreshed on pull-to-refresh anyway
   });
 
   const objective = query.data ?? null;

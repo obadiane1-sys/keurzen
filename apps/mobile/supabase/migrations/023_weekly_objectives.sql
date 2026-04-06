@@ -113,7 +113,7 @@ BEGIN
       ),
       streak AS (
         SELECT count(*) AS days
-        FROM generate_series(0, 29) AS i
+        FROM generate_series(1, 29) AS i
         WHERE (CURRENT_DATE - i) IN (SELECT d FROM daily)
           AND NOT EXISTS (
             SELECT 1 FROM generate_series(0, i - 1) AS j

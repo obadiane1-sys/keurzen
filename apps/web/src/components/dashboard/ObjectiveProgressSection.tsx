@@ -1,6 +1,6 @@
 'use client';
 
-type ObjectiveType = 'completion' | 'balance' | 'tlx' | 'streak' | 'maintenance';
+import type { ObjectiveType } from '@keurzen/shared';
 
 const typeColorVars: Record<ObjectiveType, string> = {
   completion: 'var(--color-sauge)',
@@ -30,14 +30,13 @@ export function ObjectiveProgressSection({
   achieved,
 }: ObjectiveProgressSectionProps) {
   const color = achieved ? 'var(--color-sauge)' : typeColorVars[type];
-  const isInverted = type === 'balance' || type === 'tlx';
-  const unit = isInverted ? '' : '%';
+  const unit = type === 'completion' || type === 'balance' ? '%' : type === 'streak' ? 'j' : '';
 
   return (
     <div className="mt-3 border-t border-border-light pt-3">
       <div className="mb-1.5 flex items-center gap-1.5">
-        <span style={{ color }} className="text-base">
-          {achieved ? '✓' : '🎯'}
+        <span style={{ color }} className="text-sm font-bold">
+          {achieved ? '✓' : '→'}
         </span>
         <span className="text-sm font-semibold text-text-primary truncate">
           {achieved ? 'Objectif atteint !' : label}
