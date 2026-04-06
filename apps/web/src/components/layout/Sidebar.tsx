@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import {
   Home, CheckCircle, Calendar, List,
-  Users, Mail, Settings, LogOut, X,
+  Users, Mail, Settings, LogOut, X, MessageCircle,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { Avatar } from '@/components/ui/Avatar';
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
 
 const HOUSEHOLD_ITEMS = [
   { href: '/settings/household', icon: Users, label: 'Mon foyer' },
+  { href: '/messages', icon: MessageCircle, label: 'Messages' },
   { href: '/settings/invite', icon: Mail, label: 'Invitations' },
 ];
 
