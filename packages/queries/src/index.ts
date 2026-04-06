@@ -16,3 +16,4 @@ export * from './hooks/useWeeklyStats';
 export * from './hooks/useNotifications';
 export * from './hooks/useReports';
 export * from './hooks/useObjectives';
+export * from './hooks/useMessaging';
