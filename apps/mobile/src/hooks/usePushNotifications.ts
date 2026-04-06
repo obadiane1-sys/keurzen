@@ -97,6 +97,10 @@ function handleNotificationResponse(data: Record<string, unknown>) {
   const type = data?.type;
 
   switch (type) {
+    case 'chat_message':
+      // Navigate to conversation
+      // router.push(`/(app)/messages/${data.conversationId}`);
+      break;
     case 'overdue':
       // Navigate to task detail
       // router.push(`/(app)/tasks/${data.task_id}`);
