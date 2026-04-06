@@ -535,6 +535,42 @@ export interface MealPlanFormValues {
   assigned_to?: string;
 }
 
+// ─── Messaging ───────────────────────────────────────────────────────────────
+
+export type ConversationType = 'household' | 'direct';
+
+export interface Conversation {
+  id: string;
+  household_id: string;
+  type: ConversationType;
+  created_by: string;
+  created_at: string;
+  // Joined / computed
+  members?: ConversationMember[];
+  last_message?: Message;
+  unread_count?: number;
+}
+
+export interface ConversationMember {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  last_read_at: string;
+  joined_at: string;
+  // Joined
+  profile?: Profile;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  // Joined
+  sender?: Profile;
+}
+
 // ─── Utility Types ─────────────────────────────────────────────────────────────
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
