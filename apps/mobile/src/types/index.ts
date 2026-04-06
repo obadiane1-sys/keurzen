@@ -172,6 +172,24 @@ export interface WeeklyStat {
   profile?: Profile;
 }
 
+// ─── Weekly Objectives ────────────────────────────────────────────────────────
+
+export type ObjectiveType = 'completion' | 'balance' | 'tlx' | 'streak' | 'maintenance';
+
+export interface WeeklyObjective {
+  id: string;
+  household_id: string;
+  week_start: string;
+  type: ObjectiveType;
+  target_value: number;
+  baseline_value: number;
+  current_value: number;
+  achieved: boolean;
+  achieved_at: string | null;
+  label: string;
+  created_at: string;
+}
+
 export type AlertLevel = 'balanced' | 'watch' | 'unbalanced';
 export type AlertType = 'task_imbalance' | 'time_imbalance' | 'overload';
 
