@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useMessages, useSendMessage, useMarkConversationAsRead } from '@keurzen/queries';
+import { useEffect, useRef, useCallback } from 'react';
+import { useMessages, useSendMessage, useMarkConversationAsRead, useMessagingRealtime } from '@keurzen/queries';
 import { useAuthStore } from '@keurzen/stores';
 import type { Conversation, Message } from '@keurzen/shared';
 import { MessageBubble } from './MessageBubble';
@@ -18,34 +18,55 @@ export function ConversationThread({ conversation }: ConversationThreadProps) {
   const sendMessage = useSendMessage();
   const markAsRead = useMarkConversationAsRead();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
+
+  // Realtime subscription
+  useMessagingRealtime(conversation.id);
+
+  const isHousehold = conversation.type === 'household';
 
   // Flatten pages (newest first per page) → reverse to oldest-at-top
   const messages: Message[] = (data?.pages ?? []).flatMap((page) => page).reverse();
 
-  // Mark as read on mount and when messages change
+  // Mark as read on mount and when new messages arrive (not on old page load)
   useEffect(() => {
     markAsRead.mutate(conversation.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.id, messages.length]);
+  }, [conversation.id]);
 
-  // Scroll to bottom on new messages
+  // Mark as read when genuinely new messages arrive at the end
+  useEffect(() => {
+    if (messages.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
+      markAsRead.mutate(conversation.id);
+    }
+    prevMessageCountRef.current = messages.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
+
+  // Scroll to bottom only on new messages (not on older page load)
+  const isAtBottomRef = useRef(true);
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) {
+    if (el && isAtBottomRef.current) {
       el.scrollTop = el.scrollHeight;
     }
   }, [messages.length]);
 
-  function handleScroll() {
+  const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    // Track if user is near the bottom
+    isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    // Load older messages when near top
     if (el.scrollTop < 80 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   function handleSend(content: string) {
     sendMessage.mutate({ conversationId: conversation.id, content });
+    // Ensure we scroll to bottom after sending
+    isAtBottomRef.current = true;
   }
 
   // Find index of last own message for ReadIndicator
@@ -71,10 +92,7 @@ export function ConversationThread({ conversation }: ConversationThreadProps) {
         <div className="flex flex-col gap-2">
           {messages.map((message, index) => {
             const isOwn = message.sender_id === user?.id;
-            const prevMessage = messages[index - 1];
-            const showSenderName =
-              !isOwn &&
-              (!prevMessage || prevMessage.sender_id !== message.sender_id);
+            const showSenderName = isHousehold && !isOwn;
 
             return (
               <div key={message.id}>

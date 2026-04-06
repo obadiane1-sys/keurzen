@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
 import { supabase } from '../lib/supabase/client';
 import { useAuthStore } from '../stores/auth.store';
 
@@ -98,16 +99,17 @@ function handleNotificationResponse(data: Record<string, unknown>) {
 
   switch (type) {
     case 'chat_message':
-      // Navigate to conversation
-      // router.push(`/(app)/messages/${data.conversationId}`);
+      if (data.conversationId) {
+        router.push(`/(app)/messages/${data.conversationId}` as any);
+      }
       break;
     case 'overdue':
-      // Navigate to task detail
-      // router.push(`/(app)/tasks/${data.task_id}`);
+      if (data.task_id) {
+        router.push(`/(app)/tasks/${data.task_id}` as any);
+      }
       break;
     case 'morning_digest':
-      // Navigate to tasks list
-      // router.push('/(app)/tasks');
+      router.push('/(app)/tasks' as any);
       break;
     default:
       break;

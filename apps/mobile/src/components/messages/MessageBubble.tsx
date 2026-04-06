@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xs,
   },
   timeOwn: {
-    color: 'rgba(255,253,249,0.65)',
+    color: `${Colors.textInverse}A6`,
     fontFamily: Typography.fontFamily.regular,
   },
   timeOther: {

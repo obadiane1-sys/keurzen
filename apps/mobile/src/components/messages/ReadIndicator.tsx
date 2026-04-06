@@ -15,7 +15,7 @@ export function ReadIndicator({ message, members, currentUserId }: ReadIndicator
   const readers = members.filter(
     (m) =>
       m.user_id !== currentUserId &&
-      m.last_read_at >= message.created_at,
+      new Date(m.last_read_at).getTime() >= new Date(message.created_at).getTime(),
   );
 
   if (readers.length === 0) return null;

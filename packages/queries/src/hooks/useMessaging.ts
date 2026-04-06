@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuthStore, useHouseholdStore } from '@keurzen/stores';
 import type { Conversation, Message } from '@keurzen/shared';
@@ -290,6 +291,47 @@ export function useGetOrCreateHouseholdConversation() {
       }
     },
   });
+}
+
+// ─── Realtime Subscription ──────────────────────────────────────────────────
+
+/**
+ * Subscribe to new messages in a conversation via Supabase Realtime.
+ * Invalidates relevant queries when a new message arrives from another user.
+ */
+export function useMessagingRealtime(conversationId: string | undefined) {
+  const qc = useQueryClient();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (!conversationId || !user?.id) return;
+
+    const supabase = getSupabaseClient();
+
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          if (payload.new.sender_id === user.id) return;
+
+          qc.invalidateQueries({ queryKey: messagingKeys.messages(conversationId) });
+          qc.invalidateQueries({ queryKey: messagingKeys.conversations(user.id) });
+          qc.invalidateQueries({ queryKey: messagingKeys.unreadCount(user.id) });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, user?.id, qc]);
 }
 
 // ─── Create Direct Conversation ───────────────────────────────────────────────

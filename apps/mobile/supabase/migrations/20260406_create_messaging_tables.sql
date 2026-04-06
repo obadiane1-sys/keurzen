@@ -176,10 +176,18 @@ BEGIN
   LIMIT 1;
 
   IF v_conversation_id IS NULL THEN
-    -- Create the household conversation
-    INSERT INTO conversations (household_id, type, created_by)
-    VALUES (p_household_id, 'household', v_caller_id)
-    RETURNING id INTO v_conversation_id;
+    -- Create the household conversation (handle race condition with unique index)
+    BEGIN
+      INSERT INTO conversations (household_id, type, created_by)
+      VALUES (p_household_id, 'household', v_caller_id)
+      RETURNING id INTO v_conversation_id;
+    EXCEPTION WHEN unique_violation THEN
+      -- Another session created it concurrently — fetch it
+      SELECT id INTO v_conversation_id
+      FROM conversations
+      WHERE household_id = p_household_id AND type = 'household'
+      LIMIT 1;
+    END;
 
     -- Add all current household members
     INSERT INTO conversation_members (conversation_id, user_id)

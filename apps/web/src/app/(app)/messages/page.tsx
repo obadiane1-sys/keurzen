@@ -7,14 +7,15 @@ import {
   useGetOrCreateHouseholdConversation,
   useCreateDirectConversation,
 } from '@keurzen/queries';
-import { useAuthStore } from '@keurzen/stores';
+import { useAuthStore, useHouseholdStore } from '@keurzen/stores';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ConversationThread } from '@/components/messages/ConversationThread';
 import { NewConversationDialog } from '@/components/messages/NewConversationDialog';
-import type { Conversation, HouseholdMember } from '@keurzen/shared';
+import type { Conversation } from '@keurzen/shared';
 
 export default function MessagesPage() {
   const { user } = useAuthStore();
+  const { members: householdMembers } = useHouseholdStore();
   const { data: conversations = [], isLoading } = useConversations();
   const getOrCreateHousehold = useGetOrCreateHouseholdConversation();
   const createDirect = useCreateDirectConversation();
@@ -49,20 +50,8 @@ export default function MessagesPage() {
     [createDirect, conversations],
   );
 
-  // Deduplicate members across all conversations
-  const allMembers: HouseholdMember[] = (() => {
-    const seen = new Set<string>();
-    const members: HouseholdMember[] = [];
-    for (const conv of conversations) {
-      for (const m of conv.members ?? []) {
-        if (!seen.has(m.id)) {
-          seen.add(m.id);
-          members.push(m as HouseholdMember);
-        }
-      }
-    }
-    return members;
-  })();
+  // Use household members from store (correct type, has color/role fields)
+  const allMembers = householdMembers;
 
   return (
     <div className="h-[calc(100vh-6rem)] -mx-4 -my-6 md:-mx-8 md:-my-8 flex">
