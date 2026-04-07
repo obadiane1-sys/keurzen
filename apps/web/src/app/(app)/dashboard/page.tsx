@@ -52,6 +52,12 @@ export default function DashboardPage() {
   const { data: tlxDelta } = useTlxDelta();
   const { objective, progress, isAchieved } = useWeeklyObjective();
 
+  // Redirect to onboarding if not seen
+  if (profile && !profile.has_seen_onboarding) {
+    router.replace('/onboarding/setup');
+    return null;
+  }
+
   const { activeTasks, doneTasks } = useMemo(() => {
     const active: typeof allTasks = [];
     const done: typeof allTasks = [];
