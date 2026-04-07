@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 
-import { Colors, Spacing, BorderRadius, TouchTarget } from '../../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Loader } from '../../../src/components/ui/Loader';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -19,33 +19,86 @@ import { TaskCard } from '../../../src/components/tasks/TaskCard';
 import { TaskFilters } from '../../../src/components/tasks/TaskFilters';
 import { TaskCompletionToast } from '../../../src/components/tasks/TaskCompletionToast';
 import { CompletionRatingSheet } from '../../../src/components/tasks/CompletionRatingSheet';
-import { useTasks, useUpdateTaskStatus } from '../../../src/lib/queries/tasks';
+import { useTasks, useUpdateTaskStatus, useDeleteTask } from '../../../src/lib/queries/tasks';
 import { useHouseholdStore } from '../../../src/stores/household.store';
+import { useCurrentUser } from '../../../src/hooks/useAuth';
 import type { Task, TaskStatus } from '../../../src/types';
 
 export default function TasksScreen() {
   const router = useRouter();
   const { currentHousehold } = useHouseholdStore();
+  const { profile } = useCurrentUser();
   const { data: tasks = [], isLoading, refetch, isRefetching } = useTasks();
   const updateStatus = useUpdateTaskStatus();
+  const deleteTask = useDeleteTask();
 
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [completedTaskName, setCompletedTaskName] = useState<string | null>(null);
   const [ratingTask, setRatingTask] = useState<{ id: string; title: string } | null>(null);
+
+  // ─── Counts ────────────────────────────────────────────────────────────────
+
+  const now = dayjs();
+  const today = now.format('YYYY-MM-DD');
+
+  const counts = useMemo(() => {
+    let todoCount = 0;
+    let doneCount = 0;
+    let overdueCount = 0;
+
+    for (const t of tasks) {
+      if (t.status === 'done') {
+        doneCount++;
+      } else if (t.due_date && dayjs(t.due_date).isBefore(now, 'day')) {
+        overdueCount++;
+        todoCount++;
+      } else {
+        todoCount++;
+      }
+    }
+
+    return {
+      all: todoCount,
+      todo: tasks.filter((t) => t.status === 'todo' || t.status === 'in_progress').length - overdueCount,
+      done: doneCount,
+      overdue: overdueCount,
+    };
+  }, [tasks, now]);
+
+  // ─── Hero message ──────────────────────────────────────────────────────────
+
+  const firstName = profile?.full_name?.split(' ')[0] ?? '';
+
+  const heroMessage = useMemo(() => {
+    if (counts.all === 0 && counts.done > 0) return 'Tout est fait, beau travail !';
+    const parts: string[] = [];
+    if (counts.overdue > 0) parts.push(`${counts.overdue} en retard`);
+    const todayCount = tasks.filter(
+      (t) => t.status !== 'done' && t.due_date === today,
+    ).length;
+    if (todayCount > 0) parts.push(`${todayCount} pour aujourd'hui`);
+    if (parts.length === 0) return `${counts.all} tâche${counts.all > 1 ? 's' : ''} en cours`;
+    return parts.join(' · ');
+  }, [counts, tasks, today]);
 
   // ─── Filter & sort ─────────────────────────────────────────────────────────
 
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
 
-    // Compute overdue for filtering
-    const now = dayjs();
     if (statusFilter === 'overdue') {
       result = result.filter(
-        (t) => t.status !== 'done' && t.due_date && dayjs(t.due_date).isBefore(now, 'day')
+        (t) => t.status !== 'done' && t.due_date && dayjs(t.due_date).isBefore(now, 'day'),
       );
-    } else if (statusFilter !== 'all') {
-      result = result.filter((t) => t.status === statusFilter);
+    } else if (statusFilter === 'done') {
+      result = result.filter((t) => t.status === 'done');
+    } else if (statusFilter === 'todo') {
+      result = result.filter(
+        (t) => t.status !== 'done' && !(t.due_date && dayjs(t.due_date).isBefore(now, 'day')),
+      );
+    } else {
+      // 'all' — show all non-done
+      result = result.filter((t) => t.status !== 'done');
     }
 
     // Sort: overdue first, then by due_date, then by created_at
@@ -55,46 +108,48 @@ export default function TasksScreen() {
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
 
-      // Done tasks at the bottom
       if (a.status === 'done' && b.status !== 'done') return 1;
       if (a.status !== 'done' && b.status === 'done') return -1;
 
-      // By due_date ascending (nulls last)
       if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
       if (a.due_date) return -1;
       if (b.due_date) return 1;
 
-      // By created_at descending
       return b.created_at.localeCompare(a.created_at);
     });
 
     return result;
-  }, [tasks, statusFilter]);
+  }, [tasks, statusFilter, now]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
   const handleToggleStatus = useCallback(
     (task: Task) => {
       if (task.status !== 'done' && (task.task_type ?? 'household') === 'household') {
-        // Household task → open rating sheet instead of direct toggle
         setRatingTask({ id: task.id, title: task.title });
         return;
       }
-      // Personal task or unchecking → direct toggle
       const newStatus: TaskStatus = task.status === 'done' ? 'todo' : 'done';
       updateStatus.mutate({ id: task.id, status: newStatus });
       if (newStatus === 'done') {
         setCompletedTaskName(task.title);
       }
     },
-    [updateStatus]
+    [updateStatus],
   );
 
   const handleTaskPress = useCallback(
     (task: Task) => {
       router.push(`/(app)/tasks/${task.id}`);
     },
-    [router]
+    [router],
+  );
+
+  const handleDelete = useCallback(
+    (task: Task) => {
+      deleteTask.mutate(task.id);
+    },
+    [deleteTask],
   );
 
   const handleCreate = useCallback(() => {
@@ -126,11 +181,13 @@ export default function TasksScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text variant="h2">Tâches</Text>
-        <Text variant="bodySmall" color="secondary">
-          {tasks.filter((t) => t.status !== 'done').length} en cours
+      {/* Hero Header */}
+      <View style={styles.heroHeader}>
+        <Text style={styles.heroGreeting}>
+          Bonjour {firstName}
+        </Text>
+        <Text variant="body" color="secondary">
+          {heroMessage}
         </Text>
       </View>
 
@@ -139,6 +196,7 @@ export default function TasksScreen() {
         <TaskFilters
           selectedStatus={statusFilter}
           onStatusChange={setStatusFilter}
+          counts={counts}
         />
       </View>
 
@@ -147,7 +205,7 @@ export default function TasksScreen() {
         <EmptyState
           variant="tasks"
           expression="normal"
-          action={{ label: 'Ajouter une tache', onPress: handleCreate }}
+          action={statusFilter === 'done' ? undefined : { label: 'Ajouter une tache', onPress: handleCreate }}
         />
       ) : (
         <FlatList
@@ -158,6 +216,8 @@ export default function TasksScreen() {
               task={item}
               onPress={() => handleTaskPress(item)}
               onToggleStatus={() => handleToggleStatus(item)}
+              onDelete={() => handleDelete(item)}
+              onEdit={() => handleTaskPress(item)}
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -211,10 +271,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
+  heroHeader: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.base,
-    gap: 2,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xs,
+    gap: Spacing.xs,
+  },
+  heroGreeting: {
+    fontSize: Typography.fontSize['2xl'],
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    lineHeight: Typography.fontSize['2xl'] * Typography.lineHeight.tight,
   },
   filtersContainer: {
     paddingHorizontal: Spacing.xl,
@@ -233,9 +300,10 @@ const styles = StyleSheet.create({
     bottom: Spacing['2xl'],
     width: 56,
     height: 56,
-    borderRadius: BorderRadius.button,
+    borderRadius: BorderRadius.fab,
     backgroundColor: Colors.terracotta,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.lg,
   },
 });
