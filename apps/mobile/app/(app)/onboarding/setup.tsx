@@ -17,7 +17,6 @@ import { Mascot } from '../../../src/components/ui/Mascot';
 import { useAuthStore } from '../../../src/stores/auth.store';
 import { markOnboardingSeen } from '../../../src/lib/supabase/auth';
 import { supabase } from '../../../src/lib/supabase/client';
-import type { HouseholdType, CurrentSplit, PainPoint, MainGoal } from '../../../src/types';
 
 // ─── Step Definitions ────────────────────────────────────────────────────────
 
@@ -130,13 +129,19 @@ export default function OnboardingSetupScreen() {
     try {
       if (savePreferences) {
         const [householdType, currentSplit, painPoint, mainGoal] = selections;
-        await supabase.from('onboarding_preferences').upsert({
-          user_id: user.id,
-          household_type: householdType as HouseholdType,
-          current_split: currentSplit as CurrentSplit,
-          pain_point: painPoint as PainPoint,
-          main_goal: mainGoal as MainGoal,
-        });
+        if (householdType && currentSplit && painPoint && mainGoal) {
+          await supabase.from('onboarding_preferences').upsert(
+            {
+              user_id: user.id,
+              household_type: householdType,
+              current_split: currentSplit,
+              pain_point: painPoint,
+              main_goal: mainGoal,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' }
+          );
+        }
       }
 
       await markOnboardingSeen(user.id);
