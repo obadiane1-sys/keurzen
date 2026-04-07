@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Plus, Search, CheckCircle } from 'lucide-react';
-import { useTasks } from '@keurzen/queries';
+import { useTasks, useDeleteTask } from '@keurzen/queries';
 import { useAuthStore } from '@keurzen/stores';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TaskList } from '@/components/tasks/TaskList';
@@ -16,16 +15,10 @@ import dayjs from 'dayjs';
 
 type Tab = 'all' | 'today' | 'overdue' | 'done';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'all', label: 'Toutes' },
-  { key: 'today', label: "Aujourd'hui" },
-  { key: 'overdue', label: 'En retard' },
-  { key: 'done', label: 'Faites' },
-];
-
 export default function TasksPage() {
   const { profile } = useAuthStore();
   const { data: tasks = [], isLoading } = useTasks();
+  const { mutate: deleteTask } = useDeleteTask();
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -33,11 +26,52 @@ export default function TasksPage() {
 
   const now = dayjs();
   const today = now.format('YYYY-MM-DD');
+  const firstName = profile?.full_name?.split(' ')[0] ?? '';
+
+  // ─── Counts ──────────────────────────────────────────────────────────────
+
+  const counts = useMemo(() => {
+    let allCount = 0;
+    let todayCount = 0;
+    let overdueCount = 0;
+    let doneCount = 0;
+
+    for (const t of tasks) {
+      if (t.status === 'done') {
+        doneCount++;
+        continue;
+      }
+      allCount++;
+      if (t.due_date === today) todayCount++;
+      if (t.due_date && dayjs(t.due_date).isBefore(now, 'day')) overdueCount++;
+    }
+
+    return { all: allCount, today: todayCount, overdue: overdueCount, done: doneCount };
+  }, [tasks, today, now]);
+
+  // ─── Hero message ────────────────────────────────────────────────────────
+
+  const heroMessage = useMemo(() => {
+    if (counts.all === 0 && counts.done > 0) return 'Tout est fait, beau travail !';
+    const parts: string[] = [];
+    if (counts.overdue > 0) parts.push(`${counts.overdue} en retard`);
+    if (counts.today > 0) parts.push(`${counts.today} pour aujourd'hui`);
+    if (parts.length === 0) return `${counts.all} tâche${counts.all > 1 ? 's' : ''} en cours`;
+    return parts.join(' · ');
+  }, [counts]);
+
+  // ─── Tabs definition ────────────────────────────────────────────────────
+
+  const TABS: { key: Tab; label: string; count: number }[] = [
+    { key: 'all', label: 'Toutes', count: counts.all },
+    { key: 'today', label: "Aujourd'hui", count: counts.today },
+    { key: 'overdue', label: 'En retard', count: counts.overdue },
+    { key: 'done', label: 'Faites', count: counts.done },
+  ];
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
 
-    // Filter by tab
     switch (activeTab) {
       case 'today':
         result = result.filter(
@@ -55,12 +89,11 @@ export default function TasksPage() {
       case 'done':
         result = result.filter((t) => t.status === 'done');
         break;
-      default: // 'all'
+      default: // 'all' — non-done only
         result = result.filter((t) => t.status !== 'done');
         break;
     }
 
-    // Filter by search
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -72,6 +105,17 @@ export default function TasksPage() {
 
     return result;
   }, [tasks, activeTab, search, today, now]);
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+      if (!window.confirm(`Supprimer « ${task.title} » ?`)) return;
+      deleteTask(id);
+      if (selectedTaskId === id) setSelectedTaskId(null);
+    },
+    [tasks, deleteTask, selectedTaskId],
+  );
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
@@ -85,37 +129,52 @@ export default function TasksPage() {
 
   return (
     <>
-      <PageHeader
-        title="Taches"
-        userName={profile?.full_name || undefined}
-        avatarUrl={profile?.avatar_url}
-        actions={
-          <Button size="md" onClick={() => setShowCreate(true)}>
-            <Plus size={16} />
-            Creer
-          </Button>
-        }
-      />
+      {/* Hero Header */}
+      <div className="flex items-center justify-between px-1 pt-2 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">
+            Bonjour {firstName}
+          </h1>
+          <p className="text-sm text-text-secondary mt-0.5">
+            {heroMessage}
+          </p>
+        </div>
+        <Button size="md" onClick={() => setShowCreate(true)}>
+          <Plus size={16} />
+          Creer
+        </Button>
+      </div>
 
-      {/* Tabs */}
+      {/* Tabs with counters */}
       <div className="mb-4 flex items-center gap-1 border-b border-border-light">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => {
-              setActiveTab(key);
-              setSelectedTaskId(null);
-            }}
-            className={cn(
-              'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === key
-                ? 'border-terracotta text-terracotta'
-                : 'border-transparent text-text-muted hover:text-text-primary',
-            )}
-          >
-            {label}
-          </button>
-        ))}
+        {TABS.map(({ key, label, count }) => {
+          const isOverdueTab = key === 'overdue' && activeTab !== key && count > 0;
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                setActiveTab(key);
+                setSelectedTaskId(null);
+              }}
+              className={cn(
+                'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
+                activeTab === key
+                  ? 'border-terracotta text-terracotta'
+                  : 'border-transparent text-text-muted hover:text-text-primary',
+              )}
+            >
+              {label}
+              <span
+                className={cn(
+                  'ml-1.5 text-xs',
+                  activeTab === key ? 'text-terracotta' : isOverdueTab ? 'text-rose' : 'text-text-muted',
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search */}
@@ -151,7 +210,6 @@ export default function TasksPage() {
         />
       ) : (
         <div className="flex gap-4">
-          {/* Task List */}
           <div
             className={cn(
               'flex-1 min-w-0',
@@ -162,10 +220,10 @@ export default function TasksPage() {
               tasks={filteredTasks}
               selectedId={selectedTaskId}
               onSelect={setSelectedTaskId}
+              onDelete={handleDelete}
             />
           </div>
 
-          {/* Detail Panel — desktop */}
           {selectedTask && (
             <div className="hidden lg:block lg:flex-1 lg:min-w-0">
               <TaskDetail
