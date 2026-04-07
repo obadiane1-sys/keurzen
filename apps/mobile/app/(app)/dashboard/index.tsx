@@ -10,7 +10,7 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 
@@ -24,11 +24,12 @@ import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { CircularGauge } from '../../../src/components/dashboard/CircularGauge';
 import { StatusPill } from '../../../src/components/dashboard/StatusPill';
 import { NarrativeCard } from '../../../src/components/dashboard/NarrativeCard';
 import { TlxDetailCard } from '../../../src/components/dashboard/TlxDetailCard';
 import { WeeklyReportCard } from '../../../src/components/dashboard/WeeklyReportCard';
+import { HouseholdScoreCard } from '../../../src/components/dashboard/HouseholdScoreCard';
+import { WeeklyTipCard } from '../../../src/components/dashboard/WeeklyTipCard';
 
 // ─── Staggered fade-in ──────────────────────────────────────────────────────
 
@@ -117,28 +118,18 @@ export default function DashboardScreen() {
   const { data: currentTlx } = useCurrentTlx();
   const { data: tlxDelta } = useTlxDelta();
 
-  const fadeAnims = useStaggeredFadeIn(9);
+  const fadeAnims = useStaggeredFadeIn(10);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
-  const { activeTasks, doneTasks } = useMemo(() => {
-    const active: typeof allTasks = [];
-    const done: typeof allTasks = [];
-    for (const t of allTasks) {
-      if (t.status === 'done') done.push(t);
-      else active.push(t);
-    }
-    return { activeTasks: active, doneTasks: done };
+  // Redirect to onboarding if not seen
+  if (profile && !profile.has_seen_onboarding) {
+    return <Redirect href="/(app)/onboarding/setup" />;
+  }
+
+  const doneTasks = useMemo(() => {
+    return allTasks.filter((t) => t.status === 'done');
   }, [allTasks]);
-
-  // Current user's balance share
-  const myBalance = balanceMembers.find((m) => m.userId === profile?.id);
-  const balancePercent = myBalance ? Math.round(myBalance.tasksShare * 100) : 0;
-
-  // Weekly progress: done / total
-  const weeklyProgress = allTasks.length > 0
-    ? Math.round((doneTasks.length / allTasks.length) * 100)
-    : 0;
 
   if (isLoading) return <Loader fullScreen />;
 
@@ -221,33 +212,18 @@ export default function DashboardScreen() {
           </ScrollView>
         </FadeSection>
 
-        {/* ── 3. THREE GAUGES ── */}
+        {/* ── 3. HOUSEHOLD SCORE ── */}
         <FadeSection anim={fadeAnims[2]} style={styles.sectionPadded}>
-          <View style={styles.gaugesCard}>
-            <CircularGauge
-              value={currentTlx?.score ?? 0}
-              max={100}
-              color={Colors.prune}
-              label="Charge mentale"
-              subtitle="/ 100"
-            />
-            <CircularGauge
-              value={balancePercent}
-              max={100}
-              color={Colors.sauge}
-              label="Mon equilibre"
-            />
-            <CircularGauge
-              value={weeklyProgress}
-              max={100}
-              color={Colors.miel}
-              label="Progression"
-            />
-          </View>
+          <HouseholdScoreCard />
+        </FadeSection>
+
+        {/* ── 3b. WEEKLY TIP ── */}
+        <FadeSection anim={fadeAnims[3]} style={styles.sectionPadded}>
+          <WeeklyTipCard />
         </FadeSection>
 
         {/* ── 4. NARRATIVE CARD ── */}
-        <FadeSection anim={fadeAnims[3]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
           <NarrativeCard
             doneTasks={doneTasks.length}
             overdueTasks={overdueTasks.length}
@@ -257,7 +233,7 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 5. CHARGE MENTALE ── */}
-        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[5]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
             Charge mentale
           </Text>
@@ -265,7 +241,7 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 6. TACHES DU JOUR ── */}
-        <FadeSection anim={fadeAnims[5]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[6]} style={styles.sectionPadded}>
           <View style={styles.sectionHeaderRow}>
             <Text variant="overline" color="muted">Taches du jour</Text>
             {todayTasks.length > 0 && (
@@ -299,7 +275,7 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 7. REPARTITION SEMAINE ── */}
-        <FadeSection anim={fadeAnims[6]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[7]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
             Repartition cette semaine
           </Text>
@@ -339,7 +315,7 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 8. TERMINE RECEMMENT ── */}
-        <FadeSection anim={fadeAnims[7]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[8]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
             Termine recemment
           </Text>
@@ -370,7 +346,7 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 9. RAPPORT HEBDO ── */}
-        <FadeSection anim={fadeAnims[8]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[9]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
             Rapport de la semaine
           </Text>
@@ -451,18 +427,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.sm,
-  },
-
-  // Gauges
-  gaugesCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.base,
-    ...Shadows.card,
   },
 
   // Flat card
