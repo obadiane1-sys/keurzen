@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -149,13 +149,11 @@ export default function OnboardingSetupScreen() {
       if (profile) {
         setProfile({ ...profile, has_seen_onboarding: true });
       }
-
-      router.replace('/(app)/dashboard');
     } catch {
-      // Proceed anyway — onboarding is best-effort
-      router.replace('/(app)/dashboard');
+      // Best-effort — proceed to dashboard regardless
     } finally {
       setIsLoading(false);
+      router.replace('/(app)/dashboard');
     }
   };
 

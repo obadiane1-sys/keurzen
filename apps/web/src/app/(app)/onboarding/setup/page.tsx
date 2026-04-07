@@ -5,13 +5,9 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@keurzen/stores';
 import { markOnboardingSeen, getSupabaseClient } from '@keurzen/queries';
+import type { HouseholdType, CurrentSplit, PainPoint, MainGoal } from '@keurzen/shared';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-type HouseholdType = 'solo' | 'couple' | 'family' | 'large_family';
-type CurrentSplit = 'mainly_me' | 'equal' | 'varies' | 'starting';
-type PainPoint = 'meals' | 'chores' | 'planning' | 'finances';
-type MainGoal = 'mental_relief' | 'overview' | 'balance' | 'save_time';
 
 interface OnboardingAnswers {
   household_type: HouseholdType | null;
@@ -309,11 +305,9 @@ export default function OnboardingSetupPage() {
             opacity: loading ? 0.7 : 1,
           }}
         >
-          {loading
-            ? 'Chargement...'
-            : step < STEPS.length - 1
-            ? 'Continuer'
-            : 'Terminer'}
+          {loading && 'Chargement...'}
+          {!loading && step < STEPS.length - 1 && 'Continuer'}
+          {!loading && step === STEPS.length - 1 && 'Terminer'}
         </button>
       </div>
     </div>
