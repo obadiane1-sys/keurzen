@@ -6,6 +6,7 @@ export * from './services/auth.service';
 export * from './services/task.service';
 export * from './services/household.service';
 export * from './services/list.service';
+export * from './services/onboarding.service';
 
 // Hooks
 export * from './hooks/useTasks';
@@ -17,3 +18,4 @@ export * from './hooks/useNotifications';
 export * from './hooks/useReports';
 export * from './hooks/useObjectives';
 export * from './hooks/useMessaging';
+export * from './hooks/useOnboarding';
