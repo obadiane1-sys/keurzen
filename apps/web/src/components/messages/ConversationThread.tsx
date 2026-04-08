@@ -18,7 +18,6 @@ export function ConversationThread({ conversation }: ConversationThreadProps) {
   const sendMessage = useSendMessage();
   const markAsRead = useMarkConversationAsRead();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const prevMessageCountRef = useRef(0);
 
   // Realtime subscription
   useMessagingRealtime(conversation.id);
@@ -28,20 +27,12 @@ export function ConversationThread({ conversation }: ConversationThreadProps) {
   // Flatten pages (newest first per page) → reverse to oldest-at-top
   const messages: Message[] = (data?.pages ?? []).flatMap((page) => page).reverse();
 
-  // Mark as read on mount and when new messages arrive (not on old page load)
+  // Mark as read on mount and when new messages arrive
   useEffect(() => {
+    if (messages.length === 0) return;
     markAsRead.mutate(conversation.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.id]);
-
-  // Mark as read when genuinely new messages arrive at the end
-  useEffect(() => {
-    if (messages.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
-      markAsRead.mutate(conversation.id);
-    }
-    prevMessageCountRef.current = messages.length;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length]);
+  }, [conversation.id, messages.length]);
 
   // Scroll to bottom only on new messages (not on older page load)
   const isAtBottomRef = useRef(true);

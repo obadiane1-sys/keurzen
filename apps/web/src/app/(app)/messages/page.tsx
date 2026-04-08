@@ -50,9 +50,6 @@ export default function MessagesPage() {
     [createDirect, conversations],
   );
 
-  // Use household members from store (correct type, has color/role fields)
-  const allMembers = householdMembers;
-
   return (
     <div className="h-[calc(100vh-6rem)] -mx-4 -my-6 md:-mx-8 md:-my-8 flex">
       {/* Left panel — conversation list */}
@@ -108,7 +105,7 @@ export default function MessagesPage() {
       <NewConversationDialog
         open={showNew}
         onClose={() => setShowNew(false)}
-        members={allMembers}
+        members={householdMembers}
         currentUserId={user?.id ?? ''}
         onSelect={handleNewDM}
       />

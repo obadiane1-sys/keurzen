@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   FlatList,
@@ -23,20 +23,8 @@ import {
 } from '../../../src/lib/queries/messaging';
 import { useMessagingRealtime } from '../../../src/hooks/useMessagingRealtime';
 import { useAuthStore } from '../../../src/stores/auth.store';
-import type { Message, Conversation } from '../../../src/types';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getConversationTitle(
-  conversation: Conversation | undefined,
-  currentUserId: string
-): string {
-  if (!conversation) return 'Messages';
-  if (conversation.type === 'household') return 'Groupe foyer';
-  const others = (conversation.members ?? []).filter((m) => m.user_id !== currentUserId);
-  if (others.length === 0) return 'Conversation';
-  return others.map((m) => m.profile?.full_name ?? 'Membre').join(', ');
-}
+import { getConversationTitle } from '../../../src/components/messages/ConversationListItem';
+import type { Message } from '../../../src/types';
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -78,11 +66,9 @@ export default function ConversationScreen() {
   );
 
   // Mark as read on mount and when messages update
-  const markedRef = useRef(false);
   useEffect(() => {
     if (id && messages.length > 0) {
       markAsRead.mutate(id);
-      markedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, messages.length]);
@@ -101,7 +87,7 @@ export default function ConversationScreen() {
     }
   }, [hasNextPage, fetchNextPage]);
 
-  const title = getConversationTitle(conversation, user?.id ?? '');
+  const title = conversation ? getConversationTitle(conversation, user?.id ?? '') : 'Messages';
   const isHousehold = conversation?.type === 'household';
 
   const renderItem = useCallback(

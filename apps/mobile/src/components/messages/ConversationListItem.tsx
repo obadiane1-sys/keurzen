@@ -21,7 +21,7 @@ function formatTime(dateStr: string): string {
   return d.format('DD/MM');
 }
 
-function getTitle(conversation: Conversation, currentUserId: string): string {
+export function getConversationTitle(conversation: Conversation, currentUserId: string): string {
   if (conversation.type === 'household') return 'Groupe foyer';
   const others = (conversation.members ?? []).filter((m) => m.user_id !== currentUserId);
   if (others.length === 0) return 'Conversation';
@@ -43,7 +43,7 @@ export function ConversationListItem({
   onPress,
 }: ConversationListItemProps) {
   const isHousehold = conversation.type === 'household';
-  const title = getTitle(conversation, currentUserId);
+  const title = getConversationTitle(conversation, currentUserId);
   const preview = getPreview(conversation, currentUserId);
   const unread = conversation.unread_count ?? 0;
   const lastMessageTime = conversation.last_message?.created_at;

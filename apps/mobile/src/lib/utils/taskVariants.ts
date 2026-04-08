@@ -50,17 +50,25 @@ export function filterVariants(variants: TaskVariant[], query: string, maxResult
     .slice(0, maxResults);
 }
 
+const RECURRENCE_LABELS: Record<string, string> = {
+  daily: 'Quotidien',
+  weekly: 'Hebdo',
+  biweekly: 'Bi-hebdo',
+  monthly: 'Mensuel',
+};
+
+// medium is intentionally omitted — it's the default priority
+const PRIORITY_LABELS: Record<string, string> = {
+  low: 'Faible',
+  high: 'Haute',
+  urgent: 'Urgente',
+};
+
 export function formatVariantSubtitle(v: TaskVariant, categoryLabels: Record<string, { label: string }>): string {
   const parts: string[] = [];
 
-  const recurrenceLabels: Record<string, string> = {
-    daily: 'Quotidien',
-    weekly: 'Hebdo',
-    biweekly: 'Bi-hebdo',
-    monthly: 'Mensuel',
-  };
-  if (v.recurrence !== 'none' && recurrenceLabels[v.recurrence]) {
-    parts.push(recurrenceLabels[v.recurrence]);
+  if (v.recurrence !== 'none' && RECURRENCE_LABELS[v.recurrence]) {
+    parts.push(RECURRENCE_LABELS[v.recurrence]);
   }
 
   if (v.estimatedMinutes != null) {
@@ -73,10 +81,8 @@ export function formatVariantSubtitle(v: TaskVariant, categoryLabels: Record<str
     }
   }
 
-  // medium is intentionally omitted — it's the default priority, no need to show it in subtitle
-  const priorityLabels: Record<string, string> = { low: 'Faible', high: 'Haute', urgent: 'Urgente' };
-  if (priorityLabels[v.priority]) {
-    parts.push(priorityLabels[v.priority]);
+  if (PRIORITY_LABELS[v.priority]) {
+    parts.push(PRIORITY_LABELS[v.priority]);
   }
 
   if (parts.length === 0) {

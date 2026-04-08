@@ -13,6 +13,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Modal,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -53,11 +55,6 @@ const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string; icon: string }
 
 // ─── Date helpers ───────────────────────────────────────────────────────────
 
-const DAY_NAMES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
 const SHORT_DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const SHORT_MONTHS = [
   'janv.', 'fév.', 'mars', 'avr.', 'mai', 'juin',
@@ -66,10 +63,6 @@ const SHORT_MONTHS = [
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function formatDatePill(date: Date): string {
@@ -81,28 +74,129 @@ function formatDatePill(date: Date): string {
   return `${SHORT_DAYS[date.getDay()]} ${date.getDate()} ${SHORT_MONTHS[date.getMonth()]}`;
 }
 
-function endOfWeek(): Date {
+
+// ─── Wheel Picker ────────────────────────────────────────────────────────
+
+const WHEEL_ITEM_HEIGHT = 44;
+const WHEEL_VISIBLE_ITEMS = 5;
+const WHEEL_HEIGHT = WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE_ITEMS;
+const WHEEL_PADDING = WHEEL_ITEM_HEIGHT * Math.floor(WHEEL_VISIBLE_ITEMS / 2);
+
+function buildDateOptions(daysAhead = 90): { label: string; date: Date }[] {
   const now = new Date();
-  const day = now.getDay();
-  const daysUntilFri = day <= 5 ? 5 - day : 5 + 7 - day;
-  const fri = new Date(now);
-  fri.setDate(now.getDate() + daysUntilFri);
-  return fri;
+  return Array.from({ length: daysAhead }, (_, i) => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    return { label: formatDatePill(date), date };
+  });
 }
 
-const QUICK_DATE_CHIPS = [
-  { label: "Aujourd'hui", getDate: () => new Date() },
-  { label: 'Demain', getDate: () => { const d = new Date(); d.setDate(d.getDate() + 1); return d; } },
-  { label: 'Vendredi', getDate: () => endOfWeek() },
-];
+const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const MINUTE_LABELS = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
 
-type Period = 'matin' | 'apres-midi' | 'soir';
-const PERIODS: { key: Period; label: string; emoji: string; hours: number[] }[] = [
-  { key: 'matin', label: 'Matin', emoji: '\u{1F305}', hours: [6, 7, 8, 9, 10, 11, 12] },
-  { key: 'apres-midi', label: 'Apres-midi', emoji: '\u{2600}\u{FE0F}', hours: [12, 13, 14, 15, 16, 17, 18] },
-  { key: 'soir', label: 'Soir', emoji: '\u{1F319}', hours: [18, 19, 20, 21, 22, 23] },
-];
-const MINUTES = ['00', '15', '30', '45'];
+function WheelColumn({
+  items,
+  selectedIndex,
+  onSelect,
+  width,
+}: {
+  items: string[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  width: number;
+}) {
+  const scrollRef = useRef<ScrollView>(null);
+  const isUserScrolling = useRef(false);
+
+  useEffect(() => {
+    if (!isUserScrolling.current) {
+      scrollRef.current?.scrollTo({
+        y: selectedIndex * WHEEL_ITEM_HEIGHT,
+        animated: false,
+      });
+    }
+  }, [selectedIndex]);
+
+  const handleMomentumEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const idx = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(idx, items.length - 1));
+      isUserScrolling.current = false;
+      onSelect(clamped);
+    },
+    [items.length, onSelect],
+  );
+
+  return (
+    <View style={[wheelStyles.column, { width, height: WHEEL_HEIGHT }]}>
+      {/* Highlight bar */}
+      <View style={wheelStyles.highlight} pointerEvents="none" />
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={WHEEL_ITEM_HEIGHT}
+        decelerationRate="fast"
+        onScrollBeginDrag={() => { isUserScrolling.current = true; }}
+        onMomentumScrollEnd={handleMomentumEnd}
+        contentContainerStyle={{ paddingVertical: WHEEL_PADDING }}
+      >
+        {items.map((label, i) => {
+          const isSelected = i === selectedIndex;
+          return (
+            <View key={`${label}-${i}`} style={wheelStyles.item}>
+              <Text
+                style={isSelected ? wheelStyles.itemTextSelected : wheelStyles.itemTextDimmed}
+                numberOfLines={1}
+              >
+                {label}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+const wheelStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  column: {
+    overflow: 'hidden',
+  },
+  highlight: {
+    position: 'absolute',
+    top: WHEEL_PADDING,
+    left: 0,
+    right: 0,
+    height: WHEEL_ITEM_HEIGHT,
+    backgroundColor: Colors.backgroundSubtle,
+    borderRadius: BorderRadius.sm,
+  },
+  item: {
+    height: WHEEL_ITEM_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemTextSelected: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+  },
+  itemTextDimmed: {
+    color: Colors.textMuted,
+    fontSize: Typography.fontSize.base,
+  },
+  separator: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+    marginTop: WHEEL_PADDING,
+  },
+});
 
 // ─── Estimated time chips ─────────────────────────────────────────────────
 
@@ -118,6 +212,12 @@ const TIME_CHIPS: { value: number; label: string }[] = [
 
 type SheetKey = 'date' | 'assignee' | 'time' | 'category' | 'priority' | 'recurrence' | 'note' | null;
 
+const CATEGORY_OPTIONS = Object.entries(categoryLabels).map(([key, val]) => ({
+  value: key as TaskCategory,
+  label: val.label,
+  icon: val.icon,
+}));
+
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // ─── BottomSheet component ────────────────────────────────────────────────
@@ -128,12 +228,14 @@ function BottomSheet({
   title,
   children,
   renderContent,
+  noScroll,
 }: {
   visible: boolean;
   onClose: () => void;
   title: string;
   children?: React.ReactNode;
   renderContent?: () => React.ReactNode;
+  noScroll?: boolean;
 }) {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -204,15 +306,21 @@ function BottomSheet({
 
           <Text style={sheetStyles.title}>{title}</Text>
 
-          <ScrollView
-            style={sheetStyles.content}
-            contentContainerStyle={sheetStyles.contentContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
-          >
-            {renderContent ? renderContent() : children}
-          </ScrollView>
+          {noScroll ? (
+            <View style={[sheetStyles.content, sheetStyles.contentContainer]}>
+              {renderContent ? renderContent() : children}
+            </View>
+          ) : (
+            <ScrollView
+              style={sheetStyles.content}
+              contentContainerStyle={sheetStyles.contentContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              {renderContent ? renderContent() : children}
+            </ScrollView>
+          )}
 
           <SafeAreaView edges={['bottom']} style={sheetStyles.validateSafe}>
             <TouchableOpacity
@@ -373,6 +481,9 @@ export default function CreateTaskScreen() {
   const { members } = useHouseholdStore();
   const { data: existingTasks = [] } = useTasks();
 
+  // Form state
+  const [taskName, setTaskName] = useState('');
+
   // Build deduplicated task variants for suggestions
   const allVariants = useMemo(
     () => buildTaskVariants(existingTasks),
@@ -383,11 +494,7 @@ export default function CreateTaskScreen() {
     () => filterVariants(allVariants, taskName),
     [allVariants, taskName]
   );
-
-  // Form state
-  const [taskName, setTaskName] = useState('');
   const [dueDate, setDueDate] = useState<Date | null>(null);
-  const [dueTime, setDueTime] = useState<{ hour: number; minute: string } | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [category, setCategory] = useState<TaskCategory>('cleaning');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -401,50 +508,37 @@ export default function CreateTaskScreen() {
   // Sheet state
   const [activeSheet, setActiveSheet] = useState<SheetKey>(null);
 
-  // Date picker state
-  const [displayMonth, setDisplayMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [timeOpen, setTimeOpen] = useState(false);
-  const [selPeriod, setSelPeriod] = useState<Period>('matin');
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const today = useMemo(() => new Date(), []);
-  const effectiveMin = useMemo(() => startOfDay(new Date()), []);
-
-  // ─── Calendar grid ────────────────────────────────────────────────────────
-
-  const calendarDays = useMemo(() => {
-    const year = displayMonth.getFullYear();
-    const month = displayMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    let startDay = firstDay.getDay() - 1;
-    if (startDay < 0) startDay = 6;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: (Date | null)[] = [];
-    for (let i = 0; i < startDay; i++) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
-    while (cells.length % 7 !== 0) cells.push(null);
-    return cells;
-  }, [displayMonth]);
-
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
-  const handleDayPress = (day: Date) => setDueDate(day);
-  const handleQuickDateChip = (getDate: () => Date) => setDueDate(getDate());
-  const handleHourSelect = (hour: number) => setDueTime({ hour, minute: dueTime?.minute ?? '00' });
+  const dateOptions = useMemo(() => buildDateOptions(90), []);
+  const dateLabels = useMemo(() => dateOptions.map(o => o.label), [dateOptions]);
 
-  const handleMinuteSelect = (minute: string) => {
-    if (dueTime) {
-      setDueTime({ ...dueTime, minute });
-    } else {
-      const firstHour = PERIODS.find(p => p.key === selPeriod)!.hours[0];
-      setDueTime({ hour: firstHour, minute });
-    }
-  };
+  const selectedDateIdx = useMemo(() => {
+    if (!dueDate) return 0;
+    const idx = dateOptions.findIndex(o => isSameDay(o.date, dueDate));
+    return idx >= 0 ? idx : 0;
+  }, [dueDate, dateOptions]);
 
-  const isHourPast = useCallback((hour: number) => {
-    const now = new Date();
-    if (!dueDate || !isSameDay(dueDate, now)) return false;
-    return hour < now.getHours();
+  const selectedHourIdx = dueDate ? dueDate.getHours() : 12;
+  const selectedMinuteIdx = dueDate ? Math.round(dueDate.getMinutes() / 5) : 0;
+
+  const handleDateColumnSelect = useCallback((idx: number) => {
+    const chosen = new Date(dateOptions[idx].date);
+    const current = dueDate ?? new Date();
+    chosen.setHours(current.getHours(), current.getMinutes(), 0, 0);
+    setDueDate(chosen);
+  }, [dateOptions, dueDate]);
+
+  const handleHourColumnSelect = useCallback((idx: number) => {
+    const d = dueDate ? new Date(dueDate) : new Date();
+    d.setHours(idx, d.getMinutes(), 0, 0);
+    setDueDate(d);
+  }, [dueDate]);
+
+  const handleMinuteColumnSelect = useCallback((idx: number) => {
+    const d = dueDate ? new Date(dueDate) : new Date();
+    d.setMinutes(idx * 5, 0, 0);
+    setDueDate(d);
   }, [dueDate]);
 
   const toggleAssignee = (userId: string) => {
@@ -456,9 +550,7 @@ export default function CreateTaskScreen() {
 
     let dueDateStr: string | undefined;
     if (dueDate) {
-      const d = new Date(dueDate);
-      if (dueTime) d.setHours(dueTime.hour, parseInt(dueTime.minute, 10), 0, 0);
-      dueDateStr = d.toISOString().split('T')[0];
+      dueDateStr = dueDate.toISOString().split('T')[0];
     }
 
     const values: TaskFormValues = {
@@ -499,14 +591,6 @@ export default function CreateTaskScreen() {
 
   // ─── Derived data ─────────────────────────────────────────────────────────
 
-  const categoryOptions = useMemo(() =>
-    Object.entries(categoryLabels).map(([key, val]) => ({
-      value: key as TaskCategory,
-      label: val.label,
-      icon: val.icon,
-    })),
-  []);
-
   const getInitials = (name?: string | null) => {
     if (!name) return '?';
     const parts = name.trim().split(' ').filter(Boolean);
@@ -517,17 +601,17 @@ export default function CreateTaskScreen() {
 
   const getMemberColor = (index: number) => Colors.memberColors[index % Colors.memberColors.length];
 
-  const currentPeriodHours = PERIODS.find(p => p.key === selPeriod)!.hours;
   const isDisabled = !taskName.trim();
 
   // ─── Value previews ───────────────────────────────────────────────────────
 
   const datePreview = useMemo(() => {
     if (!dueDate) return 'Non définie';
-    let text = formatDatePill(dueDate);
-    if (dueTime) text += ` \u00B7 ${dueTime.hour.toString().padStart(2, '0')}:${dueTime.minute}`;
-    return text;
-  }, [dueDate, dueTime]);
+    const text = formatDatePill(dueDate);
+    const hours = dueDate.getHours().toString().padStart(2, '0');
+    const mins = dueDate.getMinutes().toString().padStart(2, '0');
+    return `${text} \u00B7 ${hours}:${mins}`;
+  }, [dueDate]);
 
   const assigneePreview = useMemo(() => {
     if (!assignedTo) return 'Personne';
@@ -536,27 +620,22 @@ export default function CreateTaskScreen() {
     return member.profile?.full_name?.split(' ')[0] ?? 'Membre';
   }, [assignedTo, members]);
 
-  const timePreview = useMemo(() => {
+  const timePreview = (() => {
     if (!estimatedMinutes) return 'Non défini';
     const mins = parseInt(estimatedMinutes, 10);
     if (mins >= 60) return `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}` : ''}`;
     return `${estimatedMinutes} min`;
-  }, [estimatedMinutes]);
+  })();
 
-  const categoryPreview = useMemo(() => {
-    return categoryLabels[category]?.label ?? category;
-  }, [category]);
+  const categoryPreview = categoryLabels[category]?.label ?? category;
 
   const currentPriority = PRIORITY_CONFIG.find(p => p.value === priority)!;
 
-  const recurrencePreview = useMemo(() => {
-    return RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Aucune';
-  }, [recurrence]);
+  const recurrencePreview = RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Aucune';
 
-  const notePreview = useMemo(() => {
-    if (!notes.trim()) return 'Aucune';
-    return notes.trim().length > 30 ? notes.trim().substring(0, 30) + '...' : notes.trim();
-  }, [notes]);
+  const notePreview = !notes.trim()
+    ? 'Aucune'
+    : notes.trim().length > 30 ? notes.trim().substring(0, 30) + '...' : notes.trim();
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -711,188 +790,29 @@ export default function CreateTaskScreen() {
         visible={activeSheet === 'date'}
         onClose={() => setActiveSheet(null)}
         title="Date limite"
+        noScroll
         renderContent={() => (
-          <>
-            {/* Quick chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {QUICK_DATE_CHIPS.map(chip => {
-                const active = dueDate ? isSameDay(chip.getDate(), dueDate) : false;
-                return (
-                  <TouchableOpacity
-                    key={chip.label}
-                    onPress={() => handleQuickDateChip(chip.getDate)}
-                    style={[styles.dateChip, active && styles.dateChipActive]}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.dateChipText, active ? styles.dateChipTextActive as TextStyle : undefined]}>
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-              {dueDate && (
-                <TouchableOpacity
-                  onPress={() => { setDueDate(null); setDueTime(null); }}
-                  style={styles.dateChipClear}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.dateChipClearText}>Effacer</Text>
-                </TouchableOpacity>
-              )}
-            </ScrollView>
-
-            {/* Mini calendar */}
-            <View style={styles.calendarContainer}>
-              <View style={styles.monthHeader}>
-                <TouchableOpacity
-                  onPress={() => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() - 1, 1))}
-                  style={styles.monthNavBtn}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} />
-                </TouchableOpacity>
-                <Text style={styles.monthTitle}>
-                  {MONTH_NAMES[displayMonth.getMonth()]} {displayMonth.getFullYear()}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1))}
-                  style={styles.monthNavBtn}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.dayNamesRow}>
-                {DAY_NAMES.map((name, i) => (
-                  <View key={i} style={styles.dayNameCell}>
-                    <Text style={styles.dayNameText}>{name}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.daysGrid}>
-                {calendarDays.map((day, i) => {
-                  if (!day) return <View key={`empty-${i}`} style={styles.dayCell} />;
-                  const isPast = startOfDay(day) < effectiveMin;
-                  const isToday = isSameDay(day, today);
-                  const isSelected = dueDate ? isSameDay(day, dueDate) : false;
-                  return (
-                    <TouchableOpacity
-                      key={day.toISOString()}
-                      style={[styles.dayCell, isSelected && styles.dayCellSelected]}
-                      onPress={() => !isPast && handleDayPress(day)}
-                      disabled={isPast}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        styles.dayText,
-                        isPast ? styles.dayTextPast as TextStyle : undefined,
-                        isToday ? styles.dayTextToday as TextStyle : undefined,
-                        isSelected ? styles.dayTextSelected as TextStyle : undefined,
-                      ]}>
-                        {day.getDate()}
-                      </Text>
-                      {isToday && !isSelected && <View style={styles.todayDot} />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Time section */}
-            <TouchableOpacity style={styles.timeToggle} onPress={() => setTimeOpen(prev => !prev)} activeOpacity={0.7}>
-              <View style={styles.timeToggleLeft}>
-                <Ionicons name="time-outline" size={16} color={Colors.prune} />
-                <Text style={styles.timeToggleLabel}>Heure limite</Text>
-              </View>
-              <View style={styles.timeToggleRight}>
-                {dueTime && (
-                  <View style={styles.pillMint}>
-                    <Text style={styles.pillMintText}>
-                      {dueTime.hour.toString().padStart(2, '0')}:{dueTime.minute}
-                    </Text>
-                  </View>
-                )}
-                <Ionicons
-                  name={timeOpen ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={Colors.textMuted}
-                />
-              </View>
-            </TouchableOpacity>
-
-            {timeOpen && (
-              <View style={styles.timePanel}>
-                {/* Period filter */}
-                <View style={styles.periodRow}>
-                  {PERIODS.map(p => {
-                    const active = selPeriod === p.key;
-                    return (
-                      <TouchableOpacity
-                        key={p.key}
-                        style={[styles.periodBtn, active && styles.periodBtnActive]}
-                        onPress={() => setSelPeriod(p.key)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.periodEmoji}>{p.emoji}</Text>
-                        <Text style={[styles.periodText, active ? styles.periodTextActive as TextStyle : undefined]}>
-                          {p.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Hour grid */}
-                <View style={styles.hourGrid}>
-                  {currentPeriodHours.map(hour => {
-                    const active = dueTime?.hour === hour;
-                    const past = isHourPast(hour);
-                    return (
-                      <TouchableOpacity
-                        key={hour}
-                        style={[styles.hourCell, active && styles.hourCellActive, past && styles.hourCellDisabled]}
-                        onPress={() => !past && handleHourSelect(hour)}
-                        disabled={past}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          styles.hourText,
-                          active ? styles.hourTextActive as TextStyle : undefined,
-                          past ? styles.hourTextDisabled as TextStyle : undefined,
-                        ]}>
-                          {hour.toString().padStart(2, '0')}h
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Minutes */}
-                <View style={styles.minuteSection}>
-                  <Text style={styles.minuteSectionLabel}>MINUTES</Text>
-                  <View style={styles.minuteRow}>
-                    {MINUTES.map(m => {
-                      const active = dueTime?.minute === m;
-                      return (
-                        <TouchableOpacity
-                          key={m}
-                          style={[styles.minuteCell, active && styles.minuteCellActive]}
-                          onPress={() => handleMinuteSelect(m)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[styles.minuteText, active ? styles.minuteTextActive as TextStyle : undefined]}>
-                            :{m}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              </View>
-            )}
-          </>
+          <View style={wheelStyles.container}>
+            <WheelColumn
+              items={dateLabels}
+              selectedIndex={selectedDateIdx}
+              onSelect={handleDateColumnSelect}
+              width={150}
+            />
+            <WheelColumn
+              items={HOUR_LABELS}
+              selectedIndex={selectedHourIdx}
+              onSelect={handleHourColumnSelect}
+              width={60}
+            />
+            <Text style={wheelStyles.separator}>:</Text>
+            <WheelColumn
+              items={MINUTE_LABELS}
+              selectedIndex={selectedMinuteIdx}
+              onSelect={handleMinuteColumnSelect}
+              width={60}
+            />
+          </View>
         )}
       />
 
@@ -1008,7 +928,7 @@ export default function CreateTaskScreen() {
         title="Catégorie"
         renderContent={() => (
           <>
-            {categoryOptions.map((opt, i) => {
+            {CATEGORY_OPTIONS.map((opt, i) => {
               const active = category === opt.value;
               return (
                 <React.Fragment key={opt.value}>
@@ -1034,7 +954,7 @@ export default function CreateTaskScreen() {
                       <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
                     )}
                   </TouchableOpacity>
-                  {i < categoryOptions.length - 1 && <View style={styles.sheetDivider} />}
+                  {i < CATEGORY_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
                 </React.Fragment>
               );
             })}
@@ -1229,259 +1149,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // ── Date section (inside sheet) ─────────────────────────────────────────
-  chipRow: {
-    gap: Spacing.sm,
-    paddingVertical: 2,
-    marginBottom: Spacing.base,
-  },
-  dateChip: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundCard,
-  },
-  dateChipActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
-  },
-  dateChipText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  dateChipTextActive: {
-    color: Colors.textInverse,
-  },
-  dateChipClear: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
-    borderColor: Colors.rose,
-    backgroundColor: `${Colors.rose}14`,
-  },
-  dateChipClearText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.rose,
-  },
-
-  // Calendar
-  calendarContainer: {
-    gap: Spacing.sm + 2,
-    marginBottom: Spacing.sm,
-  },
-  monthHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  monthNavBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  monthTitle: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  dayNamesRow: {
-    flexDirection: 'row',
-  },
-  dayNameCell: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  dayNameText: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '14.285%' as unknown as number,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    maxHeight: 38,
-  },
-  dayCellSelected: {
-    backgroundColor: Colors.terracotta,
-    borderRadius: BorderRadius.full,
-  },
-  dayText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  dayTextPast: {
-    color: Colors.gray300,
-  },
-  dayTextToday: {
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.terracotta,
-  },
-  dayTextSelected: {
-    color: Colors.textInverse,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-  },
-  todayDot: {
-    position: 'absolute',
-    bottom: 3,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.terracotta,
-  },
-
-  // Time
-  timeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  timeToggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  timeToggleLabel: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  timeToggleRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  timePanel: {
-    gap: Spacing.md,
-    marginTop: Spacing.sm,
-  },
-  periodRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  periodBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundCard,
-  },
-  periodBtnActive: {
-    backgroundColor: `${Colors.prune}1A`,
-    borderColor: Colors.prune,
-  },
-  periodEmoji: {
-    fontSize: Typography.fontSize.sm,
-  },
-  periodText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  periodTextActive: {
-    color: Colors.prune,
-  },
-  hourGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  hourCell: {
-    width: '23%' as unknown as number,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundCard,
-    alignItems: 'center',
-  },
-  hourCellActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
-  },
-  hourCellDisabled: {
-    borderColor: Colors.borderLight,
-  },
-  hourText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  hourTextActive: {
-    color: Colors.textInverse,
-  },
-  hourTextDisabled: {
-    color: Colors.gray300,
-  },
-  minuteSection: {
-    gap: Spacing.xs,
-  },
-  minuteSectionLabel: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textMuted,
-    letterSpacing: 1,
-  },
-  minuteRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  minuteCell: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundCard,
-    alignItems: 'center',
-  },
-  minuteCellActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
-  },
-  minuteText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  minuteTextActive: {
-    color: Colors.textInverse,
-  },
-  pillMint: {
-    backgroundColor: `${Colors.terracotta}1A`,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-  },
-  pillMintText: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.greenStrong,
-  },
 
   // ── Sheet list rows (assignee, category, recurrence) ────────────────────
   sheetListRow: {
