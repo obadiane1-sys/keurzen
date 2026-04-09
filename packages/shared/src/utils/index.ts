@@ -48,3 +48,5 @@ export function computeTlxScore(values: {
 }
 
 export { categoryColorMap } from './taskCategoryColors';
+export { computeHouseholdScore } from './householdScore';
+export type { HouseholdScoreInput, HouseholdScoreResult, ScoreDimension } from './householdScore';
