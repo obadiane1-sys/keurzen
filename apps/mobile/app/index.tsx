@@ -59,6 +59,7 @@ export default function SplashScreen() {
   const { session, isInitialized } = useAuthStore();
   const { pendingInviteToken, pendingInviteCode } = useUiStore();
   const hasNavigated = useRef(false);
+  // eslint-disable-next-line react-hooks/purity
   const loadedAt = useRef(Date.now());
 
   // Mascot entrance
