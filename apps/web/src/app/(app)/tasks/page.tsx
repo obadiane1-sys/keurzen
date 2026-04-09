@@ -139,7 +139,7 @@ export default function TasksPage() {
             {heroMessage}
           </p>
         </div>
-        <Button size="md" onClick={() => setShowCreate(true)}>
+        <Button size="default" onClick={() => setShowCreate(true)}>
           <Plus size={16} />
           Creer
         </Button>

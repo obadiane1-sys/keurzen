@@ -10,7 +10,7 @@ export function TlxSummaryCard() {
   const { data: tlxDelta } = useTlxDelta();
 
   const score = currentTlx?.score ?? null;
-  const delta = tlxDelta ?? null;
+  const delta = tlxDelta?.delta ?? null;
 
   const deltaColor = delta !== null && delta < 0
     ? 'var(--color-sauge)'

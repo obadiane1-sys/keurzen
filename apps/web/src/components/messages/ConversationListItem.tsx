@@ -30,9 +30,10 @@ export function ConversationListItem({
 
   // Time
   const lastTime = conversation.last_message?.created_at ?? conversation.created_at;
-  const timeLabel = dayjs(lastTime).isToday()
-    ? dayjs(lastTime).format('HH:mm')
-    : dayjs(lastTime).format('DD/MM');
+  const d = dayjs(lastTime);
+  const timeLabel = d.isSame(dayjs(), 'day')
+    ? d.format('HH:mm')
+    : d.format('DD/MM');
 
   // Preview
   let preview = 'Aucun message';

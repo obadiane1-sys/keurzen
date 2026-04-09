@@ -124,7 +124,7 @@ function CollapsibleSection({
         onClick={onToggle}
         className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-background/50 transition-colors min-h-[44px]"
       >
-        <Icon size={16} className="shrink-0" style={{ color: iconColor }} />
+        <span className="shrink-0" style={{ color: iconColor }}><Icon size={16} /></span>
         <span className="flex-1 text-sm font-semibold text-text-secondary">{title}</span>
         <span className="text-xs text-text-muted">({count})</span>
         <Chevron size={14} className="text-text-muted" />

@@ -51,7 +51,7 @@ export default function ListsPage() {
         userName={profile?.full_name || undefined}
         avatarUrl={profile?.avatar_url}
         actions={
-          <Button size="md" onClick={() => setShowCreate(true)}>
+          <Button size="default" onClick={() => setShowCreate(true)}>
             <Plus size={16} />
             Creer
           </Button>
