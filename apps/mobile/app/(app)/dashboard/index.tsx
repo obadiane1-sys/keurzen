@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -19,27 +19,31 @@ import { useMyHousehold } from '../../../src/lib/queries/household';
 import { useTasks, useOverdueTasks, useTodayTasks } from '../../../src/lib/queries/tasks';
 import { useWeeklyBalance } from '../../../src/lib/queries/weekly-stats';
 import { useCurrentTlx, useTlxDelta } from '../../../src/lib/queries/tlx';
+import { useHouseholdStreak } from '../../../src/hooks/useHouseholdStreak';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { StatusPill } from '../../../src/components/dashboard/StatusPill';
-import { NarrativeCard } from '../../../src/components/dashboard/NarrativeCard';
-import { TlxDetailCard } from '../../../src/components/dashboard/TlxDetailCard';
-import { WeeklyReportCard } from '../../../src/components/dashboard/WeeklyReportCard';
 import { HouseholdScoreCard } from '../../../src/components/dashboard/HouseholdScoreCard';
 import { WeeklyTipCard } from '../../../src/components/dashboard/WeeklyTipCard';
+import { TlxDetailCard } from '../../../src/components/dashboard/TlxDetailCard';
+import { WeeklyReportCard } from '../../../src/components/dashboard/WeeklyReportCard';
 
 // ─── Staggered fade-in ──────────────────────────────────────────────────────
 
 function useStaggeredFadeIn(count: number) {
-  const anims = useRef(
-    Array.from({ length: count }, () => ({
-      opacity: new Animated.Value(0),
-      translateY: new Animated.Value(14),
-    })),
-  ).current;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const anims = useMemo(
+    () =>
+      Array.from({ length: count }, () => ({
+        opacity: new Animated.Value(0),
+        translateY: new Animated.Value(14),
+      })),
+    // count is stable (literal passed at call site)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     const animations = anims.map((a, i) =>
@@ -61,7 +65,7 @@ function useStaggeredFadeIn(count: number) {
       ]),
     );
     Animated.parallel(animations).start();
-  }, []);
+  }, [anims]);
 
   return anims;
 }
@@ -96,15 +100,6 @@ const priorityColors: Record<string, string> = {
   low: Colors.sauge,
 };
 
-function formatDateHeader(): string {
-  const months = [
-    'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
-    'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
-  ];
-  const now = new Date();
-  return `Aujourd'hui, ${now.getDate()} ${months[now.getMonth()]}`;
-}
-
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
@@ -117,19 +112,20 @@ export default function DashboardScreen() {
   const { members: balanceMembers } = useWeeklyBalance();
   const { data: currentTlx } = useCurrentTlx();
   const { data: tlxDelta } = useTlxDelta();
+  const { data: streakDays = 0 } = useHouseholdStreak();
 
-  const fadeAnims = useStaggeredFadeIn(10);
+  const fadeAnims = useStaggeredFadeIn(9);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
+
+  const doneTasks = useMemo(() => {
+    return allTasks.filter((t) => t.status === 'done');
+  }, [allTasks]);
 
   // Redirect to onboarding if not seen
   if (profile && !profile.has_seen_onboarding) {
     return <Redirect href="/(app)/onboarding/setup" />;
   }
-
-  const doneTasks = useMemo(() => {
-    return allTasks.filter((t) => t.status === 'done');
-  }, [allTasks]);
 
   if (isLoading) return <Loader fullScreen />;
 
@@ -168,10 +164,19 @@ export default function DashboardScreen() {
         {/* ── 1. HEADER ── */}
         <FadeSection anim={fadeAnims[0]} style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text variant="h4" weight="bold" style={styles.dateText}>
-              {formatDateHeader()}
+            <Text variant="overline" color="muted" style={styles.sectionTitle}>
+              SCORE HEBDO DU FOYER
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={() => router.push('/(app)/notifications')}
+            accessibilityLabel="Notifications"
+            accessibilityRole="button"
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            style={styles.headerIcon}
+          >
+            <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push('/(app)/settings/profile')}
             accessibilityLabel="Mon profil"
@@ -190,60 +195,55 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </FadeSection>
 
-        {/* ── 2. STATUS PILLS ── */}
-        <FadeSection anim={fadeAnims[1]} style={styles.pillsRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.pillsContent}
-          >
-            <StatusPill dot={Colors.sauge} label={household.name} />
-            <StatusPill
-              icon={<Ionicons name="clipboard-outline" size={14} color={Colors.textSecondary} />}
-              label={`${todayTasks.length} tache${todayTasks.length !== 1 ? 's' : ''} aujourd'hui`}
-            />
-            {overdueTasks.length > 0 && (
-              <StatusPill
-                dot={Colors.rose}
-                label={`${overdueTasks.length} en retard`}
-                variant="alert"
-              />
-            )}
-          </ScrollView>
+        {/* ── 2. HERO SCORE CARD (Lifesum-style) ── */}
+        <FadeSection anim={fadeAnims[1]} style={styles.sectionPadded}>
+          <HouseholdScoreCard firstName={firstName} />
         </FadeSection>
 
-        {/* ── 3. HOUSEHOLD SCORE ── */}
+        {/* ── 3. STREAK + STATS (side-by-side like Lifesum) ── */}
         <FadeSection anim={fadeAnims[2]} style={styles.sectionPadded}>
-          <HouseholdScoreCard />
+          <View style={styles.statsHeaderRow}>
+            <Text variant="overline" color="muted">
+              CETTE SEMAINE
+            </Text>
+          </View>
+          <View style={styles.statCardsRow}>
+            <View style={styles.statCard}>
+              <Text variant="h2" weight="extrabold" style={styles.statNumber}>
+                {streakDays}
+              </Text>
+              <Text variant="caption" color="secondary" style={styles.statLabel}>
+                {streakDays <= 1 ? 'jour' : 'jours'} de suite
+              </Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text variant="h2" weight="extrabold" style={styles.statNumber}>
+                {todayTasks.length}
+              </Text>
+              <Text variant="caption" color="secondary" style={styles.statLabel}>
+                {todayTasks.length <= 1 ? "tache aujourd'hui" : "taches aujourd'hui"}
+              </Text>
+            </View>
+          </View>
         </FadeSection>
 
-        {/* ── 3b. WEEKLY TIP ── */}
+        {/* ── 4. WEEKLY TIP ── */}
         <FadeSection anim={fadeAnims[3]} style={styles.sectionPadded}>
           <WeeklyTipCard />
         </FadeSection>
 
-        {/* ── 4. NARRATIVE CARD ── */}
-        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
-          <NarrativeCard
-            doneTasks={doneTasks.length}
-            overdueTasks={overdueTasks.length}
-            tlxDelta={tlxDelta?.delta ?? null}
-            hasTlx={!!currentTlx}
-          />
-        </FadeSection>
-
         {/* ── 5. CHARGE MENTALE ── */}
-        <FadeSection anim={fadeAnims[5]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Charge mentale
+            CHARGE MENTALE
           </Text>
           <TlxDetailCard currentTlx={currentTlx} tlxDelta={tlxDelta} />
         </FadeSection>
 
         {/* ── 6. TACHES DU JOUR ── */}
-        <FadeSection anim={fadeAnims[6]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[5]} style={styles.sectionPadded}>
           <View style={styles.sectionHeaderRow}>
-            <Text variant="overline" color="muted">Taches du jour</Text>
+            <Text variant="overline" color="muted">TACHES DU JOUR</Text>
             {todayTasks.length > 0 && (
               <TouchableOpacity onPress={() => router.push('/(app)/tasks')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text variant="caption" style={{ color: Colors.terracotta }}>Tout voir</Text>
@@ -268,16 +268,16 @@ export default function DashboardScreen() {
               ))
             ) : (
               <Text variant="body" color="muted" style={styles.emptyText}>
-                Aucune tache prevue aujourd'hui
+                {"Aucune tache prevue aujourd'hui"}
               </Text>
             )}
           </View>
         </FadeSection>
 
         {/* ── 7. REPARTITION SEMAINE ── */}
-        <FadeSection anim={fadeAnims[7]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[6]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Repartition cette semaine
+            REPARTITION CETTE SEMAINE
           </Text>
           <View style={styles.flatCard}>
             {balanceMembers.length > 0 ? (
@@ -315,9 +315,9 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 8. TERMINE RECEMMENT ── */}
-        <FadeSection anim={fadeAnims[8]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[7]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Termine recemment
+            TERMINE RECEMMENT
           </Text>
           <View style={styles.flatCard}>
             {doneTasks.length > 0 ? (
@@ -346,9 +346,9 @@ export default function DashboardScreen() {
         </FadeSection>
 
         {/* ── 9. RAPPORT HEBDO ── */}
-        <FadeSection anim={fadeAnims[9]} style={styles.sectionPadded}>
+        <FadeSection anim={fadeAnims[8]} style={styles.sectionPadded}>
           <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Rapport de la semaine
+            RAPPORT DE LA SEMAINE
           </Text>
           <WeeklyReportCard />
         </FadeSection>
@@ -375,43 +375,38 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
   },
 
-  // Header
+  // Header (Lifesum-style: title left, icons right)
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
-  dateText: {
-    color: Colors.textPrimary,
+  sectionTitle: {
+    fontSize: Typography.fontSize.xs,
+    letterSpacing: 1.5,
+  },
+  headerIcon: {
+    marginRight: Spacing.md,
   },
   avatar: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     borderRadius: BorderRadius.full,
   },
   avatarFallback: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.sm,
     color: Colors.textInverse,
-  },
-
-  // Pills
-  pillsRow: {
-    marginBottom: Spacing.lg,
-  },
-  pillsContent: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
   },
 
   // Sections
@@ -427,6 +422,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+  },
+
+  // Side-by-side stat cards (Lifesum streaks style)
+  statsHeaderRow: {
+    marginBottom: Spacing.sm,
+  },
+  statCardsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.card,
+  },
+  statNumber: {
+    fontSize: Typography.fontSize['3xl'],
+    color: Colors.textPrimary,
+    lineHeight: Typography.fontSize['3xl'] * 1.1,
+  },
+  statLabel: {
+    marginTop: Spacing.xs,
+    textAlign: 'center',
   },
 
   // Flat card
