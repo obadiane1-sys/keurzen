@@ -4,15 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Text } from '../../src/components/ui/Text';
-import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../src/constants/tokens';
+import { Text } from '../../../src/components/ui/Text';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../../src/constants/tokens';
 import { useWeeklyBalance, useCoachingInsights } from '@keurzen/queries';
 
-import { ScoreBreakdownCard } from '../../src/components/analytics/ScoreBreakdownCard';
-import { EquitySection } from '../../src/components/analytics/EquitySection';
-import { TlxDetailSection } from '../../src/components/analytics/TlxDetailSection';
-import { TrendsSection } from '../../src/components/analytics/TrendsSection';
-import { InsightCard } from '../../src/components/dashboard/InsightCard';
+import { ScoreBreakdownCard } from '../../../src/components/analytics/ScoreBreakdownCard';
+import { EquitySection } from '../../../src/components/analytics/EquitySection';
+import { TlxDetailSection } from '../../../src/components/analytics/TlxDetailSection';
+import { TrendsSection } from '../../../src/components/analytics/TrendsSection';
+import { InsightCard } from '../../../src/components/dashboard/InsightCard';
 
 export default function AnalyticsScreen() {
   const router = useRouter();
