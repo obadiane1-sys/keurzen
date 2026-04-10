@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 
 import { Text } from '../ui/Text';
-import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/tokens';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../constants/tokens';
 import { useTasks } from '../../lib/queries/tasks';
 import { useWeeklyBalance } from '../../lib/queries/weekly-stats';
 import { useCurrentTlx } from '../../lib/queries/tlx';
@@ -21,26 +21,58 @@ function getScoreColor(score: number): string {
   return Colors.rose;
 }
 
-function getScoreLabel(score: number): string {
-  if (score >= 70) return 'Bon equilibre';
-  if (score >= 40) return 'A surveiller';
-  return 'Attention requise';
+function getMotivationalMessage(score: number, firstName: string): { title: string; subtitle: string } {
+  if (score >= 80) {
+    return {
+      title: `${firstName}, c'est parfait !`,
+      subtitle: 'Votre foyer fonctionne en harmonie. Continuez sur cette lancee !',
+    };
+  }
+  if (score >= 60) {
+    return {
+      title: `${firstName}, beau travail !`,
+      subtitle: 'Votre equilibre est solide. Quelques ajustements et ce sera optimal.',
+    };
+  }
+  if (score >= 40) {
+    return {
+      title: `${firstName}, on progresse !`,
+      subtitle: 'Completez vos taches et votre score progressera cette semaine.',
+    };
+  }
+  return {
+    title: `${firstName}, courage !`,
+    subtitle: 'Quelques efforts suffiront a remonter votre score cette semaine.',
+  };
+}
+
+// ─── Gauge Labels (Lifesum-style) ───────────────────────────────────────────
+
+const GAUGE_LABELS = ['FRAGILE', 'A RISQUE', 'MOYEN', 'BON', 'OPTIMAL'] as const;
+
+function getActiveLabel(score: number): string {
+  if (score < 20) return 'FRAGILE';
+  if (score < 40) return 'A RISQUE';
+  if (score < 60) return 'MOYEN';
+  if (score < 80) return 'BON';
+  return 'OPTIMAL';
 }
 
 // ─── Ring constants ──────────────────────────────────────────────────────────
 
-const RING_SIZE = 100;
-const RING_STROKE = 8;
+const RING_SIZE = 220;
+const RING_STROKE = 14;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface HouseholdScoreCardProps {
-  previousScore?: number | null;
+  firstName?: string;
 }
 
-export function HouseholdScoreCard({ previousScore }: HouseholdScoreCardProps) {
+export function HouseholdScoreCard({ firstName = '' }: HouseholdScoreCardProps) {
+  const router = useRouter();
   const { data: allTasks = [] } = useTasks();
   const { members: balanceMembers } = useWeeklyBalance();
   const { data: currentTlx } = useCurrentTlx();
@@ -50,12 +82,9 @@ export function HouseholdScoreCard({ previousScore }: HouseholdScoreCardProps) {
   const scoreResult = useMemo(() => {
     const completedTasks = allTasks.filter((t) => t.status === 'done').length;
     const totalTasks = allTasks.length;
-
-    // Max imbalance: largest absolute tasks_delta among members
     const maxImbalance = balanceMembers.length > 0
       ? Math.max(...balanceMembers.map((m) => Math.abs(m.tasksDelta)))
       : 0;
-
     const averageTlx = currentTlx?.score ?? 0;
 
     return computeHouseholdScore({
@@ -68,99 +97,90 @@ export function HouseholdScoreCard({ previousScore }: HouseholdScoreCardProps) {
   }, [allTasks, balanceMembers, currentTlx, streakDays]);
 
   const scoreColor = getScoreColor(scoreResult.total);
-  const trend = previousScore != null ? scoreResult.total - previousScore : null;
-  const trendColor = trend != null && trend >= 0 ? Colors.sauge : Colors.rose;
   const strokeDashoffset = RING_CIRCUMFERENCE * (1 - scoreResult.total / 100);
+  const message = getMotivationalMessage(scoreResult.total, firstName);
+  const activeLabel = getActiveLabel(scoreResult.total);
 
   return (
     <View style={styles.card}>
-      <View style={styles.topRow}>
-        <View style={styles.ringContainer}>
-          <Svg width={RING_SIZE} height={RING_SIZE}>
-            <Circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              stroke={Colors.gray100}
-              strokeWidth={RING_STROKE}
-              fill="none"
-            />
-            <Circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              stroke={scoreColor}
-              strokeWidth={RING_STROKE}
-              fill="none"
-              strokeDasharray={RING_CIRCUMFERENCE}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              rotation={-90}
-              origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
-            />
-          </Svg>
-          <View style={[styles.ringCenter, { width: RING_SIZE, height: RING_SIZE }]}>
+      {/* ── Gauge labels ── */}
+      <View style={styles.labelsRow}>
+        {GAUGE_LABELS.map((label) => {
+          const isActive = label === activeLabel;
+          return (
             <Text
-              variant="h2"
-              weight="extrabold"
-              style={{ color: scoreColor, fontSize: 28, lineHeight: 32 }}
+              key={label}
+              variant="caption"
+              weight={isActive ? 'bold' : 'regular'}
+              style={[
+                styles.gaugeLabel,
+                { color: isActive ? scoreColor : Colors.textMuted },
+              ]}
             >
-              {scoreResult.total}
+              {label}
             </Text>
-          </View>
-        </View>
+          );
+        })}
+      </View>
 
-        {/* Right side: label + trend */}
-        <View style={styles.infoColumn}>
-          <Text variant="h4" weight="bold" style={styles.title}>
-            Score foyer
-          </Text>
+      {/* ── Large centered gauge ── */}
+      <View style={styles.gaugeContainer}>
+        <Svg width={RING_SIZE} height={RING_SIZE}>
+          <Defs>
+            <LinearGradient id="scoreGradient" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={Colors.gray100} stopOpacity="1" />
+              <Stop offset="1" stopColor={Colors.borderLight} stopOpacity="1" />
+            </LinearGradient>
+          </Defs>
+          {/* Background ring */}
+          <Circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RING_RADIUS}
+            stroke="url(#scoreGradient)"
+            strokeWidth={RING_STROKE}
+            fill="none"
+          />
+          {/* Score ring */}
+          <Circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RING_RADIUS}
+            stroke={scoreColor}
+            strokeWidth={RING_STROKE}
+            fill="none"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            rotation={-90}
+            origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+          />
+        </Svg>
+
+        {/* Center content */}
+        <View style={styles.gaugeCenter}>
           <Text
-            variant="bodySmall"
-            weight="semibold"
-            style={{ color: scoreColor }}
+            variant="display"
+            weight="extrabold"
+            style={[styles.scoreNumber, { color: Colors.textPrimary }]}
           >
-            {getScoreLabel(scoreResult.total)}
+            {scoreResult.total}
           </Text>
-          {trend !== null && (
-            <View style={styles.trendRow}>
-              <Ionicons
-                name={trend >= 0 ? 'arrow-up' : 'arrow-down'}
-                size={14}
-                color={trendColor}
-              />
-              <Text variant="caption" weight="semibold" style={{ color: trendColor }}>
-                {trend >= 0 ? '+' : ''}{trend} vs sem. prec.
-              </Text>
-            </View>
-          )}
+          <Text variant="bodySmall" color="muted" style={styles.scoreMax}>
+            /100
+          </Text>
         </View>
       </View>
 
-      <View style={styles.barsContainer}>
-        {Object.values(scoreResult.dimensions).map((dim) => (
-          <View key={dim.label} style={styles.barRow}>
-            <Text variant="caption" color="secondary" style={styles.barLabel}>
-              {dim.label}
-            </Text>
-            <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  {
-                    width: `${dim.value}%`,
-                    backgroundColor: getScoreColor(dim.value),
-                  },
-                ]}
-              />
-            </View>
-            <Text variant="caption" weight="semibold" color="secondary" style={styles.barValue}>
-              {dim.value}
-            </Text>
-          </View>
-        ))}
-      </View>
+      {/* ── Motivational message ── */}
+      <Text variant="h3" weight="bold" style={styles.motivTitle}>
+        {message.title}
+      </Text>
+      <Text variant="body" color="secondary" style={styles.motivSubtitle}>
+        {message.subtitle}
+      </Text>
 
+      {/* ── Objective progress (if any) ── */}
       {objective && (
         <ObjectiveProgressSection
           label={objective.label}
@@ -172,6 +192,18 @@ export function HouseholdScoreCard({ previousScore }: HouseholdScoreCardProps) {
           achieved={isAchieved}
         />
       )}
+
+      {/* ── Divider + CTA ── */}
+      <View style={styles.ctaDivider} />
+      <TouchableOpacity
+        style={styles.ctaButton}
+        onPress={() => router.push('/(app)/dashboard/analytics')}
+        activeOpacity={0.7}
+      >
+        <Text variant="label" weight="bold" style={styles.ctaText}>
+          VOIR LES DETAILS
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -182,60 +214,79 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.backgroundCard,
     borderRadius: BorderRadius.xl,
-    padding: Spacing.base,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.base,
+    paddingHorizontal: Spacing.xl,
+    alignItems: 'center',
     ...Shadows.card,
   },
-  topRow: {
+
+  // Gauge labels row
+  labelsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.base,
-    marginBottom: Spacing.base,
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
-  ringContainer: {
+  gaugeLabel: {
+    fontSize: Typography.fontSize.xs - 1,
+    letterSpacing: 0.8,
+  },
+
+  // Large gauge
+  gaugeContainer: {
     position: 'relative',
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xl,
   },
-  ringCenter: {
+  gaugeCenter: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
+    width: RING_SIZE,
+    height: RING_SIZE,
   },
-  infoColumn: {
-    flex: 1,
-    gap: Spacing.xs,
+  scoreNumber: {
+    fontSize: 56,
+    lineHeight: 64,
   },
-  title: {
+  scoreMax: {
+    fontSize: Typography.fontSize.md,
+    marginTop: -4,
+  },
+
+  // Motivational text
+  motivTitle: {
+    fontSize: Typography.fontSize['2xl'],
+    textAlign: 'center',
     color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
   },
-  trendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.xs,
+  motivSubtitle: {
+    fontSize: Typography.fontSize.base,
+    textAlign: 'center',
+    lineHeight: Typography.fontSize.base * 1.6,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.base,
   },
-  barsContainer: {
-    gap: Spacing.sm,
+
+  // CTA
+  ctaDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.borderLight,
+    width: '100%',
+    marginBottom: Spacing.base,
   },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
+  ctaButton: {
+    paddingVertical: Spacing.sm,
   },
-  barLabel: {
-    width: 100,
-  },
-  barTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.gray100,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: 6,
-    borderRadius: 3,
-  },
-  barValue: {
-    width: 24,
-    textAlign: 'right',
+  ctaText: {
+    color: Colors.terracotta,
+    fontSize: Typography.fontSize.sm,
+    letterSpacing: 1.2,
   },
 });

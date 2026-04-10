@@ -51,7 +51,7 @@ export function ScoreHeroCard() {
   return (
     <div
       className="relative overflow-hidden rounded-3xl bg-background-card p-6 shadow-card cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => router.push('/dashboard/weekly-review')}
+      onClick={() => router.push('/dashboard/analytics')}
     >
       {/* Decorative blobs */}
       <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-terracotta/10 blur-2xl" />
