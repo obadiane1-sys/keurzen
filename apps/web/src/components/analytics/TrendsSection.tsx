@@ -46,6 +46,20 @@ export function TrendsSection() {
     tlx: t.avgTlxScore,
   }));
 
+  const tooltipStyle = {
+    backgroundColor: 'var(--color-background-card)',
+    border: '1px solid var(--color-border)',
+    borderRadius: 8,
+    fontSize: 12,
+  };
+
+  const xAxisProps = {
+    dataKey: 'week' as const,
+    tick: { fontSize: 10, fill: 'var(--color-text-muted)' },
+    axisLine: false,
+    tickLine: false,
+  };
+
   return (
     <div className="rounded-2xl bg-background-card p-5 shadow-card">
       <p className="text-sm font-bold text-text-primary mb-4">
@@ -60,21 +74,9 @@ export function TrendsSection() {
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" />
-              <XAxis
-                dataKey="week"
-                tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-                axisLine={false}
-                tickLine={false}
-              />
+              <XAxis {...xAxisProps} />
               <YAxis hide />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--color-background-card)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={tooltipStyle} />
               <Line
                 type="monotone"
                 dataKey="tasks"
@@ -94,21 +96,9 @@ export function TrendsSection() {
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" />
-              <XAxis
-                dataKey="week"
-                tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-                axisLine={false}
-                tickLine={false}
-              />
+              <XAxis {...xAxisProps} />
               <YAxis hide domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--color-background-card)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={tooltipStyle} />
               <Line
                 type="monotone"
                 dataKey="tlx"

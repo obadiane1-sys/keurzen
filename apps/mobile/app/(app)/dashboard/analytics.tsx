@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
-import { Colors, Spacing, BorderRadius, Typography } from '../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../src/constants/tokens';
 import { useWeeklyBalance, useCoachingInsights } from '@keurzen/queries';
 
 import { ScoreBreakdownCard } from '../../src/components/analytics/ScoreBreakdownCard';
@@ -130,11 +130,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    shadowColor: '#3D2C22',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Shadows.card,
   },
   sectionTitle: {
     color: Colors.textPrimary,
@@ -155,11 +151,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
     backgroundColor: Colors.backgroundCard,
     borderRadius: BorderRadius.xl,
-    shadowColor: '#3D2C22',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Shadows.card,
   },
   weeklyReviewText: {
     color: Colors.terracotta,

@@ -13,28 +13,39 @@ const PAD_X = 24;
 const PAD_TOP = 8;
 const PAD_BOTTOM = 20;
 
-function buildPoints(
+interface ChartPoint {
+  x: number;
+  y: number;
+  value: number | null;
+}
+
+function computeChartPoints(
   data: WeekTrend[],
   accessor: (d: WeekTrend) => number | null,
-): string {
-  const validData = data.filter((d) => accessor(d) !== null);
-  if (validData.length < 2) return '';
-
+): ChartPoint[] {
   const n = data.length;
+  if (n < 2) return [];
+
   const usableW = CHART_W - PAD_X * 2;
   const usableH = CHART_H - PAD_TOP - PAD_BOTTOM;
-
   const values = data.map((d) => accessor(d) ?? 0);
   const max = Math.max(...values, 1);
 
-  return data
-    .map((d, i) => {
-      const v = accessor(d) ?? 0;
-      const x = PAD_X + (i / (n - 1)) * usableW;
-      const y = PAD_TOP + usableH - (v / max) * usableH;
-      return `${x},${y}`;
-    })
-    .join(' ');
+  return data.map((d, i) => {
+    const v = accessor(d);
+    const numV = v ?? 0;
+    return {
+      x: PAD_X + (i / (n - 1)) * usableW,
+      y: PAD_TOP + usableH - (numV / max) * usableH,
+      value: v,
+    };
+  });
+}
+
+function buildPolylinePoints(points: ChartPoint[]): string {
+  const validCount = points.filter((p) => p.value !== null).length;
+  if (validCount < 2) return '';
+  return points.map((p) => `${p.x},${p.y}`).join(' ');
 }
 
 interface MiniChartProps {
@@ -46,9 +57,8 @@ interface MiniChartProps {
 }
 
 function MiniChart({ title, data, accessor, color, unit = '' }: MiniChartProps) {
-  const points = buildPoints(data, accessor);
-  const n = data.length;
-  const usableW = CHART_W - PAD_X * 2;
+  const chartPoints = computeChartPoints(data, accessor);
+  const polyline = buildPolylinePoints(chartPoints);
 
   return (
     <View style={chartStyles.chartCard}>
@@ -70,9 +80,9 @@ function MiniChart({ title, data, accessor, color, unit = '' }: MiniChartProps) 
             />
           );
         })}
-        {points ? (
+        {polyline ? (
           <Polyline
-            points={points}
+            points={polyline}
             fill="none"
             stroke={color}
             strokeWidth={2.5}
@@ -80,35 +90,27 @@ function MiniChart({ title, data, accessor, color, unit = '' }: MiniChartProps) 
             strokeLinejoin="round"
           />
         ) : null}
-        {data.map((d, i) => {
-          const v = accessor(d);
-          if (v === null) return null;
-          const values = data.map((dd) => accessor(dd) ?? 0);
-          const max = Math.max(...values, 1);
-          const usableH = CHART_H - PAD_TOP - PAD_BOTTOM;
-          const x = PAD_X + (i / (n - 1)) * usableW;
-          const y = PAD_TOP + usableH - (v / max) * usableH;
-          return <Circle key={i} cx={x} cy={y} r={3} fill={color} />;
-        })}
-        {data.map((d, i) => {
-          const x = PAD_X + (i / (n - 1)) * usableW;
-          return (
-            <SvgText
-              key={i}
-              x={x}
-              y={CHART_H - 4}
-              fontSize={10}
-              fill={Colors.textMuted}
-              textAnchor="middle"
-            >
-              {d.weekLabel}
-            </SvgText>
-          );
-        })}
+        {chartPoints.map((pt, i) =>
+          pt.value !== null ? (
+            <Circle key={i} cx={pt.x} cy={pt.y} r={3} fill={color} />
+          ) : null,
+        )}
+        {chartPoints.map((pt, i) => (
+          <SvgText
+            key={i}
+            x={pt.x}
+            y={CHART_H - 4}
+            fontSize={10}
+            fill={Colors.textMuted}
+            textAnchor="middle"
+          >
+            {data[i].weekLabel}
+          </SvgText>
+        ))}
       </Svg>
-      {data.length > 0 && accessor(data[data.length - 1]) !== null && (
+      {chartPoints.length > 0 && chartPoints[chartPoints.length - 1].value !== null && (
         <Text variant="caption" color="muted" style={chartStyles.currentValue}>
-          Cette semaine : {accessor(data[data.length - 1])}{unit}
+          Cette semaine : {chartPoints[chartPoints.length - 1].value}{unit}
         </Text>
       )}
     </View>

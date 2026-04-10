@@ -1,4 +1,3 @@
-// packages/queries/src/hooks/useAnalyticsTrends.ts
 import { useQuery } from '@tanstack/react-query';
 import { useHouseholdStore } from '@keurzen/stores';
 import type { WeeklyStat, TlxEntry } from '@keurzen/shared';

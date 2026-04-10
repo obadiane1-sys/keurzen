@@ -46,7 +46,7 @@ export function EquitySection({
     );
   }
 
-  const expectedShare = members.length > 0 ? 1 / members.length : 0;
+  const expectedShare = 1 / members.length;
 
   return (
     <View style={styles.card}>
