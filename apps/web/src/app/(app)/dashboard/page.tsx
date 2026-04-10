@@ -2,56 +2,67 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@keurzen/stores';
-import { useTasks } from '@keurzen/queries';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { TlxSummaryCard } from '@/components/dashboard/TlxSummaryCard';
-import { TodayTasksCard } from '@/components/dashboard/TodayTasksCard';
-import { RepartitionCard } from '@/components/dashboard/RepartitionCard';
-import { WeeklyTipCard } from '@/components/dashboard/WeeklyTipCard';
+import { useCoachingInsights } from '@keurzen/queries';
+import { InsightsCarousel } from '@/components/dashboard/InsightsCarousel';
+import { ScoreHeroCard } from '@/components/dashboard/ScoreHeroCard';
+import { TaskEquityCard } from '@/components/dashboard/TaskEquityCard';
+import { MentalLoadCardV2 } from '@/components/dashboard/MentalLoadCardV2';
+import { UpcomingTasksCard } from '@/components/dashboard/UpcomingTasksCard';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { profile } = useAuthStore();
-  const { isLoading } = useTasks();
+  const { data: insights = [] } = useCoachingInsights();
 
   if (profile && !profile.has_seen_onboarding) {
     router.replace('/onboarding/setup');
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
-      </div>
-    );
-  }
+  const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
   return (
-    <div className="mx-auto flex max-w-[1200px] gap-8 px-6 py-8 max-lg:flex-col">
-      {/* Sticky sidebar with score */}
-      <DashboardSidebar />
-
-      {/* Main content */}
-      <main className="flex-1 min-w-0">
-        <h1 className="mb-6 font-heading text-[22px] font-extrabold text-text-primary">
-          Tableau de bord
-        </h1>
-
-        {/* TLX + Repartition — 2 columns */}
-        <div className="grid grid-cols-2 gap-4 mb-4 max-md:grid-cols-1">
-          <TlxSummaryCard />
-          <RepartitionCard />
+    <div className="mx-auto max-w-[800px] px-6 py-8 space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background-card shadow-card">
+            <span className="text-xl">🏠</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">
+              Bonjour,{' '}
+              <span className="text-terracotta">{firstName}</span>
+            </h1>
+            <p className="text-sm text-text-muted">
+              Prête à équilibrer votre quotidien ?
+            </p>
+          </div>
         </div>
 
-        {/* Today tasks — full width */}
-        <div className="mb-4">
-          <TodayTasksCard />
-        </div>
+        <button
+          onClick={() => router.push('/notifications')}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-background-card shadow-card transition-colors hover:bg-border-light"
+          aria-label="Notifications"
+        >
+          <span className="text-lg">🔔</span>
+        </button>
+      </div>
 
-        {/* Weekly tip — full width */}
-        <WeeklyTipCard />
-      </main>
+      {/* Insights Carousel */}
+      <InsightsCarousel insights={insights} />
+
+      {/* Score Hero */}
+      <ScoreHeroCard />
+
+      {/* Equity + Mental Load — 2 columns */}
+      <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+        <TaskEquityCard />
+        <MentalLoadCardV2 />
+      </div>
+
+      {/* Upcoming Tasks */}
+      <UpcomingTasksCard />
     </div>
   );
 }
