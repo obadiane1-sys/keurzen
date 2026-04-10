@@ -50,3 +50,5 @@ export function computeTlxScore(values: {
 export { categoryColorMap } from './taskCategoryColors';
 export { computeHouseholdScore } from './householdScore';
 export type { HouseholdScoreInput, HouseholdScoreResult, ScoreDimension } from './householdScore';
+export { computeWeeklyAggregation, computeImbalanceLevel, computeAverageTlx, IMBALANCE_THRESHOLD, MIN_TASKS_SAMPLE, MIN_MINUTES_SAMPLE } from './weeklyStats';
+export type { MemberTaskData, MemberWeeklyStats, WeeklyAggregation } from './weeklyStats';
