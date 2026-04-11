@@ -3,12 +3,10 @@ import { ScrollView, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export type DashboardTabKey = 'insights' | 'stats' | 'tasks';
+export type DashboardTabKey = 'insights';
 
 const TABS: { key: DashboardTabKey; icon: keyof typeof MaterialCommunityIcons.glyphMap; label: string }[] = [
   { key: 'insights', icon: 'lightbulb-outline', label: 'Insights & Actions' },
-  { key: 'stats', icon: 'chart-bar', label: 'My Stats' },
-  { key: 'tasks', icon: 'clipboard-check-outline', label: 'Tasks' },
 ];
 
 interface DashboardTabsProps {

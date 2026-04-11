@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text as RNText } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { Text } from '../ui/Text';
 import { BadgeIcon } from '../ui/BadgeIcon';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTasks } from '../../lib/queries/tasks';
@@ -61,7 +60,7 @@ export function ScoreCardV2() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Score du Foyer</Text>
+        <RNText style={styles.title}>Score du Foyer</RNText>
         <BadgeIcon name="information-outline" size="md" />
       </View>
 
@@ -70,8 +69,8 @@ export function ScoreCardV2() {
         {/* Left: score + trend + message */}
         <View style={styles.leftSection}>
           <View style={styles.scoreRow}>
-            <Text style={styles.scoreNumber}>{score}</Text>
-            <Text style={styles.scoreMax}>/100</Text>
+            <RNText style={styles.scoreNumber}>{score}</RNText>
+            <RNText style={styles.scoreMax}>/100</RNText>
           </View>
           <View style={styles.trendRow}>
             <MaterialCommunityIcons
@@ -79,11 +78,11 @@ export function ScoreCardV2() {
               size={16}
               color={trend.positive ? '#48BB78' : '#FF6B6B'}
             />
-            <Text style={[styles.trendText, { color: trend.positive ? '#48BB78' : '#FF6B6B' }]}>
+            <RNText style={[styles.trendText, { color: trend.positive ? '#48BB78' : '#FF6B6B' }]}>
               {trend.label}
-            </Text>
+            </RNText>
           </View>
-          <Text style={styles.coachMessage}>{coachMessage}</Text>
+          <RNText style={styles.coachMessage}>{coachMessage}</RNText>
         </View>
 
         {/* Right: gauge */}

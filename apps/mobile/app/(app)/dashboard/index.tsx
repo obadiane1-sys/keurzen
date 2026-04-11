@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
@@ -10,17 +10,13 @@ import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { DashboardTabs, type DashboardTabKey } from '../../../src/components/dashboard/DashboardTabs';
+import { DashboardTabs } from '../../../src/components/dashboard/DashboardTabs';
 import { InsightsTab } from '../../../src/components/dashboard/InsightsTab';
-import { StatsTab } from '../../../src/components/dashboard/StatsTab';
-import { TasksTab } from '../../../src/components/dashboard/TasksTab';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
-  const [activeTab, setActiveTab] = useState<DashboardTabKey>('insights');
-
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
   if (profile && !profile.has_seen_onboarding) {
@@ -86,12 +82,10 @@ export default function DashboardScreen() {
         </View>
 
         {/* TABS */}
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <DashboardTabs activeTab="insights" onTabChange={() => {}} />
 
         {/* TAB CONTENT */}
-        {activeTab === 'insights' && <InsightsTab />}
-        {activeTab === 'stats' && <StatsTab />}
-        {activeTab === 'tasks' && <TasksTab />}
+        <InsightsTab />
       </ScrollView>
     </SafeAreaView>
   );
