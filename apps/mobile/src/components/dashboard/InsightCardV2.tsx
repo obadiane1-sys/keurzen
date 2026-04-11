@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import { BadgeIcon } from '../ui/BadgeIcon';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,28 +15,28 @@ const TYPE_CONFIG: Record<string, {
   ctaColor: string;
 }> = {
   alert: {
-    bgCard: 'bg-[#FFF5F5]',
-    borderColor: 'border-danger/20',
+    bgCard: '#FFF5F5',
+    borderColor: 'rgba(255, 107, 107, 0.2)',
     icon: 'alert-circle',
-    bgIcon: 'bg-danger/20',
+    bgIcon: 'rgba(255, 107, 107, 0.2)',
     iconColor: '#FF6B6B',
     labelColor: '#FF6B6B',
     ctaColor: '#FF6B6B',
   },
   conseil: {
-    bgCard: 'bg-surface',
-    borderColor: 'border-border',
+    bgCard: '#FFFFFF',
+    borderColor: '#E2E8F0',
     icon: 'chat-outline',
-    bgIcon: 'bg-tertiary/20',
+    bgIcon: 'rgba(255, 215, 0, 0.2)',
     iconColor: '#FFD700',
     labelColor: '#718096',
     ctaColor: '#00E5FF',
   },
   wellbeing: {
-    bgCard: 'bg-surface',
-    borderColor: 'border-border',
+    bgCard: '#FFFFFF',
+    borderColor: '#E2E8F0',
     icon: 'heart',
-    bgIcon: 'bg-secondary/20',
+    bgIcon: 'rgba(255, 182, 193, 0.2)',
     iconColor: '#FFB6C1',
     labelColor: '#718096',
     ctaColor: '#FFB6C1',
@@ -55,39 +55,31 @@ export function InsightCardV2({ insight, onPress }: InsightCardV2Props) {
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.75}
-      className={`min-w-[280px] p-5 rounded-3xl border-2 shadow-soft ${config.bgCard} ${config.borderColor}`}
+      style={[styles.card, { backgroundColor: config.bgCard, borderColor: config.borderColor }]}
     >
       {/* Header: icon + label */}
-      <View className="flex-row items-center mb-4" style={{ gap: 12 }}>
+      <View style={styles.headerRow}>
         <BadgeIcon
           name={config.icon}
           size="lg"
-          bgClassName={`${config.bgIcon} border-0`}
+          bgColor={config.bgIcon}
           iconColor={config.iconColor}
+          noBorder
+          noShadow={false}
         />
-        <Text
-          className="uppercase tracking-widest"
-          style={{ fontSize: 10, fontFamily: 'Outfit_700Bold', color: config.labelColor }}
-        >
+        <Text style={[styles.label, { color: config.labelColor }]}>
           {insight.label}
         </Text>
       </View>
 
       {/* Message */}
-      <Text
-        className="text-base mb-4"
-        style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}
-        numberOfLines={3}
-      >
+      <Text style={styles.message} numberOfLines={3}>
         {insight.message}
       </Text>
 
       {/* CTA */}
-      <View className="flex-row items-center">
-        <Text
-          className="uppercase tracking-wider"
-          style={{ fontSize: 12, fontFamily: 'Outfit_700Bold', color: config.ctaColor }}
-        >
+      <View style={styles.ctaRow}>
+        <Text style={[styles.ctaText, { color: config.ctaColor }]}>
           {insight.cta_label}
         </Text>
         <MaterialCommunityIcons
@@ -100,3 +92,45 @@ export function InsightCardV2({ insight, onPress }: InsightCardV2Props) {
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    minWidth: 280,
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 10,
+    fontFamily: 'Outfit_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  message: {
+    fontSize: 16,
+    fontFamily: 'Nunito_700Bold',
+    color: '#2D3748',
+    marginBottom: 16,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ctaText: {
+    fontSize: 12,
+    fontFamily: 'Outfit_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+});

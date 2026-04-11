@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -21,8 +21,8 @@ export function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 24, gap: 16 }}
-      className="mb-8"
+      contentContainerStyle={styles.scrollContent}
+      style={styles.scrollContainer}
     >
       {TABS.map((tab) => {
         const isActive = activeTab === tab.key;
@@ -30,18 +30,13 @@ export function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
           <TouchableOpacity
             key={tab.key}
             onPress={() => onTabChange(tab.key)}
-            className={`flex-row items-center px-6 py-3 rounded-full border-2 shadow-soft ${
-              isActive
-                ? 'border-primary bg-primary/5'
-                : 'border-transparent bg-surface'
-            }`}
             activeOpacity={0.7}
+            style={[
+              styles.tab,
+              isActive ? styles.tabActive : styles.tabInactive,
+            ]}
           >
-            <View
-              className={`w-6 h-6 items-center justify-center rounded-2xl ${
-                isActive ? 'bg-primary/20' : 'bg-gray-100'
-              }`}
-            >
+            <View style={[styles.iconCircle, isActive ? styles.iconCircleActive : styles.iconCircleInactive]}>
               <MaterialCommunityIcons
                 name={tab.icon}
                 size={14}
@@ -49,10 +44,7 @@ export function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
               />
             </View>
             <Text
-              className={`ml-2 text-sm font-bold ${
-                isActive ? 'text-primary' : 'text-text-muted'
-              }`}
-              style={{ fontFamily: 'Outfit_700Bold' }}
+              style={[styles.tabLabel, { color: isActive ? '#00E5FF' : '#718096' }]}
             >
               {tab.label}
             </Text>
@@ -62,3 +54,52 @@ export function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    marginBottom: 32,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    gap: 16,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 9999,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  tabActive: {
+    borderColor: '#00E5FF',
+    backgroundColor: 'rgba(0, 229, 255, 0.05)',
+  },
+  tabInactive: {
+    borderColor: 'transparent',
+    backgroundColor: '#FFFFFF',
+  },
+  iconCircle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+  },
+  iconCircleActive: {
+    backgroundColor: 'rgba(0, 229, 255, 0.2)',
+  },
+  iconCircleInactive: {
+    backgroundColor: '#F7FAFC',
+  },
+  tabLabel: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontFamily: 'Outfit_700Bold',
+  },
+});

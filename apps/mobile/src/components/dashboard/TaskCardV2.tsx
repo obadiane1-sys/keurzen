@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import { BadgeIcon } from '../ui/BadgeIcon';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,20 +13,20 @@ dayjs.extend(isTomorrow);
 
 const CATEGORY_CONFIG: Record<string, {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  bgClassName: string;
+  bgColor: string;
   iconColor: string;
 }> = {
-  courses: { icon: 'cart', bgClassName: 'bg-primary/10 border-0', iconColor: '#00E5FF' },
-  menage: { icon: 'broom', bgClassName: 'bg-secondary/10 border-0', iconColor: '#FFB6C1' },
-  cuisine: { icon: 'silverware-fork-knife', bgClassName: 'bg-tertiary/10 border-0', iconColor: '#FFD700' },
-  linge: { icon: 'tshirt-crew', bgClassName: 'bg-purple/10 border-0', iconColor: '#9F7AEA' },
-  enfants: { icon: 'human-child', bgClassName: 'bg-info/10 border-0', iconColor: '#4299E1' },
+  courses: { icon: 'cart', bgColor: 'rgba(0, 229, 255, 0.1)', iconColor: '#00E5FF' },
+  menage: { icon: 'broom', bgColor: 'rgba(255, 182, 193, 0.1)', iconColor: '#FFB6C1' },
+  cuisine: { icon: 'silverware-fork-knife', bgColor: 'rgba(255, 215, 0, 0.1)', iconColor: '#FFD700' },
+  linge: { icon: 'tshirt-crew', bgColor: 'rgba(159, 122, 234, 0.1)', iconColor: '#9F7AEA' },
+  enfants: { icon: 'human-child', bgColor: 'rgba(66, 153, 225, 0.1)', iconColor: '#4299E1' },
 };
 
 function getCategoryConfig(category: string) {
   return CATEGORY_CONFIG[category.toLowerCase()] ?? {
     icon: 'checkbox-marked-circle-outline' as const,
-    bgClassName: 'bg-gray-100 border-0',
+    bgColor: '#F7FAFC',
     iconColor: '#718096',
   };
 }
@@ -51,28 +51,21 @@ export function TaskCardV2({ task, onComplete }: TaskCardV2Props) {
   const meta = [dateLabel, assigneeName].filter(Boolean).join(' \u00B7 ');
 
   return (
-    <View className="bg-surface p-4 rounded-3xl shadow-soft border border-border/50 flex-row items-center justify-between">
+    <View style={styles.card}>
       {/* Left: icon + info */}
-      <View className="flex-row items-center flex-1" style={{ gap: 16 }}>
+      <View style={styles.leftRow}>
         <BadgeIcon
           name={config.icon}
           size="xl"
-          bgClassName={config.bgClassName}
+          bgColor={config.bgColor}
           iconColor={config.iconColor}
+          noBorder
         />
-        <View className="flex-1">
-          <Text
-            className="text-sm"
-            style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}
-            numberOfLines={1}
-          >
+        <View style={styles.textColumn}>
+          <Text style={styles.taskTitle} numberOfLines={1}>
             {task.title}
           </Text>
-          <Text
-            className="uppercase tracking-wider mt-0.5"
-            style={{ fontSize: 10, fontFamily: 'Outfit_700Bold', color: '#718096' }}
-            numberOfLines={1}
-          >
+          <Text style={styles.taskMeta} numberOfLines={1}>
             {meta}
           </Text>
         </View>
@@ -82,10 +75,65 @@ export function TaskCardV2({ task, onComplete }: TaskCardV2Props) {
       <TouchableOpacity
         onPress={() => onComplete(task.id)}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        className="w-10 h-10 items-center justify-center rounded-2xl bg-gray-50 shadow-badge border border-border"
+        style={styles.checkbox}
       >
         <MaterialCommunityIcons name="circle-outline" size={24} color="#CBD5E0" />
       </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#F7FAFC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  leftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 16,
+  },
+  textColumn: {
+    flex: 1,
+  },
+  taskTitle: {
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
+    color: '#2D3748',
+  },
+  taskMeta: {
+    fontSize: 10,
+    fontFamily: 'Outfit_700Bold',
+    color: '#718096',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  checkbox: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: '#F7FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+});

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -31,11 +31,9 @@ export default function DashboardScreen() {
 
   if (!household) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <View className="flex-row justify-between items-center px-6 py-4">
-          <Text className="text-xl" style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}>
-            Bienvenue
-          </Text>
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.emptyHeader}>
+          <Text style={styles.welcomeText}>Bienvenue</Text>
           <Mascot size={44} expression="calm" />
         </View>
         <EmptyState
@@ -50,10 +48,10 @@ export default function DashboardScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 96 }}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -64,27 +62,26 @@ export default function DashboardScreen() {
         }
       >
         {/* HEADER */}
-        <View className="flex-row items-center justify-between px-6 pt-8 pb-2">
-          <View className="flex-row items-center" style={{ gap: 12 }}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
             {/* Avatar */}
-            <View className="w-12 h-12 bg-surface rounded-full shadow-soft items-center justify-center border-2 border-primary/20 p-0.5">
+            <View style={styles.avatar}>
               <Mascot size={40} expression="calm" />
             </View>
-            <Text className="text-xl" style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}>
-              Bonjour, <Text style={{ color: '#00E5FF' }}>{firstName}</Text> {'\u2728'}
-            </Text>
+            <View>
+              <Text style={styles.greeting}>
+                Bonjour, <Text style={styles.greetingName}>{firstName}</Text> {'\u2728'}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
-            className="w-10 h-10 items-center justify-center rounded-2xl shadow-badge border border-border bg-surface"
+            style={styles.notifButton}
             accessibilityLabel="Notifications"
             onPress={() => router.push('/(app)/notifications')}
           >
             <MaterialCommunityIcons name="bell-outline" size={20} color="#2D3748" />
-            {/* Red dot for unread */}
-            <View
-              className="absolute bg-danger rounded-full border-2 border-surface"
-              style={{ top: 4, right: 4, width: 10, height: 10 }}
-            />
+            {/* Red dot */}
+            <View style={styles.notifDot} />
           </TouchableOpacity>
         </View>
 
@@ -99,3 +96,88 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#F7F9FC',
+  },
+  scrollContent: {
+    paddingBottom: 96,
+  },
+  emptyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  welcomeText: {
+    fontSize: 20,
+    fontFamily: 'Nunito_700Bold',
+    color: '#2D3748',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 2,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 229, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  greeting: {
+    fontSize: 20,
+    fontFamily: 'Nunito_700Bold',
+    color: '#2D3748',
+  },
+  greetingName: {
+    color: '#00E5FF',
+  },
+  notifButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  notifDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FF6B6B',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+});

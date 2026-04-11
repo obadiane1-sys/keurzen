@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import { InsightCardV2 } from './InsightCardV2';
@@ -32,7 +32,7 @@ export function InsightsTab() {
   }
 
   return (
-    <View style={{ gap: 32 }}>
+    <View style={styles.container}>
       {/* 1. Insights carousel */}
       {insights.length > 0 && (
         <FlatList
@@ -40,7 +40,7 @@ export function InsightsTab() {
           keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, gap: 16 }}
+          contentContainerStyle={styles.carouselContent}
           renderItem={({ item }: { item: CoachingInsight }) => (
             <InsightCardV2 insight={item} />
           )}
@@ -48,36 +48,25 @@ export function InsightsTab() {
       )}
 
       {/* 2. Score du Foyer */}
-      <View className="px-6">
+      <View style={styles.section}>
         <ScoreCardV2 />
       </View>
 
       {/* 3. Upcoming Tasks */}
-      <View className="px-6" style={{ gap: 16 }}>
-        <View className="flex-row justify-between items-center">
-          <Text
-            className="text-lg"
-            style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}
-          >
-            Taches a venir
-          </Text>
-          <Text
-            className="uppercase tracking-widest"
-            style={{ fontSize: 12, fontFamily: 'Outfit_700Bold', color: '#00E5FF' }}
-            onPress={() => router.push('/(app)/tasks')}
-          >
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Taches a venir</Text>
+          <Text style={styles.seeAll} onPress={() => router.push('/(app)/tasks')}>
             Voir tout
           </Text>
         </View>
 
         {upcomingTasks.length === 0 ? (
-          <View className="bg-surface rounded-3xl p-8 shadow-soft border border-border items-center">
-            <Text style={{ fontFamily: 'Outfit_400Regular', color: '#718096' }}>
-              Aucune tache a venir
-            </Text>
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Aucune tache a venir</Text>
           </View>
         ) : (
-          <View style={{ gap: 16 }}>
+          <View style={styles.taskList}>
             {upcomingTasks.map((task) => (
               <TaskCardV2 key={task.id} task={task} onComplete={handleComplete} />
             ))}
@@ -87,3 +76,57 @@ export function InsightsTab() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 32,
+  },
+  carouselContent: {
+    paddingHorizontal: 24,
+    gap: 16,
+  },
+  section: {
+    paddingHorizontal: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: 'Nunito_700Bold',
+    color: '#2D3748',
+  },
+  seeAll: {
+    fontSize: 12,
+    fontFamily: 'Outfit_700Bold',
+    color: '#00E5FF',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(0, 229, 255, 0.2)',
+    paddingBottom: 2,
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  emptyText: {
+    fontFamily: 'Outfit_400Regular',
+    color: '#718096',
+  },
+  taskList: {
+    gap: 16,
+  },
+});
