@@ -7,38 +7,29 @@ import isToday from 'dayjs/plugin/isToday';
 import isTomorrow from 'dayjs/plugin/isTomorrow';
 
 import { Text } from '../ui/Text';
-import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../constants/tokens';
+import { ColorsV2, RadiusV2 } from '../../constants/tokensV2';
+import { Spacing, Typography } from '../../constants/tokens';
 import { useTasks, useUpdateTaskStatus } from '../../lib/queries/tasks';
 import type { Task } from '../../types';
 
 dayjs.extend(isToday);
 dayjs.extend(isTomorrow);
 
-// ─── Category config ──────────────────────────────────────────────────────────
-
 interface CategoryConfig {
   icon: keyof typeof Ionicons.glyphMap;
-  color: string;
 }
 
 const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
-  cuisine: { icon: 'restaurant-outline', color: Colors.miel },
-  menage: { icon: 'sparkles-outline', color: Colors.rose },
-  courses: { icon: 'cart-outline', color: Colors.terracotta },
-  linge: { icon: 'shirt-outline', color: Colors.prune },
-  enfants: { icon: 'people-outline', color: Colors.sauge },
+  cuisine: { icon: 'restaurant-outline' },
+  menage: { icon: 'sparkles-outline' },
+  courses: { icon: 'cart-outline' },
+  linge: { icon: 'shirt-outline' },
+  enfants: { icon: 'people-outline' },
 };
 
-const DEFAULT_CATEGORY_CONFIG: CategoryConfig = {
-  icon: 'checkbox-outline',
-  color: Colors.terracotta,
-};
-
-function getCategoryConfig(category: string): CategoryConfig {
-  return CATEGORY_CONFIG[category.toLowerCase()] ?? DEFAULT_CATEGORY_CONFIG;
+function getCategoryIcon(category: string): keyof typeof Ionicons.glyphMap {
+  return CATEGORY_CONFIG[category.toLowerCase()]?.icon ?? 'checkbox-outline';
 }
-
-// ─── Date formatting ──────────────────────────────────────────────────────────
 
 function formatDueDate(dueDate: string | null): string {
   if (!dueDate) return '';
@@ -48,41 +39,24 @@ function formatDueDate(dueDate: string | null): string {
   return d.format('ddd D MMM');
 }
 
-// ─── Task row ─────────────────────────────────────────────────────────────────
-
-interface TaskRowProps {
-  task: Task;
-  onComplete: (id: string) => void;
-}
-
-function TaskRow({ task, onComplete }: TaskRowProps) {
-  const catConfig = getCategoryConfig(task.category);
+function TaskRow({ task, onComplete }: { task: Task; onComplete: (id: string) => void }) {
+  const icon = getCategoryIcon(task.category);
   const assigneeName = task.assigned_profile?.full_name ?? null;
   const dateLabel = formatDueDate(task.due_date);
 
   return (
     <View style={styles.taskRow}>
-      {/* Category icon circle */}
-      <View
-        style={[
-          styles.categoryIcon,
-          { backgroundColor: `${catConfig.color}1A` },
-        ]}
-      >
-        <Ionicons name={catConfig.icon} size={18} color={catConfig.color} />
+      <View style={styles.categoryIcon}>
+        <Ionicons name={icon} size={18} color={ColorsV2.onSurfaceVariant} />
       </View>
-
-      {/* Task info */}
       <View style={styles.taskInfo}>
         <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.taskTitle}>
           {task.title}
         </Text>
-        <Text variant="caption" color="muted" numberOfLines={1}>
+        <Text variant="caption" style={styles.taskMeta} numberOfLines={1}>
           {[dateLabel, assigneeName].filter(Boolean).join(' · ')}
         </Text>
       </View>
-
-      {/* Checkbox */}
       <TouchableOpacity
         onPress={() => onComplete(task.id)}
         style={styles.checkbox}
@@ -93,8 +67,6 @@ function TaskRow({ task, onComplete }: TaskRowProps) {
     </View>
   );
 }
-
-// ─── Main card ────────────────────────────────────────────────────────────────
 
 export function UpcomingTasksCard() {
   const router = useRouter();
@@ -117,77 +89,83 @@ export function UpcomingTasksCard() {
     updateStatus({ id, status: 'done' });
   }
 
-  if (upcomingTasks.length === 0) {
-    return (
-      <View style={styles.card}>
-        <View style={styles.emptyState}>
-          <Text variant="bodySmall" color="muted" style={styles.emptyText}>
-            Aucune tache a venir
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.card}>
+    <View>
       {/* Header */}
       <View style={styles.header}>
-        <Text variant="h3" weight="bold">
-          Taches a venir
-        </Text>
+        <Text variant="overline" style={styles.overline}>A venir</Text>
         <TouchableOpacity
           onPress={() => router.push('/(app)/tasks')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text variant="bodySmall" weight="bold" style={styles.seeAll}>
-            Voir tout
-          </Text>
+          <Text variant="bodySmall" weight="bold" style={styles.seeAll}>Voir tout</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Task list */}
-      <View style={styles.taskList}>
-        {upcomingTasks.map((task, index) => (
-          <View key={task.id}>
-            <TaskRow task={task} onComplete={handleComplete} />
-            {index < upcomingTasks.length - 1 && <View style={styles.divider} />}
-          </View>
-        ))}
-      </View>
+      {upcomingTasks.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text variant="bodySmall" style={styles.emptyText}>Aucune tache a venir</Text>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          {upcomingTasks.map((task, index) => (
+            <React.Fragment key={task.id}>
+              <TaskRow task={task} onComplete={handleComplete} />
+              {index < upcomingTasks.length - 1 && <View style={styles.spacer} />}
+            </React.Fragment>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius['2xl'],
-    padding: Spacing.lg,
-    ...Shadows.card,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  seeAll: {
-    color: Colors.terracotta,
+  overline: {
+    fontSize: 11,
+    letterSpacing: 2,
+    color: ColorsV2.onSurfaceVariant,
   },
-  taskList: {
-    gap: 0,
+  seeAll: {
+    color: ColorsV2.primary,
+  },
+  card: {
+    backgroundColor: ColorsV2.surfaceContainerLowest,
+    borderRadius: RadiusV2.md,
+    borderWidth: 1,
+    borderColor: ColorsV2.outlineVariant,
+    padding: Spacing.lg,
+    paddingBottom: Spacing['2xl'],
+    marginLeft: 8,
+    marginRight: -10,
+  },
+  emptyCard: {
+    backgroundColor: ColorsV2.surfaceContainerLowest,
+    borderRadius: RadiusV2.md,
+    borderWidth: 1,
+    borderColor: ColorsV2.outlineVariant,
+    padding: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: ColorsV2.onSurfaceVariant,
   },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
     gap: Spacing.md,
   },
   categoryIcon: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     borderRadius: 12,
+    backgroundColor: ColorsV2.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -195,8 +173,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   taskTitle: {
-    color: Colors.textPrimary,
+    color: ColorsV2.onSurface,
     fontSize: Typography.fontSize.sm,
+  },
+  taskMeta: {
+    color: ColorsV2.onSurfaceVariant,
+    marginTop: 2,
   },
   checkbox: {
     width: 24,
@@ -208,19 +190,10 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: Colors.gray200,
+    borderWidth: 2,
+    borderColor: ColorsV2.outlineVariant,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: 0,
-  },
-  emptyState: {
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    textAlign: 'center',
+  spacer: {
+    height: 14,
   },
 });
