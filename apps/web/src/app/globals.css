@@ -1,5 +1,10 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Keurzen "Cafe Cosy" tokens ─── */
 @theme {
   --color-terracotta: #C07A62;
   --color-sauge: #82A47E;
@@ -29,6 +34,123 @@
   --font-body: var(--font-inter), sans-serif;
 }
 
+/* ─── Editorial Kawaii V2 tokens ─── */
+@theme {
+  --color-v2-primary: #007261;
+  --color-v2-primary-container: #91eed9;
+  --color-v2-on-primary: #ffffff;
+  --color-v2-secondary: #9d4b53;
+  --color-v2-on-secondary: #ffffff;
+  --color-v2-tertiary: #cab4f3;
+  --color-v2-tertiary-container: #e8ddf5;
+  --color-v2-surface: #fefcf4;
+  --color-v2-surface-container: #f5f4eb;
+  --color-v2-surface-lowest: #ffffff;
+  --color-v2-surface-highest: #e9e9de;
+  --color-v2-on-surface: #383833;
+  --color-v2-on-surface-variant: #6b6b63;
+  --color-v2-outline-variant: rgba(156,143,128,0.15);
+  --radius-v2-md: 1.5rem;
+  --radius-v2-xl: 3rem;
+}
+
+/* ─── shadcn semantic tokens → Cafe Cosy mapping ─── */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Background & text — Cafe Cosy cream + brown */
+  --background: #FDFBF8;
+  --foreground: #2D1F17;
+  --card: #FFFDF9;
+  --card-foreground: #2D1F17;
+  --popover: #FFFDF9;
+  --popover-foreground: #2D1F17;
+
+  /* Primary — Terracotta */
+  --primary: #C07A62;
+  --primary-foreground: #FFFDF9;
+
+  /* Secondary — Sauge */
+  --secondary: #82A47E;
+  --secondary-foreground: #FFFDF9;
+
+  /* Muted — warm neutral */
+  --muted: #F3EDE6;
+  --muted-foreground: #6B5D50;
+
+  /* Accent — Miel */
+  --accent: #CFA24F;
+  --accent-foreground: #2D1F17;
+
+  /* Destructive — Rose */
+  --destructive: #CF7B74;
+
+  /* Borders & inputs — warm sand */
+  --border: #EBE5DD;
+  --input: #EBE5DD;
+  --ring: #C07A62;
+
+  /* Charts — Keurzen brand palette */
+  --chart-1: #C07A62;
+  --chart-2: #82A47E;
+  --chart-3: #CFA24F;
+  --chart-4: #CF7B74;
+  --chart-5: #9585A3;
+
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #FDFBF8;
+  --sidebar-foreground: #2D1F17;
+  --sidebar-primary: #C07A62;
+  --sidebar-primary-foreground: #FFFDF9;
+  --sidebar-accent: #F3EDE6;
+  --sidebar-accent-foreground: #2D1F17;
+  --sidebar-border: #EBE5DD;
+  --sidebar-ring: #C07A62;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
@@ -38,4 +160,55 @@ body {
 *:focus-visible {
   outline: 2px solid var(--color-terracotta);
   outline-offset: 2px;
+}
+
+/* TLX range slider */
+.tlx-slider {
+  background: linear-gradient(
+    to right,
+    var(--slider-color) 0%,
+    var(--slider-color) var(--slider-pct),
+    var(--color-border-light) var(--slider-pct),
+    var(--color-border-light) 100%
+  );
+}
+.tlx-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-color);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(45, 31, 23, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.tlx-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+.tlx-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-color);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(45, 31, 23, 0.15);
+  cursor: pointer;
+}
+.tlx-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
