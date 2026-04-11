@@ -15,7 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
 import { useCoachingInsights } from '@keurzen/queries';
-import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../../src/constants/tokens';
+import { Spacing, Typography } from '../../../src/constants/tokens';
+import { ColorsV2 } from '../../../src/constants/tokensV2';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -25,11 +26,9 @@ import { ScoreHeroCard } from '../../../src/components/dashboard/ScoreHeroCard';
 import { TaskEquityCard } from '../../../src/components/dashboard/TaskEquityCard';
 import { MentalLoadCardV2 } from '../../../src/components/dashboard/MentalLoadCardV2';
 import { UpcomingTasksCard } from '../../../src/components/dashboard/UpcomingTasksCard';
-
-// ─── Staggered fade-in ──────────────────────────────────────────────────────
+import { HomeHeartCard } from '../../../src/components/dashboard/HomeHeartCard';
 
 function useStaggeredFadeIn(count: number) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const animsRef = useRef(
     Array.from({ length: count }, () => ({
       opacity: new Animated.Value(0),
@@ -84,15 +83,13 @@ function FadeSection({
   );
 }
 
-// ─── Main Dashboard ─────────────────────────────────────────────────────────
-
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
   const { data: insights = [] } = useCoachingInsights();
 
-  const fadeAnims = useStaggeredFadeIn(6); // header + 5 sections
+  const fadeAnims = useStaggeredFadeIn(7);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
@@ -129,25 +126,19 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={Colors.terracotta}
-            colors={[Colors.terracotta]}
+            tintColor={ColorsV2.primary}
+            colors={[ColorsV2.primary]}
           />
         }
       >
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <FadeSection anim={fadeAnims[0]} style={styles.header}>
-          <View style={styles.mascotCircle}>
-            <Mascot size={36} />
-          </View>
           <View style={styles.greetingColumn}>
-            <Text variant="h2" weight="bold">
-              {'Bonjour, '}
-              <Text variant="h2" weight="bold" style={styles.firstNameAccent}>
-                {firstName}
-              </Text>
+            <Text variant="overline" style={styles.greetingOverline}>
+              Bonjour
             </Text>
-            <Text variant="bodySmall" color="muted">
-              Prete a equilibrer votre quotidien ?
+            <Text variant="h1" weight="bold" style={styles.greetingName}>
+              {firstName}
             </Text>
           </View>
           <TouchableOpacity
@@ -155,42 +146,45 @@ export default function DashboardScreen() {
             accessibilityLabel="Notifications"
             accessibilityRole="button"
           >
-            <Ionicons name="notifications-outline" size={22} color={Colors.textSecondary} />
+            <Ionicons name="notifications-outline" size={22} color={ColorsV2.onSurfaceVariant} />
           </TouchableOpacity>
         </FadeSection>
 
-        {/* ── 1. INSIGHTS CAROUSEL ── */}
+        {/* 1. INSIGHTS CAROUSEL */}
         <FadeSection anim={fadeAnims[1]} style={styles.carouselSection}>
           <InsightsCarousel insights={insights} />
         </FadeSection>
 
-        {/* ── 2. SCORE DU FOYER ── */}
+        {/* 2. SCORE DU FOYER */}
         <FadeSection anim={fadeAnims[2]} style={styles.section}>
           <ScoreHeroCard />
         </FadeSection>
 
-        {/* ── 3. GRID: TASK EQUITY + MENTAL LOAD ── */}
+        {/* 3. GRID: TASK EQUITY + MENTAL LOAD */}
         <FadeSection anim={fadeAnims[3]} style={styles.gridRow}>
           <TaskEquityCard />
           <View style={styles.gridSpacer} />
           <MentalLoadCardV2 />
         </FadeSection>
 
-        {/* ── 4. UPCOMING TASKS ── */}
+        {/* 4. UPCOMING TASKS */}
         <FadeSection anim={fadeAnims[4]} style={styles.section}>
           <UpcomingTasksCard />
+        </FadeSection>
+
+        {/* 5. HOME HEART */}
+        <FadeSection anim={fadeAnims[5]} style={styles.section}>
+          <HomeHeartCard />
         </FadeSection>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: ColorsV2.surface,
   },
   scrollContent: {
     paddingBottom: Spacing['4xl'],
@@ -205,49 +199,44 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.base,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing['2xl'],
   },
-  mascotCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.backgroundCard,
-    ...Shadows.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.base,
+  greetingColumn: {},
+  greetingOverline: {
+    fontSize: 11,
+    letterSpacing: 2,
+    color: ColorsV2.secondary,
+    marginBottom: 4,
   },
-  greetingColumn: {
-    flex: 1,
-  },
-  firstNameAccent: {
-    color: Colors.terracotta,
+  greetingName: {
+    fontSize: Typography.fontSize['3xl'],
+    color: ColorsV2.onSurface,
+    letterSpacing: -0.5,
   },
   bellButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundCard,
-    ...Shadows.card,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: ColorsV2.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing.base,
   },
   carouselSection: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing['2xl'],
   },
   section: {
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing['2xl'],
   },
   gridRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing['2xl'],
   },
   gridSpacer: {
-    width: Spacing.base,
+    width: Spacing.md,
   },
 });
