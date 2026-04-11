@@ -10,15 +10,9 @@ import type { Task } from '@keurzen/shared';
 dayjs.extend(isToday);
 dayjs.extend(isTomorrow);
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function getCategoryEmoji(category: string): string {
   const map: Record<string, string> = {
-    cooking: '🍳',
-    cleaning: '🧹',
-    shopping: '🛒',
-    linge: '👕',
-    children: '👶',
+    cooking: '🍳', cleaning: '🧹', shopping: '🛒', linge: '👕', children: '👶',
   };
   return map[category] ?? '✅';
 }
@@ -30,8 +24,6 @@ function formatDueDate(date: string | null): string {
   if (d.isTomorrow()) return 'Demain';
   return d.format('DD/MM');
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function UpcomingTasksCard() {
   const router = useRouter();
@@ -49,24 +41,24 @@ export function UpcomingTasksCard() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-text-primary">Taches a venir</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-[2px] text-v2-on-surface-variant">
+          A venir
+        </p>
         <button
-          className="text-sm font-bold text-terracotta"
+          className="text-sm font-bold text-v2-primary"
           onClick={() => router.push('/tasks')}
         >
           Voir tout
         </button>
       </div>
 
-      {/* Task list */}
       {upcomingTasks.length === 0 ? (
-        <div className="rounded-2xl bg-background-card p-6 shadow-sm text-center">
-          <p className="text-sm text-text-muted">Aucune tache a venir</p>
+        <div className="rounded-[var(--radius-v2-md)] bg-v2-surface-lowest p-6 border border-v2-outline-variant text-center">
+          <p className="text-sm text-v2-on-surface-variant">Aucune tache a venir</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-[var(--radius-v2-md)] bg-v2-surface-lowest p-5 pb-7 border border-v2-outline-variant ml-2 -mr-2.5 space-y-3.5">
           {upcomingTasks.map((task) => (
             <TaskRow
               key={task.id}
@@ -80,37 +72,25 @@ export function UpcomingTasksCard() {
   );
 }
 
-// ─── Task Row ─────────────────────────────────────────────────────────────────
-
-interface TaskRowProps {
-  task: Task;
-  onComplete: () => void;
-}
-
-function TaskRow({ task, onComplete }: TaskRowProps) {
+function TaskRow({ task, onComplete }: { task: Task; onComplete: () => void }) {
   const emoji = getCategoryEmoji(task.category);
   const dateLabel = formatDueDate(task.due_date);
   const assigneeName = task.assigned_profile?.full_name?.split(' ')[0];
 
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-background-card p-4 shadow-sm border border-border-light">
-      {/* Left: icon + info */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center shrink-0">
-          <span className="text-base">{emoji}</span>
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-text-primary truncate">{task.title}</p>
-          <p className="text-xs text-text-muted">
-            {dateLabel}
-            {assigneeName ? ` · ${assigneeName}` : ''}
-          </p>
-        </div>
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-[12px] bg-v2-surface-container flex items-center justify-center shrink-0">
+        <span className="text-sm">{emoji}</span>
       </div>
-
-      {/* Right: checkbox */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-v2-on-surface truncate">{task.title}</p>
+        <p className="text-xs text-v2-on-surface-variant">
+          {dateLabel}
+          {assigneeName ? ` · ${assigneeName}` : ''}
+        </p>
+      </div>
       <button
-        className="w-6 h-6 rounded-full border-2 border-border hover:border-terracotta transition-colors shrink-0 ml-3"
+        className="w-6 h-6 rounded-full border-2 border-v2-outline-variant hover:border-v2-primary transition-colors shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
