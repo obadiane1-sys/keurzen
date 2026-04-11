@@ -1,108 +1,131 @@
-import { Tabs, Redirect } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Tabs, Redirect, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth.store';
-import { Colors, Typography } from '../../src/constants/tokens';
-import { Ionicons } from '@expo/vector-icons';
 import { Loader } from '../../src/components/ui/Loader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '../../src/components/ui/Text';
 
-function TabIcon({
-  name,
-  focused,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  focused: boolean;
-}) {
-  const iconName = focused ? name : (`${name}-outline` as keyof typeof Ionicons.glyphMap);
+const VISIBLE_TABS = [
+  { route: 'dashboard', label: 'Accueil', icon: 'home' as keyof typeof MaterialCommunityIcons.glyphMap },
+  { route: 'tasks', label: 'Taches', icon: 'clipboard-check-outline' as keyof typeof MaterialCommunityIcons.glyphMap },
+  { route: 'stats', label: 'Stats', icon: 'chart-bar' as keyof typeof MaterialCommunityIcons.glyphMap },
+  { route: 'hub', label: 'Hub', icon: 'view-grid-outline' as keyof typeof MaterialCommunityIcons.glyphMap },
+];
+
+function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   return (
-    <Ionicons
-      name={iconName}
-      size={24}
-      color={focused ? Colors.textPrimary : Colors.textMuted}
-    />
+    <View style={[styles.tabBar, { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
+      {VISIBLE_TABS.map((tab, index) => {
+        const routeIndex = state.routes.findIndex((r: any) => r.name === tab.route);
+        const isFocused = state.index === routeIndex;
+
+        const items: React.ReactNode[] = [];
+
+        // Insert FAB after 2nd tab (before stats)
+        if (index === 2) {
+          items.push(
+            <TouchableOpacity
+              key="fab"
+              onPress={() => router.push('/(app)/tasks/create')}
+              activeOpacity={0.85}
+              style={styles.fab}
+            >
+              <MaterialCommunityIcons name="plus" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+          );
+        }
+
+        items.push(
+          <TouchableOpacity
+            key={tab.route}
+            onPress={() => navigation.navigate(tab.route)}
+            style={styles.tabItem}
+          >
+            <MaterialCommunityIcons
+              name={tab.icon}
+              size={24}
+              color={isFocused ? '#00E5FF' : '#718096'}
+            />
+            <Text style={[styles.label, { color: isFocused ? '#00E5FF' : '#718096' }]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+
+        return items;
+      })}
+    </View>
   );
 }
 
-const TAB_CONFIG = [
-  { name: 'dashboard', label: 'Accueil', icon: 'home' as const },
-  { name: 'tasks', label: 'Taches', icon: 'swap-horizontal' as const },
-  { name: 'menu', label: 'Hub', icon: 'grid' as const },
-] as const;
-
 export default function AppLayout() {
   const { session, isInitialized } = useAuthStore();
-  const insets = useSafeAreaInsets();
 
   if (!isInitialized) return <Loader fullScreen />;
-
   if (!session) return <Redirect href="/(auth)/login" />;
-
-  const tabBarHeight = 52 + (insets.bottom > 0 ? insets.bottom : 6);
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: true,
-        tabBarStyle: [
-          styles.tabBar,
-          { height: tabBarHeight, paddingBottom: insets.bottom > 0 ? insets.bottom : 4 },
-        ],
-        tabBarLabelStyle: styles.label,
-        tabBarItemStyle: styles.tabItem,
-        tabBarActiveTintColor: Colors.textPrimary,
-        tabBarInactiveTintColor: Colors.textMuted,
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
-      {TAB_CONFIG.map(({ name, label, icon }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            tabBarLabel: label,
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={icon} focused={focused} />
-            ),
-          }}
-        />
-      ))}
-      {/* Hidden from tabs — accessible via Hub */}
+      <Tabs.Screen name="dashboard" />
+      <Tabs.Screen name="tasks" />
+      <Tabs.Screen name="stats" />
+      <Tabs.Screen name="hub" />
+      {/* Hidden routes — accessible via Hub */}
+      <Tabs.Screen name="menu" options={{ href: null }} />
       <Tabs.Screen name="calendar" options={{ href: null }} />
       <Tabs.Screen name="budget" options={{ href: null }} />
       <Tabs.Screen name="lists" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="meals" options={{ href: null }} />
       <Tabs.Screen name="messages" options={{ href: null }} />
-      {/* Hidden — full-screen flows */}
-      <Tabs.Screen
-        name="notifications"
-        options={{ href: null, tabBarStyle: { display: 'none' } }}
-      />
-      <Tabs.Screen
-        name="onboarding"
-        options={{ href: null, tabBarStyle: { display: 'none' } }}
-      />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="onboarding" options={{ href: null }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: Colors.backgroundCard,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    elevation: 0,
-    shadowOpacity: 0,
+    borderTopColor: '#E2E8F0',
     paddingTop: 6,
+    alignItems: 'center',
+    justifyContent: 'space-around',
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
+    paddingVertical: 4,
   },
   label: {
-    fontSize: 11,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 10,
+    fontFamily: 'Outfit_700Bold',
     marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  fab: {
+    width: 64,
+    height: 64,
+    borderRadius: 24,
+    backgroundColor: '#00E5FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -32,
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
