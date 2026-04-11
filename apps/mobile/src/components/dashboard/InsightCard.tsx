@@ -3,7 +3,8 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../ui/Text';
-import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../constants/tokens';
+import { ColorsV2, RadiusV2 } from '../../constants/tokensV2';
+import { Spacing, Typography } from '../../constants/tokens';
 import type { CoachingInsight } from '@keurzen/shared';
 
 interface InsightCardProps {
@@ -11,67 +12,25 @@ interface InsightCardProps {
   onPress?: () => void;
 }
 
-interface InsightTypeStyle {
-  bg: string;
-  border: string;
-  iconColor: string;
-  ctaColor: string;
-}
-
-function getTypeStyle(type: CoachingInsight['type']): InsightTypeStyle {
-  switch (type) {
-    case 'alert':
-      return {
-        bg: `${Colors.rose}1A`,
-        border: `${Colors.rose}33`,
-        iconColor: Colors.rose,
-        ctaColor: Colors.rose,
-      };
-    case 'wellbeing':
-      return {
-        bg: Colors.backgroundCard,
-        border: Colors.border,
-        iconColor: Colors.rose,
-        ctaColor: Colors.terracotta,
-      };
-    case 'conseil':
-    default:
-      return {
-        bg: Colors.backgroundCard,
-        border: Colors.border,
-        iconColor: Colors.miel,
-        ctaColor: Colors.terracotta,
-      };
-  }
-}
+const DOT_COLORS: Record<string, string> = {
+  alert: ColorsV2.secondary,
+  conseil: ColorsV2.primary,
+  wellbeing: ColorsV2.tertiary,
+};
 
 export function InsightCard({ insight, onPress }: InsightCardProps) {
-  const typeStyle = getTypeStyle(insight.type);
+  const dotColor = DOT_COLORS[insight.type] ?? DOT_COLORS.conseil;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.75}
-      style={[
-        styles.card,
-        {
-          backgroundColor: typeStyle.bg,
-          borderColor: typeStyle.border,
-        },
-      ]}
+      style={styles.card}
     >
-      {/* Top row: icon + label */}
+      {/* Dot + label */}
       <View style={styles.topRow}>
-        <Ionicons
-          name={insight.icon as keyof typeof Ionicons.glyphMap}
-          size={16}
-          color={typeStyle.iconColor}
-          style={styles.topIcon}
-        />
-        <Text
-          variant="overline"
-          style={[styles.label, { color: typeStyle.iconColor }]}
-        >
+        <View style={[styles.dot, { backgroundColor: dotColor }]} />
+        <Text variant="overline" style={[styles.label, { color: ColorsV2.onSurfaceVariant }]}>
           {insight.label}
         </Text>
       </View>
@@ -88,14 +47,10 @@ export function InsightCard({ insight, onPress }: InsightCardProps) {
 
       {/* CTA */}
       <View style={styles.ctaRow}>
-        <Text
-          variant="bodySmall"
-          weight="bold"
-          style={[styles.ctaText, { color: typeStyle.ctaColor }]}
-        >
+        <Text variant="bodySmall" weight="bold" style={styles.ctaText}>
           {insight.cta_label}
         </Text>
-        <Ionicons name="arrow-forward" size={14} color={typeStyle.ctaColor} />
+        <Ionicons name="arrow-forward" size={14} color={ColorsV2.primary} />
       </View>
     </TouchableOpacity>
   );
@@ -104,26 +59,29 @@ export function InsightCard({ insight, onPress }: InsightCardProps) {
 const styles = StyleSheet.create({
   card: {
     width: 280,
-    borderRadius: BorderRadius['2xl'],
-    borderWidth: 1,
+    borderRadius: RadiusV2.md,
+    backgroundColor: ColorsV2.surfaceContainer,
     padding: Spacing.lg,
-    ...Shadows.card,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
-  topIcon: {
-    marginRight: Spacing.xs,
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: Spacing.sm,
   },
   label: {
     fontSize: Typography.fontSize.xs,
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   message: {
-    color: Colors.textPrimary,
+    color: ColorsV2.onSurface,
     marginBottom: Spacing.md,
+    lineHeight: Typography.fontSize.sm * 1.6,
   },
   ctaRow: {
     flexDirection: 'row',
@@ -132,5 +90,6 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     fontSize: Typography.fontSize.sm,
+    color: ColorsV2.primary,
   },
 });

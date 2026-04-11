@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../ui/Text';
 import { InsightCard } from './InsightCard';
-import { Colors, Spacing } from '../../constants/tokens';
+import { ColorsV2 } from '../../constants/tokensV2';
+import { Spacing } from '../../constants/tokens';
 import type { CoachingInsight } from '@keurzen/shared';
 
 interface InsightsCarouselProps {
@@ -17,15 +17,13 @@ export function InsightsCarousel({ insights, onInsightPress }: InsightsCarouselP
 
   return (
     <View style={styles.container}>
-      {/* Title row */}
-      <View style={styles.titleRow}>
-        <Ionicons name="bulb-outline" size={20} color={Colors.miel} style={styles.titleIcon} />
-        <Text variant="h3" weight="bold">
-          Insights & Actions
-        </Text>
-      </View>
+      <Text
+        variant="overline"
+        style={styles.title}
+      >
+        Insights & Actions
+      </Text>
 
-      {/* Horizontal list */}
       <FlatList
         data={insights}
         keyExtractor={(item) => item.id}
@@ -48,14 +46,12 @@ const styles = StyleSheet.create({
   container: {
     marginTop: Spacing.base,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  title: {
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.md,
-  },
-  titleIcon: {
-    marginRight: Spacing.sm,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: ColorsV2.onSurfaceVariant,
   },
   listContent: {
     paddingHorizontal: Spacing.xl,
