@@ -10,10 +10,10 @@ interface BadgeProps {
 
 const variants: Record<Variant, string> = {
   default: 'bg-border-light text-text-secondary',
-  success: 'bg-sauge/15 text-sauge',
-  warning: 'bg-miel/15 text-miel',
-  danger: 'bg-rose/15 text-rose',
-  info: 'bg-prune/15 text-prune',
+  success: 'bg-success/15 text-success',
+  warning: 'bg-joy/15 text-joy',
+  danger: 'bg-accent/15 text-accent',
+  info: 'bg-primary/15 text-primary',
 };
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {

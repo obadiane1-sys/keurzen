@@ -24,9 +24,9 @@ export function SliderControl({
   maximumValue = 100,
   step = 1,
   onValueChange,
-  minimumTrackTintColor = Colors.terracotta,
+  minimumTrackTintColor = Colors.primary,
   maximumTrackTintColor = Colors.border,
-  thumbTintColor = Colors.terracotta,
+  thumbTintColor = Colors.primary,
   accessibilityLabel,
   style,
 }: SliderControlProps) {

@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   chipActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   chipLabel: {
     color: Colors.textSecondary,
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
   },
   chipCountOverdue: {
-    color: Colors.rose,
+    color: Colors.accent,
   },
 });

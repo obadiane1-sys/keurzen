@@ -15,10 +15,10 @@ interface TaskRowProps {
 }
 
 const priorityColors: Record<string, string> = {
-  high: 'var(--color-rose)',
-  urgent: 'var(--color-rose)',
-  medium: 'var(--color-miel)',
-  low: 'var(--color-sauge)',
+  high: 'var(--color-accent)',
+  urgent: 'var(--color-accent)',
+  medium: 'var(--color-joy)',
+  low: '#81C784',
 };
 
 const categoryLabels: Record<string, { label: string; icon: string }> = {
@@ -59,7 +59,7 @@ export function TaskRow({ task, isSelected, onClick, onEdit, onDelete }: TaskRow
       }}
       className={cn(
         'group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer',
-        isSelected && 'ring-1 ring-terracotta/20',
+        isSelected && 'ring-1 ring-primary/20',
       )}
       style={{ backgroundColor: `${tintColor}0F` }}
     >
@@ -69,8 +69,8 @@ export function TaskRow({ task, isSelected, onClick, onEdit, onDelete }: TaskRow
         className={cn(
           'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
           isDone
-            ? 'border-sauge bg-sauge text-white'
-            : 'border-border hover:border-terracotta',
+            ? 'border-success bg-success text-white'
+            : 'border-border hover:border-primary',
         )}
       >
         {isDone && (
@@ -132,7 +132,7 @@ export function TaskRow({ task, isSelected, onClick, onEdit, onDelete }: TaskRow
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-text-muted hover:bg-terracotta/10 hover:text-terracotta transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-text-muted hover:bg-primary/10 hover:text-primary transition-colors"
               aria-label="Modifier la tache"
             >
               <Pencil size={14} />
@@ -141,7 +141,7 @@ export function TaskRow({ task, isSelected, onClick, onEdit, onDelete }: TaskRow
           {onDelete && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-text-muted hover:bg-rose/10 hover:text-rose transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-text-muted hover:bg-accent/10 hover:text-accent transition-colors"
               aria-label="Supprimer la tache"
             >
               <Trash2 size={14} />

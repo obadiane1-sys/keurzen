@@ -225,7 +225,7 @@ function BulletPoint({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; tex
   return (
     <View style={styles.bulletRow}>
       <View style={styles.bulletIcon}>
-        <Ionicons name={icon} size={20} color={Colors.sauge} />
+        <Ionicons name={icon} size={20} color={Colors.success} />
       </View>
       <Text variant="body" style={styles.bulletText}>{text}</Text>
     </View>
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.sauge + '18',
+    backgroundColor: Colors.success + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },

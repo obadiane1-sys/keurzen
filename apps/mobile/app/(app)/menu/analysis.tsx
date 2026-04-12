@@ -88,9 +88,9 @@ function getBalanceLabel(members: { tasksShare: number }[]): { label: string; co
   const max = Math.max(...shares);
   const min = Math.min(...shares);
   const diff = max - min;
-  if (diff < 0.2) return { label: 'Équilibré', color: Colors.sauge };
-  if (diff < 0.4) return { label: 'Léger écart', color: Colors.miel };
-  return { label: 'Déséquilibre', color: Colors.rose };
+  if (diff < 0.2) return { label: 'Équilibré', color: Colors.success };
+  if (diff < 0.4) return { label: 'Léger écart', color: Colors.joy };
+  return { label: 'Déséquilibre', color: Colors.accent };
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────
@@ -135,13 +135,13 @@ export default function AnalysisScreen() {
       label: 'Tâches',
       value: `${doneTasks.length}/${allTasks.length}`,
       icon: 'checkmark-circle-outline' as const,
-      color: Colors.sauge,
+      color: Colors.success,
     },
     {
       label: 'Temps',
       value: `${Math.round(totalMinutes / 60)}h`,
       icon: 'time-outline' as const,
-      color: Colors.miel,
+      color: Colors.joy,
     },
     {
       label: 'TLX',
@@ -149,7 +149,7 @@ export default function AnalysisScreen() {
         ? `${Math.round(tlxDelta.score)}${tlxDelta.hasComparison ? (tlxDelta.delta >= 0 ? ' ↑' : ' ↓') : ''}`
         : '—',
       icon: 'pulse-outline' as const,
-      color: Colors.prune,
+      color: Colors.primary,
     },
   ];
 
@@ -169,7 +169,7 @@ export default function AnalysisScreen() {
       estimatedMinutes: t.estimated_minutes,
       priority: t.priority as 'low' | 'medium' | 'high' | 'urgent',
       assigneeName: t.assigned_profile?.full_name?.split(' ')[0] ?? 'Non assigné',
-      assigneeColor: Colors.sauge,
+      assigneeColor: Colors.success,
       assigneeAvatarUrl: t.assigned_profile?.avatar_url,
     }));
 

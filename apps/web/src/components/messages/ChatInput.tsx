@@ -52,7 +52,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         className={cn(
           'flex-1 resize-none rounded-xl border border-border-light bg-background-card px-3 py-2.5',
           'text-sm text-text-primary placeholder:text-text-muted',
-          'focus:outline-none focus:ring-2 focus:ring-terracotta/30',
+          'focus:outline-none focus:ring-2 focus:ring-primary/30',
           'disabled:opacity-50',
         )}
         style={{ minHeight: '44px', maxHeight: '120px', overflowY: 'auto' }}
@@ -63,7 +63,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         className={cn(
           'flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors',
           value.trim() && !disabled
-            ? 'bg-terracotta text-text-inverse hover:bg-terracotta/90'
+            ? 'bg-primary text-text-inverse hover:bg-primary/90'
             : 'bg-border-light text-text-muted',
         )}
         aria-label="Envoyer"

@@ -360,7 +360,7 @@ export default function ListDetailScreen() {
         <Ionicons
           name={showChecked ? 'checkbox' : 'square-outline'}
           size={20}
-          color={showChecked ? Colors.sauge : Colors.textMuted}
+          color={showChecked ? Colors.success : Colors.textMuted}
         />
         <Text variant="bodySmall" color="secondary">
           Afficher les éléments cochés

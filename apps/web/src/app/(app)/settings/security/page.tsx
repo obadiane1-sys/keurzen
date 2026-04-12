@@ -23,8 +23,8 @@ export default function SecurityPage() {
     <div className="space-y-6">
       <Card className="space-y-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-prune/15">
-            <Shield size={20} className="text-prune" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+            <Shield size={20} className="text-primary" />
           </div>
           <div>
             <h2 className="font-heading text-base font-semibold">Authentification</h2>

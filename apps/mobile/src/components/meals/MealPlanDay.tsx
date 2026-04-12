@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: Typography.fontSize.sm,
     fontWeight: '600',
-    color: Colors.terracotta,
+    color: Colors.primary,
     marginBottom: Spacing.sm,
   },
   meals: { gap: Spacing.sm },

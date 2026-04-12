@@ -13,9 +13,9 @@ const TLX_DIMENSIONS = [
 ] as const;
 
 function getBarColor(value: number): string {
-  if (value < 40) return 'var(--color-sauge)';
-  if (value <= 70) return 'var(--color-miel)';
-  return 'var(--color-rose)';
+  if (value < 40) return '#81C784';
+  if (value <= 70) return 'var(--color-joy)';
+  return 'var(--color-accent)';
 }
 
 export function TlxDetailSection() {
@@ -35,7 +35,7 @@ export function TlxDetailSection() {
           </p>
           <button
             onClick={() => router.push('/dashboard/tlx')}
-            className="px-5 py-2 bg-terracotta text-text-inverse text-sm font-bold rounded-xl tracking-wide hover:opacity-90 transition-opacity"
+            className="px-5 py-2 bg-primary text-text-inverse text-sm font-bold rounded-xl tracking-wide hover:opacity-90 transition-opacity"
           >
             REMPLIR LE TLX
           </button>
@@ -61,7 +61,7 @@ export function TlxDetailSection() {
         {tlxDelta?.hasComparison && tlxDelta.delta !== null && (
           <span
             className="ml-2 text-xs font-semibold"
-            style={{ color: tlxDelta.delta > 0 ? 'var(--color-rose)' : 'var(--color-sauge)' }}
+            style={{ color: tlxDelta.delta > 0 ? 'var(--color-accent)' : '#81C784' }}
           >
             {tlxDelta.delta > 0 ? '▲' : '▼'} {Math.abs(tlxDelta.delta)} pts
           </span>

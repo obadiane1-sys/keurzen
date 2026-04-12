@@ -45,20 +45,20 @@ function FadeInView({ children, style }: { children: React.ReactNode; style?: St
 // ─── Dimension config ────────────────────────────────────────────────────────
 
 const dimensions: { key: keyof TlxFormValues; label: string; description: string; color: string }[] = [
-  { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: Colors.prune },
-  { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: Colors.rose },
-  { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: Colors.miel },
-  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: Colors.sauge },
-  { key: 'effort', label: 'Effort', description: 'Intensite de l\'effort fourni', color: Colors.terracotta },
+  { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: Colors.primary },
+  { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: Colors.accent },
+  { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: Colors.joy },
+  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: Colors.success },
+  { key: 'effort', label: 'Effort', description: 'Intensite de l\'effort fourni', color: Colors.primary },
   { key: 'frustration', label: 'Frustration', description: 'Sentiment de decouragement, stress', color: Colors.error },
 ];
 
 // ─── Level config (reactive mascot) ─────────────────────────────────────────
 
 const LEVEL_CONFIG: Record<1 | 2 | 3, { expression: MascotExpression; label: string; labelColor: string; labelBg: string }> = {
-  1: { expression: 'happy', label: 'Super !', labelColor: Colors.greenStrong, labelBg: Colors.sauge + '20' },
+  1: { expression: 'happy', label: 'Super !', labelColor: Colors.success, labelBg: Colors.success + '20' },
   2: { expression: 'normal', label: "C'est note", labelColor: Colors.textSecondary, labelBg: Colors.border },
-  3: { expression: 'tired', label: 'Prenez soin de vous', labelColor: Colors.rose, labelBg: Colors.rose + '18' },
+  3: { expression: 'tired', label: 'Prenez soin de vous', labelColor: Colors.accent, labelBg: Colors.accent + '18' },
 };
 
 function scoreToLevel(score: number): 1 | 2 | 3 {
@@ -246,9 +246,9 @@ export default function TlxScreen() {
 }
 
 function tlxColor(score: number): string {
-  if (score <= 33) return Colors.sauge;
-  if (score <= 66) return Colors.prune;
-  return Colors.rose;
+  if (score <= 33) return Colors.success;
+  if (score <= 66) return Colors.primary;
+  return Colors.accent;
 }
 
 const styles = StyleSheet.create({

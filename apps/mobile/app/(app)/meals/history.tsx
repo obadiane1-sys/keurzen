@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   weekLabel: {
     fontSize: Typography.fontSize.sm,
     fontWeight: '700',
-    color: Colors.terracotta,
+    color: Colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     flexShrink: 0,
   },
   itemInfo: {

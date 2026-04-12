@@ -312,7 +312,7 @@ export default function TaskDetailScreen() {
             <Ionicons
               name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
               size={28}
-              color={isDone ? Colors.sauge : Colors.gray300}
+              color={isDone ? Colors.success : Colors.gray300}
             />
           </TouchableOpacity>
         </View>
@@ -393,7 +393,7 @@ export default function TaskDetailScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="close-circle-outline" size={16} color={Colors.rose} />
+                <Ionicons name="close-circle-outline" size={16} color={Colors.accent} />
                 <Text style={styles.cancelRecurrenceText}>Annuler la récurrence</Text>
               </TouchableOpacity>
             )}
@@ -410,7 +410,7 @@ export default function TaskDetailScreen() {
                 <Text variant="label" style={styles.reassignValue}>
                   {assignee ? (assignee.profile?.full_name ?? 'Membre') : 'Personne'}
                 </Text>
-                <Ionicons name="swap-horizontal-outline" size={16} color={Colors.prune} />
+                <Ionicons name="swap-horizontal-outline" size={16} color={Colors.primary} />
               </View>
             </TouchableOpacity>
             {task.completed_at && (
@@ -449,7 +449,7 @@ export default function TaskDetailScreen() {
               <Ionicons
                 name={isDone ? 'refresh-outline' : 'checkmark-circle-outline'}
                 size={18}
-                color={isDone ? Colors.rose : Colors.textPrimary}
+                color={isDone ? Colors.accent : Colors.textPrimary}
               />
             }
           />
@@ -483,11 +483,11 @@ export default function TaskDetailScreen() {
 // ─── Info Row ────────────────────────────────────────────────────────────────
 
 const INFO_ROW_ICON_COLORS: Record<string, string> = {
-  'location-outline': Colors.miel,
-  'calendar-outline': Colors.terracotta,
-  'time-outline': Colors.prune,
-  'repeat-outline': Colors.sauge,
-  'checkmark-done-outline': Colors.sauge,
+  'location-outline': Colors.joy,
+  'calendar-outline': Colors.primary,
+  'time-outline': Colors.primary,
+  'repeat-outline': Colors.success,
+  'checkmark-done-outline': Colors.success,
 };
 
 function InfoRow({
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   cancelRecurrenceText: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.rose,
+    color: Colors.accent,
   },
   reassignRow: {
     flexDirection: 'row',

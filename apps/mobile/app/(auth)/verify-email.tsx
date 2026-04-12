@@ -180,7 +180,7 @@ export default function VerifyEmailScreen() {
                 Vous n'avez pas reçu le code ?{' '}
               </Text>
               {isResending ? (
-                <ActivityIndicator size="small" color={Colors.terracotta} />
+                <ActivityIndicator size="small" color={Colors.primary} />
               ) : cooldown > 0 ? (
                 <Text variant="bodySmall" color="muted">
                   Renvoyer dans {cooldown}s
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     opacity: 0.1,
   },
   blobLavender: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     opacity: 0.08,
   },
   blobCoral: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     opacity: 0.09,
   },
 });

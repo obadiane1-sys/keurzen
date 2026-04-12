@@ -62,13 +62,13 @@ export function ConversationListItem({
       <div
         className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-          isHousehold ? 'bg-sauge/15' : 'bg-terracotta/15',
+          isHousehold ? 'bg-success/15' : 'bg-primary/15',
         )}
       >
         {isHousehold ? (
-          <Home size={18} className="text-sauge" strokeWidth={1.8} />
+          <Home size={18} className="text-success" strokeWidth={1.8} />
         ) : (
-          <User size={18} className="text-terracotta" strokeWidth={1.8} />
+          <User size={18} className="text-primary" strokeWidth={1.8} />
         )}
       </div>
 
@@ -84,7 +84,7 @@ export function ConversationListItem({
         <div className="mt-0.5 flex items-center gap-2">
           <span className="flex-1 truncate text-xs text-text-muted">{preview}</span>
           {unread > 0 && (
-            <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-terracotta px-1 text-[10px] font-bold text-text-inverse">
+            <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-text-inverse">
               {unread > 99 ? '99+' : unread}
             </span>
           )}

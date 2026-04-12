@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.sm,

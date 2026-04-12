@@ -51,7 +51,7 @@ export default function BudgetPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -127,8 +127,8 @@ export default function BudgetPage() {
             return (
               <Card key={expense.id} className="border border-border shadow-none">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-miel/10">
-                    <CatIcon size={18} className="text-miel" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-joy/10">
+                    <CatIcon size={18} className="text-joy" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold">{cat.label}</p>
@@ -144,7 +144,7 @@ export default function BudgetPage() {
                   </span>
                   <button
                     onClick={() => handleDelete(expense)}
-                    className="ml-1 rounded-[var(--radius-sm)] p-1.5 text-text-muted hover:text-rose hover:bg-rose/8 transition-colors"
+                    className="ml-1 rounded-[var(--radius-sm)] p-1.5 text-text-muted hover:text-accent hover:bg-accent/8 transition-colors"
                     aria-label="Supprimer"
                   >
                     <Trash2 size={15} />

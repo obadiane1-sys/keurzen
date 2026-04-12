@@ -38,7 +38,7 @@ function getInitials(name?: string | null): string {
 export function Avatar({ name, avatarUrl, color, size = 'md', style }: AvatarProps) {
   const dimension = sizeMap[size];
   const fontSize = fontSizeMap[size];
-  const bgColor = color ?? Colors.sauge;
+  const bgColor = color ?? Colors.success;
   const initials = getInitials(name);
 
   if (avatarUrl) {

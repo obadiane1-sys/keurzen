@@ -132,7 +132,7 @@ export default function LoginScreen() {
 
             {notFound && (
               <View style={styles.notFoundBanner}>
-                <Ionicons name="alert-circle-outline" size={16} color={Colors.rose} />
+                <Ionicons name="alert-circle-outline" size={16} color={Colors.accent} />
                 <View style={styles.notFoundContent}>
                   <Text variant="bodySmall" style={{ color: Colors.textPrimary }}>
                     Aucun compte trouvé avec cette adresse.
@@ -158,7 +158,7 @@ export default function LoginScreen() {
               style={styles.joinCodeLink}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="key-outline" size={14} color={Colors.terracotta} />
+              <Ionicons name="key-outline" size={14} color={Colors.primary} />
               <Text variant="bodySmall" color="terracotta" weight="semibold">
                 J'ai un code d'invitation
               </Text>
@@ -228,11 +228,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-    backgroundColor: Colors.rose + '18',
+    backgroundColor: Colors.accent + '18',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.rose + '40',
+    borderColor: Colors.accent + '40',
   },
   notFoundContent: {
     flex: 1,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     opacity: 0.1,
   },
   blobLavender: {
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     opacity: 0.08,
   },
   blobCoral: {
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     opacity: 0.08,
   },
 });

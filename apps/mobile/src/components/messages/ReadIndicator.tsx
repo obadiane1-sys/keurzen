@@ -26,7 +26,7 @@ export function ReadIndicator({ message, members, currentUserId }: ReadIndicator
 
   return (
     <View style={styles.container}>
-      <Ionicons name="checkmark-done" size={14} color={Colors.sauge} />
+      <Ionicons name="checkmark-done" size={14} color={Colors.success} />
       <Text variant="caption" color="muted" style={styles.text}>
         {`Vu par ${names}`}
       </Text>

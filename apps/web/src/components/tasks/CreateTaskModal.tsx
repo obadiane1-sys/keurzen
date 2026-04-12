@@ -109,7 +109,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
             {...register('description')}
             placeholder="Details optionnels..."
             rows={3}
-            className="mt-1.5 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-terracotta focus:outline-none resize-none"
+            className="mt-1.5 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none resize-none"
           />
         </div>
 
@@ -120,7 +120,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
             </label>
             <select
               {...register('priority')}
-              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-terracotta focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-primary focus:outline-none"
             >
               <option value="low">Basse</option>
               <option value="medium">Moyenne</option>
@@ -134,7 +134,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
             <input
               type="date"
               {...register('due_date')}
-              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-terracotta focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -145,7 +145,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
           </label>
           <select
             {...register('assigned_to')}
-            className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-terracotta focus:outline-none"
+            className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-primary focus:outline-none"
           >
             <option value="">Non assigne</option>
             {members.map((m) => (

@@ -80,9 +80,9 @@ export function TrendsSection() {
               <Line
                 type="monotone"
                 dataKey="tasks"
-                stroke="var(--color-terracotta)"
+                stroke="var(--color-primary)"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: 'var(--color-terracotta)' }}
+                dot={{ r: 3, fill: 'var(--color-primary)' }}
                 name="Taches"
               />
             </LineChart>
@@ -102,9 +102,9 @@ export function TrendsSection() {
               <Line
                 type="monotone"
                 dataKey="tlx"
-                stroke="var(--color-prune)"
+                stroke="var(--color-primary)"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: 'var(--color-prune)' }}
+                dot={{ r: 3, fill: 'var(--color-primary)' }}
                 name="TLX"
                 connectNulls
               />

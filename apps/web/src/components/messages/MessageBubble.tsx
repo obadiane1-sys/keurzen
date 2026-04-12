@@ -17,7 +17,7 @@ export function MessageBubble({ message, isOwn, showSenderName }: MessageBubbleP
     <div className={cn('flex w-full', isOwn ? 'justify-end' : 'justify-start')}>
       <div className="flex max-w-[78%] flex-col gap-0.5">
         {showSenderName && !isOwn && (
-          <span className="px-1 text-xs font-semibold text-terracotta">
+          <span className="px-1 text-xs font-semibold text-primary">
             {message.sender?.full_name ?? 'Membre'}
           </span>
         )}
@@ -26,7 +26,7 @@ export function MessageBubble({ message, isOwn, showSenderName }: MessageBubbleP
           className={cn(
             'rounded-2xl px-3 py-2',
             isOwn
-              ? 'rounded-br-sm bg-terracotta text-text-inverse'
+              ? 'rounded-br-sm bg-primary text-text-inverse'
               : 'rounded-bl-sm border border-border-light bg-background-card text-text-primary',
           )}
         >

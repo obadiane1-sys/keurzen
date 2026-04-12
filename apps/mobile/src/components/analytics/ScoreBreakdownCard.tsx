@@ -17,9 +17,9 @@ const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return Colors.sauge;
-  if (score >= 40) return Colors.miel;
-  return Colors.rose;
+  if (score >= 70) return Colors.success;
+  if (score >= 40) return Colors.joy;
+  return Colors.accent;
 }
 
 function getScoreLevel(score: number): string {

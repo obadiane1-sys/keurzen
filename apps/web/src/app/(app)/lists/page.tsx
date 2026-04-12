@@ -39,7 +39,7 @@ export default function ListsPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function ListsPage() {
                 className="flex flex-col items-center gap-2 py-6"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-border-light">
-                  <Icon size={22} className="text-terracotta" />
+                  <Icon size={22} className="text-primary" />
                 </div>
                 <h3 className="font-heading text-base font-semibold">{list.title}</h3>
                 <p className="text-xs text-text-muted">
@@ -104,7 +104,7 @@ export default function ListsPage() {
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as SharedListType)}
-              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-terracotta focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-[var(--radius-md)] border border-border bg-background-card px-3 text-sm focus:border-primary focus:outline-none"
             >
               <option value="shopping">Courses</option>
               <option value="todo">A faire</option>

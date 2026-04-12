@@ -366,7 +366,7 @@ export default function WeeklyReviewScreen() {
             <>
               <View style={styles.divider} />
               <SectionHeader
-                icon="lightbulb-outline"
+                icon="bulb-outline"
                 iconColor={Colors.primary}
                 title="Insights"
                 count={review.insights.length}
@@ -377,7 +377,7 @@ export default function WeeklyReviewScreen() {
                 <View style={styles.aiSectionContent}>
                   {review.insights.map((item: Insight, i: number) => (
                     <View key={i} style={styles.itemRow}>
-                      <Ionicons name="lightbulb-outline" size={16} color={Colors.primary} />
+                      <Ionicons name="bulb-outline" size={16} color={Colors.primary} />
                       <Text style={styles.itemText}>{item.text}</Text>
                     </View>
                   ))}

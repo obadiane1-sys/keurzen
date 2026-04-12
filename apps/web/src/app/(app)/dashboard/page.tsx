@@ -63,7 +63,7 @@ export default function DashboardPage() {
         <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
       </div>
 
-      <UpcomingTasksList tasks={tasks} onToggleStatus={handleToggle} />
+      <UpcomingTasksList tasks={tasks as any} onToggleStatus={handleToggle} />
     </div>
   );
 }

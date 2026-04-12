@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2 ml-3">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-terracotta" />
+            <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
             <span className="font-heading text-sm font-semibold tracking-wider">Keurzen</span>
           </div>
         </header>

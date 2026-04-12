@@ -143,7 +143,7 @@ export function useWeeklyBalance(): { members: MemberBalance[]; isLoading: boole
       return {
         userId: s.user_id,
         name: s.profile?.full_name ?? 'Membre',
-        color: hMember?.color ?? Colors.sauge,
+        color: hMember?.color ?? Colors.success,
         avatarUrl: s.profile?.avatar_url ?? null,
         tasksShare: s.tasks_share,
         minutesShare: s.minutes_share,
@@ -186,7 +186,7 @@ export function useWeeklyBalance(): { members: MemberBalance[]; isLoading: boole
     return {
       userId,
       name: data.name,
-      color: hMember?.color ?? Colors.sauge,
+      color: hMember?.color ?? Colors.success,
       avatarUrl: data.avatarUrl,
       tasksShare,
       minutesShare: 0,

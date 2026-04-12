@@ -29,20 +29,20 @@ const DIMENSIONS: {
   color: string;
   Icon: typeof Brain;
 }[] = [
-  { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: 'var(--color-prune)', Icon: Brain },
-  { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: 'var(--color-rose)', Icon: Dumbbell },
-  { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: 'var(--color-miel)', Icon: Clock },
-  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: 'var(--color-sauge)', Icon: Trophy },
-  { key: 'effort', label: 'Effort', description: "Intensite de l'effort fourni", color: 'var(--color-terracotta)', Icon: Flame },
-  { key: 'frustration', label: 'Frustration', description: 'Sentiment de decouragement, stress', color: 'var(--color-rose)', Icon: Frown },
+  { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: 'var(--color-primary)', Icon: Brain },
+  { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: 'var(--color-accent)', Icon: Dumbbell },
+  { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: 'var(--color-joy)', Icon: Clock },
+  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: '#81C784', Icon: Trophy },
+  { key: 'effort', label: 'Effort', description: "Intensite de l'effort fourni", color: 'var(--color-primary)', Icon: Flame },
+  { key: 'frustration', label: 'Frustration', description: 'Sentiment de decouragement, stress', color: 'var(--color-accent)', Icon: Frown },
 ];
 
 // ─── Score helpers ──────────────────────────────────────────────────────────
 
 function tlxColor(score: number): string {
-  if (score <= 33) return 'var(--color-sauge)';
-  if (score <= 66) return 'var(--color-prune)';
-  return 'var(--color-rose)';
+  if (score <= 33) return '#81C784';
+  if (score <= 66) return 'var(--color-primary)';
+  return 'var(--color-accent)';
 }
 
 function tlxLabel(score: number): string {
@@ -219,7 +219,7 @@ export default function TlxPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function TlxPage() {
       <div className="mb-6">
         <button
           onClick={() => router.push('/dashboard')}
-          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-terracotta transition-colors mb-4"
+          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors mb-4"
         >
           <ArrowLeft size={16} />
           Dashboard
@@ -277,7 +277,7 @@ export default function TlxPage() {
       <button
         onClick={handleSubmit}
         disabled={submitTlx.isPending}
-        className="w-full rounded-[var(--radius-lg)] bg-terracotta py-3.5 text-base font-bold text-white transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
+        className="w-full rounded-[var(--radius-lg)] bg-primary py-3.5 text-base font-bold text-white transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
       >
         {submitTlx.isPending
           ? 'Enregistrement...'

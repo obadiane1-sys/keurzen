@@ -58,8 +58,8 @@ export default function InvitePage() {
             Inviter
           </Button>
         </div>
-        {error && <p className="text-[13px] text-rose">{error}</p>}
-        {success && <p className="text-[13px] text-sauge">{success}</p>}
+        {error && <p className="text-[13px] text-accent">{error}</p>}
+        {success && <p className="text-[13px] text-success">{success}</p>}
       </Card>
 
       {/* Pending invitations */}
@@ -72,8 +72,8 @@ export default function InvitePage() {
             <div className="divide-y divide-border-light">
               {invitations.map((inv) => (
                 <div key={inv.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-miel/15">
-                    <Mail size={16} className="text-miel" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-joy/15">
+                    <Mail size={16} className="text-joy" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{inv.email || 'Lien'}</p>
@@ -85,7 +85,7 @@ export default function InvitePage() {
                   <Badge variant="warning">En attente</Badge>
                   <button
                     onClick={() => handleRevoke(inv.id, inv.email)}
-                    className="rounded p-1.5 text-text-muted hover:text-rose hover:bg-rose/8 transition-colors"
+                    className="rounded p-1.5 text-text-muted hover:text-accent hover:bg-accent/8 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>

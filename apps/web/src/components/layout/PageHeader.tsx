@@ -22,7 +22,7 @@ export function PageHeader({ title, subtitle, actions, userName, avatarUrl, unre
         <button className="relative rounded-[var(--radius-sm)] p-2 text-text-primary hover:bg-border-light transition-colors">
           <Bell size={20} />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[9px] font-bold text-text-inverse">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-text-inverse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

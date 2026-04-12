@@ -14,7 +14,7 @@ interface LoaderProps {
 export function Loader({
   label,
   size = 'large',
-  color = Colors.terracotta,
+  color = Colors.primary,
   fullScreen = false,
   style,
 }: LoaderProps) {

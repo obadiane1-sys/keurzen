@@ -59,7 +59,7 @@ export default function MessagesPage() {
           <h2 className="text-base font-semibold text-text-primary">Messages</h2>
           <button
             onClick={() => setShowNew(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-terracotta text-white transition-opacity hover:opacity-80"
+            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-primary text-white transition-opacity hover:opacity-80"
             aria-label="Nouvelle conversation"
           >
             <Plus size={16} />

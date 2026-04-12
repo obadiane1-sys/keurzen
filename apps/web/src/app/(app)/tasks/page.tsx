@@ -122,7 +122,7 @@ export default function TasksPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function TasksPage() {
               className={cn(
                 'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
                 activeTab === key
-                  ? 'border-terracotta text-terracotta'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-text-muted hover:text-text-primary',
               )}
             >
@@ -167,7 +167,7 @@ export default function TasksPage() {
               <span
                 className={cn(
                   'ml-1.5 text-xs',
-                  activeTab === key ? 'text-terracotta' : isOverdueTab ? 'text-rose' : 'text-text-muted',
+                  activeTab === key ? 'text-primary' : isOverdueTab ? 'text-accent' : 'text-text-muted',
                 )}
               >
                 {count}
@@ -188,7 +188,7 @@ export default function TasksPage() {
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-10 w-full rounded-[var(--radius-md)] border border-border bg-background-card pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted focus:border-terracotta focus:outline-none"
+          className="h-10 w-full rounded-[var(--radius-md)] border border-border bg-background-card pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none"
         />
       </div>
 

@@ -27,11 +27,11 @@ interface ButtonProps {
 }
 
 const variantConfig: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: Colors.terracotta, text: Colors.textInverse },
-  secondary: { bg: Colors.sauge, text: Colors.textInverse },
+  primary: { bg: Colors.primary, text: Colors.textInverse },
+  secondary: { bg: Colors.success, text: Colors.textInverse },
   ghost: { bg: 'transparent', text: Colors.textPrimary },
   danger: { bg: Colors.error, text: Colors.textInverse },
-  outline: { bg: 'transparent', text: Colors.terracotta, border: Colors.terracotta },
+  outline: { bg: 'transparent', text: Colors.primary, border: Colors.primary },
 };
 
 const sizeConfig: Record<ButtonSize, { height: number; px: number; fontSize: number; radius: number }> = {

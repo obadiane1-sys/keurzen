@@ -6,18 +6,18 @@ import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../consta
 import type { MemberBalance } from '@keurzen/queries';
 
 const MEMBER_COLORS = [
-  Colors.terracotta,
-  Colors.prune,
-  Colors.sauge,
-  Colors.miel,
-  Colors.rose,
+  Colors.primary,
+  Colors.primary,
+  Colors.success,
+  Colors.joy,
+  Colors.accent,
 ];
 
 function getDeltaColor(delta: number): string {
   const abs = Math.abs(delta);
-  if (abs < 0.10) return Colors.sauge;
-  if (abs < 0.20) return Colors.miel;
-  return Colors.rose;
+  if (abs < 0.10) return Colors.success;
+  if (abs < 0.20) return Colors.joy;
+  return Colors.accent;
 }
 
 interface EquitySectionProps {

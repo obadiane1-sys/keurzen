@@ -3,18 +3,18 @@
 import type { MemberBalance } from '@keurzen/queries';
 
 const MEMBER_COLORS = [
-  'var(--color-terracotta)',
-  'var(--color-prune)',
-  'var(--color-sauge)',
-  'var(--color-miel)',
-  'var(--color-rose)',
+  'var(--color-primary)',
+  'var(--color-primary)',
+  '#81C784',
+  'var(--color-joy)',
+  'var(--color-accent)',
 ];
 
 function getDeltaClasses(delta: number): string {
   const abs = Math.abs(delta);
-  if (abs < 0.10) return 'bg-sauge/10 text-sauge';
-  if (abs < 0.20) return 'bg-miel/10 text-miel';
-  return 'bg-rose/10 text-rose';
+  if (abs < 0.10) return 'bg-success/10 text-success';
+  if (abs < 0.20) return 'bg-joy/10 text-joy';
+  return 'bg-accent/10 text-accent';
 }
 
 interface EquitySectionProps {

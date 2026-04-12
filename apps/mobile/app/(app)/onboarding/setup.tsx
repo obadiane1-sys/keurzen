@@ -208,7 +208,7 @@ export default function OnboardingSetupScreen() {
             key={i}
             style={[
               styles.progressSegment,
-              { backgroundColor: i <= currentStep ? Colors.terracotta : Colors.borderLight },
+              { backgroundColor: i <= currentStep ? Colors.primary : Colors.borderLight },
             ]}
           />
         ))}
@@ -284,7 +284,7 @@ export default function OnboardingSetupScreen() {
                     <Ionicons
                       name="checkmark-circle"
                       size={20}
-                      color={Colors.terracotta}
+                      color={Colors.primary}
                     />
                   )}
                 </TouchableOpacity>
@@ -386,8 +386,8 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   optionCardSelected: {
-    borderColor: Colors.terracotta,
-    backgroundColor: Colors.terracotta + '0D',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '0D',
   },
   optionEmoji: {
     fontSize: Typography.fontSize['2xl'],
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   optionLabelSelected: {
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
 
   // CTA

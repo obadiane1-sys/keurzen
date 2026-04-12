@@ -29,9 +29,9 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getScoreColor(score: number): string {
-  if (score >= 75) return 'var(--color-sauge)';
-  if (score >= 50) return 'var(--color-miel)';
-  return 'var(--color-rose)';
+  if (score >= 75) return '#81C784';
+  if (score >= 50) return 'var(--color-joy)';
+  return 'var(--color-accent)';
 }
 
 function getScoreLabel(score: number | null): string {
@@ -56,11 +56,11 @@ function formatWeekDate(weekStart: string): string {
 }
 
 const MEMBER_COLORS = [
-  'var(--color-terracotta)',
-  'var(--color-sauge)',
-  'var(--color-prune)',
-  'var(--color-miel)',
-  'var(--color-rose)',
+  'var(--color-primary)',
+  '#81C784',
+  'var(--color-primary)',
+  'var(--color-joy)',
+  'var(--color-accent)',
 ];
 
 // ─── Score Gauge (SVG) ───────────────────────────────────────────────────────
@@ -198,12 +198,12 @@ export default function WeeklyReviewPage() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-text-secondary hover:text-terracotta mb-4"
+          className="flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4"
         >
           <ArrowLeft size={16} /> Retour
         </button>
         <div className="flex h-64 items-center justify-center">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       </div>
     );
@@ -215,7 +215,7 @@ export default function WeeklyReviewPage() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-text-secondary hover:text-terracotta mb-4"
+          className="flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4"
         >
           <ArrowLeft size={16} /> Retour
         </button>
@@ -223,7 +223,7 @@ export default function WeeklyReviewPage() {
           <p className="text-sm text-text-muted">Impossible de charger le bilan</p>
           <button
             onClick={() => refetch()}
-            className="text-sm font-semibold text-terracotta hover:underline"
+            className="text-sm font-semibold text-primary hover:underline"
           >
             Reessayer
           </button>
@@ -238,7 +238,7 @@ export default function WeeklyReviewPage() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-text-secondary hover:text-terracotta mb-4"
+          className="flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4"
         >
           <ArrowLeft size={16} /> Retour
         </button>
@@ -247,7 +247,7 @@ export default function WeeklyReviewPage() {
           <button
             onClick={() => regenerate.mutate()}
             disabled={regenerate.isPending}
-            className="rounded-full bg-prune px-6 py-2.5 text-sm font-bold text-text-inverse hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[44px]"
+            className="rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-text-inverse hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[44px]"
           >
             {regenerate.isPending ? 'Generation...' : 'Generer le bilan'}
           </button>
@@ -267,7 +267,7 @@ export default function WeeklyReviewPage() {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-text-secondary hover:text-terracotta"
+          className="flex items-center gap-1 text-sm text-text-secondary hover:text-primary"
         >
           <ArrowLeft size={16} /> Retour
         </button>
@@ -300,21 +300,21 @@ export default function WeeklyReviewPage() {
       {hasMetrics && (
         <div className="grid grid-cols-3 gap-3 mb-4">
           <Card className="flex flex-col items-center py-4 gap-1">
-            <CheckCheck size={20} className="text-sauge" />
+            <CheckCheck size={20} className="text-success" />
             <span className="font-heading text-xl font-bold text-text-primary">
               {review.total_tasks_completed}
             </span>
             <span className="text-xs text-text-muted">Taches</span>
           </Card>
           <Card className="flex flex-col items-center py-4 gap-1">
-            <Clock size={20} className="text-terracotta" />
+            <Clock size={20} className="text-primary" />
             <span className="font-heading text-xl font-bold text-text-primary">
               {formatMinutes(review.total_minutes_logged)}
             </span>
             <span className="text-xs text-text-muted">Temps</span>
           </Card>
           <Card className="flex flex-col items-center py-4 gap-1">
-            <Activity size={20} className="text-prune" />
+            <Activity size={20} className="text-primary" />
             <span className="font-heading text-xl font-bold text-text-primary">
               {review.avg_tlx_score !== null ? Math.round(review.avg_tlx_score) : '\u2014'}
             </span>
@@ -356,7 +356,7 @@ export default function WeeklyReviewPage() {
       {/* AI Report */}
       <Card className="mb-4 !p-0 overflow-hidden">
         <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-          <BarChart3 size={18} className="text-prune" />
+          <BarChart3 size={18} className="text-primary" />
           <span className="text-sm font-bold text-text-primary">Rapport IA</span>
         </div>
         <p className="px-4 pb-3 text-sm text-text-primary leading-relaxed">
@@ -369,7 +369,7 @@ export default function WeeklyReviewPage() {
             <div className="h-px bg-border-light" />
             <CollapsibleSection
               icon={AlertTriangle}
-              iconColor="var(--color-rose)"
+              iconColor="var(--color-accent)"
               title="Points d'attention"
               count={review.attention_points.length}
               expanded={expandedSections.attention}
@@ -380,7 +380,7 @@ export default function WeeklyReviewPage() {
                   <AlertTriangle
                     size={14}
                     className="mt-0.5 shrink-0"
-                    style={{ color: item.level === 'warning' ? 'var(--color-rose)' : 'var(--color-miel)' }}
+                    style={{ color: item.level === 'warning' ? 'var(--color-accent)' : 'var(--color-joy)' }}
                   />
                   <p className="text-sm text-text-primary leading-relaxed">{item.text}</p>
                 </div>
@@ -395,7 +395,7 @@ export default function WeeklyReviewPage() {
             <div className="h-px bg-border-light" />
             <CollapsibleSection
               icon={Lightbulb}
-              iconColor="var(--color-prune)"
+              iconColor="var(--color-primary)"
               title="Insights"
               count={review.insights.length}
               expanded={expandedSections.insights}
@@ -403,7 +403,7 @@ export default function WeeklyReviewPage() {
             >
               {review.insights.map((item: Insight, i: number) => (
                 <div key={i} className="flex items-start gap-2">
-                  <Lightbulb size={14} className="mt-0.5 shrink-0 text-prune" />
+                  <Lightbulb size={14} className="mt-0.5 shrink-0 text-primary" />
                   <p className="text-sm text-text-primary leading-relaxed">{item.text}</p>
                 </div>
               ))}
@@ -417,7 +417,7 @@ export default function WeeklyReviewPage() {
             <div className="h-px bg-border-light" />
             <CollapsibleSection
               icon={Compass}
-              iconColor="var(--color-sauge)"
+              iconColor="#81C784"
               title="Orientations"
               count={review.orientations.length}
               expanded={expandedSections.orientations}
@@ -429,7 +429,7 @@ export default function WeeklyReviewPage() {
                     className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                     style={{
                       backgroundColor: item.priority === 'high'
-                        ? 'var(--color-sauge)'
+                        ? '#81C784'
                         : 'var(--color-text-muted)',
                     }}
                   />
@@ -445,7 +445,7 @@ export default function WeeklyReviewPage() {
         <button
           onClick={() => regenerate.mutate()}
           disabled={regenerate.isPending}
-          className="flex w-full items-center justify-center gap-1.5 py-3 text-sm text-text-muted hover:text-terracotta transition-colors disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-1.5 py-3 text-sm text-text-muted hover:text-primary transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={regenerate.isPending ? 'animate-spin' : ''} />
           {regenerate.isPending ? 'Regeneration...' : 'Regenerer le rapport'}

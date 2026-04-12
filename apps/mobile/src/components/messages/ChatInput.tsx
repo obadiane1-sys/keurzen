@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   sendButtonActive: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
   },
   sendButtonDisabled: {
     backgroundColor: Colors.borderLight,

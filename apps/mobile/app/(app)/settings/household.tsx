@@ -47,9 +47,9 @@ export default function HouseholdScreen() {
     const now = Date.now();
     const created = new Date(invite.created_at).getTime();
     const expires = new Date(invite.expires_at).getTime();
-    if (expires < now) return { label: 'Expiré', color: Colors.rose };
-    if (now - created < 5 * 60 * 1000) return { label: 'Envoyé ✓', color: Colors.sauge };
-    return { label: 'En attente', color: Colors.miel };
+    if (expires < now) return { label: 'Expiré', color: Colors.accent };
+    if (now - created < 5 * 60 * 1000) return { label: 'Envoyé ✓', color: Colors.success };
+    return { label: 'En attente', color: Colors.joy };
   };
 
   const handleResend = async (invite: InvitationCode) => {
@@ -136,7 +136,7 @@ export default function HouseholdScreen() {
             <Card style={styles.householdCard}>
               <View style={styles.householdInfo}>
                 <View style={styles.householdIcon}>
-                  <Ionicons name="home" size={22} color={Colors.sauge} />
+                  <Ionicons name="home" size={22} color={Colors.success} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text variant="h3">{household.name}</Text>
@@ -207,7 +207,7 @@ export default function HouseholdScreen() {
                         ]}
                       >
                         <View style={styles.pendingIconCircle}>
-                          <Ionicons name="mail-outline" size={18} color={Colors.rose} />
+                          <Ionicons name="mail-outline" size={18} color={Colors.accent} />
                         </View>
                         <View style={styles.memberInfo}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
@@ -243,7 +243,7 @@ export default function HouseholdScreen() {
                             {resendingId === invite.id ? (
                               <Loader size="small" />
                             ) : (
-                              <Ionicons name="refresh" size={16} color={Colors.sauge} />
+                              <Ionicons name="refresh" size={16} color={Colors.success} />
                             )}
                           </TouchableOpacity>
                         )}
@@ -270,7 +270,7 @@ export default function HouseholdScreen() {
             >
               <View style={styles.inviteBtnLeft}>
                 <View style={styles.inviteIconCircle}>
-                  <Ionicons name="person-add" size={18} color={Colors.terracotta} />
+                  <Ionicons name="person-add" size={18} color={Colors.primary} />
                 </View>
                 <Text variant="body" style={styles.inviteBtnText}>Inviter un membre</Text>
               </View>
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.sauge + '18',
+    backgroundColor: Colors.success + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -425,18 +425,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.sauge + '20',
+    backgroundColor: Colors.success + '20',
   },
   ownerBadgeText: {
     fontSize: Typography.fontSize.xs,
-    color: Colors.greenStrong,
+    color: Colors.success,
     fontWeight: '600',
   },
   pendingIconCircle: {
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.rose + '18',
+    backgroundColor: Colors.accent + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.sauge + '18',
+    backgroundColor: Colors.success + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.terracotta + '18',
+    backgroundColor: Colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },

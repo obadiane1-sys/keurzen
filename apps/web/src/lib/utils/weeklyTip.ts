@@ -18,7 +18,7 @@ export interface WeeklyTip {
   icon: string;
   title: string;
   body: string;
-  color: 'rose' | 'prune' | 'miel' | 'sauge' | 'terracotta';
+  color: 'accent' | 'primary' | 'joy' | 'success';
 }
 
 export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
@@ -30,7 +30,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'alert-circle',
       title: 'Taches en retard',
       body: `${overdueCount} taches sont en retard. Prenez 10 minutes pour les replanifier ou les deleguer.`,
-      color: 'rose',
+      color: 'accent',
     };
   }
 
@@ -40,7 +40,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'brain',
       title: 'Charge mentale elevee',
       body: 'Votre charge mentale est elevee. Essayez de deleguer une tache recurrente ou de simplifier votre routine cette semaine.',
-      color: 'prune',
+      color: 'primary',
     };
   }
 
@@ -50,7 +50,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'scale',
       title: 'Repartition desequilibree',
       body: 'La repartition des taches est inegale. Discutez ensemble de la charge de chacun et redistribuez si besoin.',
-      color: 'miel',
+      color: 'joy',
     };
   }
 
@@ -60,7 +60,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'time',
       title: 'Quelques retards',
       body: `${overdueCount} tache${overdueCount > 1 ? 's' : ''} en retard. Un petit coup de pouce aujourd'hui peut remettre la semaine sur les rails.`,
-      color: 'miel',
+      color: 'joy',
     };
   }
 
@@ -70,7 +70,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'trending-up',
       title: 'Debut de semaine calme',
       body: 'La semaine demarre doucement. Choisissez 2-3 taches prioritaires pour prendre de l\'avance.',
-      color: 'terracotta',
+      color: 'primary',
     };
   }
 
@@ -80,7 +80,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'flame',
       title: 'Belle regularite !',
       body: `${streakDays} jours consecutifs d'activite. Continuez comme ca, votre foyer fonctionne au top !`,
-      color: 'sauge',
+      color: 'success',
     };
   }
 
@@ -90,7 +90,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'checkmark-circle',
       title: 'Bonne dynamique',
       body: 'Plus de 70% des taches sont faites. Profitez du reste de la semaine pour souffler un peu.',
-      color: 'sauge',
+      color: 'success',
     };
   }
 
@@ -100,7 +100,7 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
       icon: 'leaf',
       title: 'Pensez a vous',
       body: 'Votre charge mentale est moderee. Un moment de pause ou une tache en moins peut faire la difference.',
-      color: 'prune',
+      color: 'primary',
     };
   }
 
@@ -109,6 +109,6 @@ export function computeWeeklyTip(input: WeeklyTipInput): WeeklyTip {
     icon: 'sunny',
     title: 'Tout roule !',
     body: 'Votre foyer est bien organise cette semaine. Profitez-en pour planifier la semaine prochaine.',
-    color: 'sauge',
+    color: 'success',
   };
 }

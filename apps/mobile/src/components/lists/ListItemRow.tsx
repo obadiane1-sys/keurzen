@@ -34,28 +34,28 @@ export const shoppingCategoryLabels: Record<string, { label: string; icon: strin
 
 // Subtle pastel backgrounds per category key
 const categoryColors: Record<string, string> = {
-  fruits_legumes: Colors.sauge + '33',
-  viandes_poissons: Colors.rose + '33',
-  produits_laitiers: Colors.miel + '33',
+  fruits_legumes: Colors.success + '33',
+  viandes_poissons: Colors.accent + '33',
+  produits_laitiers: Colors.joy + '33',
   boulangerie: '#FBBF24' + '33',
-  epicerie: Colors.prune + '33',
-  surgeles: Colors.miel + '55',
-  boissons: Colors.sauge + '55',
-  hygiene: Colors.prune + '55',
-  entretien: Colors.rose + '55',
+  epicerie: Colors.primary + '33',
+  surgeles: Colors.joy + '55',
+  boissons: Colors.success + '55',
+  hygiene: Colors.primary + '55',
+  entretien: Colors.accent + '55',
   autre: Colors.gray200,
 };
 
 const categoryTextColors: Record<string, string> = {
-  fruits_legumes: Colors.greenStrong,
-  viandes_poissons: Colors.redStrong,
-  produits_laitiers: Colors.blueStrong,
-  boulangerie: Colors.orangeStrong,
+  fruits_legumes: Colors.success,
+  viandes_poissons: Colors.accent,
+  produits_laitiers: Colors.primary,
+  boulangerie: Colors.primary,
   epicerie: Colors.textSecondary,
-  surgeles: Colors.blueDeep,
-  boissons: Colors.greenStrong,
+  surgeles: Colors.primary,
+  boissons: Colors.success,
   hygiene: '#7C3AED',
-  entretien: Colors.orangeStrong,
+  entretien: Colors.primary,
   autre: Colors.textMuted,
 };
 
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   checkboxChecked: {
-    backgroundColor: Colors.sauge,
+    backgroundColor: Colors.success,
     borderWidth: 2,
-    borderColor: Colors.sauge,
+    borderColor: Colors.success,
   },
 
   // Title
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.miel + '55',
+    backgroundColor: Colors.joy + '55',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

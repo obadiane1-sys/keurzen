@@ -64,15 +64,15 @@ const colorMap: Record<TextColor, string> = {
   secondary: Colors.textSecondary,
   muted: Colors.textMuted,
   inverse: Colors.textInverse,
-  mint: Colors.sauge,
-  coral: Colors.rose,
-  lavender: Colors.prune,
+  mint: Colors.success,
+  coral: Colors.accent,
+  lavender: Colors.primary,
   navy: Colors.textPrimary,
   error: Colors.error,
   success: Colors.success,
-  terracotta: Colors.terracotta,
-  sauge: Colors.sauge,
-  prune: Colors.prune,
+  terracotta: Colors.primary,
+  sauge: Colors.success,
+  prune: Colors.primary,
 };
 
 // Map named weight prop to fontFamily

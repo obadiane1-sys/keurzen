@@ -148,7 +148,7 @@ export default function JoinCodeScreen() {
                 maxLength={1}
                 textContentType="oneTimeCode"
                 autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                selectionColor={Colors.terracotta}
+                selectionColor={Colors.primary}
                 accessibilityLabel={`Chiffre ${index + 1}`}
               />
             ))}
@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   codeCellFilled: {
-    borderColor: Colors.terracotta,
-    backgroundColor: Colors.terracotta + '08',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '08',
   },
   codeCellError: {
     borderColor: Colors.error,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     opacity: 0.1,
   },
   blobLavender: {
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     opacity: 0.08,
   },
   blobCoral: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     opacity: 0.09,
   },
 });

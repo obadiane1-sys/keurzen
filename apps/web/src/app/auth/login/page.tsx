@@ -52,8 +52,8 @@ export default function LoginPage() {
         />
 
         {error && (
-          <div className="rounded-[var(--radius-md)] bg-rose/10 px-3 py-2">
-            <p className="text-[13px] text-rose">{error}</p>
+          <div className="rounded-[var(--radius-md)] bg-accent/10 px-3 py-2">
+            <p className="text-[13px] text-accent">{error}</p>
           </div>
         )}
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-text-secondary">
         Pas de compte ?{' '}
-        <Link href="/auth/signup" className="font-medium text-terracotta hover:underline">
+        <Link href="/auth/signup" className="font-medium text-primary hover:underline">
           Creer un compte
         </Link>
       </p>

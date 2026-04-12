@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     marginTop: Spacing['2xl'],
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: 24,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing['2xl'],

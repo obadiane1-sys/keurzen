@@ -181,7 +181,7 @@ export default function OnboardingSetupPage() {
             onClick={handleDiscover}
             className="w-full rounded-[var(--radius-lg)] py-3.5 text-base font-semibold transition-opacity hover:opacity-90 active:opacity-80"
             style={{
-              backgroundColor: 'var(--color-terracotta)',
+              backgroundColor: 'var(--color-primary)',
               color: 'var(--color-text-inverse)',
             }}
           >
@@ -207,7 +207,7 @@ export default function OnboardingSetupPage() {
               style={{
                 backgroundColor:
                   i <= step
-                    ? 'var(--color-terracotta)'
+                    ? 'var(--color-primary)'
                     : 'var(--color-border)',
               }}
             />
@@ -259,10 +259,10 @@ export default function OnboardingSetupPage() {
                 className="flex w-full items-center gap-4 rounded-[var(--radius-lg)] px-4 py-3.5 text-left transition-all"
                 style={{
                   backgroundColor: isSelected
-                    ? 'color-mix(in srgb, var(--color-terracotta) 8%, white)'
+                    ? 'color-mix(in srgb, var(--color-primary) 8%, white)'
                     : 'var(--color-background-card)',
                   border: isSelected
-                    ? '2px solid var(--color-terracotta)'
+                    ? '2px solid var(--color-primary)'
                     : '2px solid var(--color-border)',
                   boxShadow: 'var(--shadow-card)',
                 }}
@@ -272,7 +272,7 @@ export default function OnboardingSetupPage() {
                   className="flex-1 text-sm font-medium"
                   style={{
                     color: isSelected
-                      ? 'var(--color-terracotta)'
+                      ? 'var(--color-primary)'
                       : 'var(--color-text-primary)',
                   }}
                 >
@@ -281,7 +281,7 @@ export default function OnboardingSetupPage() {
                 {isSelected && (
                   <CheckCircle
                     size={20}
-                    style={{ color: 'var(--color-terracotta)', flexShrink: 0 }}
+                    style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                   />
                 )}
               </button>
@@ -296,7 +296,7 @@ export default function OnboardingSetupPage() {
           className="w-full rounded-[var(--radius-lg)] py-3.5 text-base font-semibold transition-opacity"
           style={{
             backgroundColor: selectedValue
-              ? 'var(--color-terracotta)'
+              ? 'var(--color-primary)'
               : 'var(--color-border)',
             color: selectedValue
               ? 'var(--color-text-inverse)'

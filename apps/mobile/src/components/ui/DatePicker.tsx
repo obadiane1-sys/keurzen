@@ -84,9 +84,9 @@ interface QuickChip {
 const QUICK_CHIPS: QuickChip[] = [
   {
     label: "Aujourd'hui",
-    bg: `${Colors.sauge}20`,
-    border: Colors.sauge,
-    text: Colors.greenStrong,
+    bg: `${Colors.success}20`,
+    border: Colors.success,
+    text: Colors.success,
     getDate: () => {
       const d = new Date();
       d.setHours(23, 59, 0, 0);
@@ -107,9 +107,9 @@ const QUICK_CHIPS: QuickChip[] = [
   },
   {
     label: 'Cette semaine',
-    bg: `${Colors.prune}20`,
-    border: Colors.prune,
-    text: Colors.prune,
+    bg: `${Colors.primary}20`,
+    border: Colors.primary,
+    text: Colors.primary,
     getDate: () => {
       const d = endOfWeek();
       d.setHours(23, 59, 0, 0);
@@ -118,9 +118,9 @@ const QUICK_CHIPS: QuickChip[] = [
   },
   {
     label: 'Sans date',
-    bg: `${Colors.terracotta}20`,
-    border: Colors.terracotta,
-    text: Colors.orangeStrong,
+    bg: `${Colors.primary}20`,
+    border: Colors.primary,
+    text: Colors.primary,
     getDate: () => null,
   },
 ];
@@ -354,7 +354,7 @@ export function DatePicker({
       >
         <View style={styles.triggerLeft}>
           <View style={styles.triggerIcon}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.greenStrong} />
+            <Ionicons name="calendar-outline" size={16} color={Colors.success} />
           </View>
           <Text
             style={[
@@ -475,7 +475,7 @@ export function DatePicker({
           >
             <View style={styles.timeTriggerLeft}>
               <View style={styles.timeTriggerIcon}>
-                <Ionicons name="time-outline" size={14} color={Colors.prune} />
+                <Ionicons name="time-outline" size={14} color={Colors.primary} />
               </View>
               <Text style={styles.timeTriggerLabel}>Heure limite</Text>
             </View>
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     width: Spacing['3xl'],
     height: Spacing['3xl'],
     borderRadius: BorderRadius.md,
-    backgroundColor: `${Colors.sauge}20`,
+    backgroundColor: `${Colors.success}20`,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
     maxHeight: 36,
   },
   dayCellSelected: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.card,
   },
   dayText: {
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
     width: Spacing['3xl'],
     height: Spacing['3xl'],
     borderRadius: BorderRadius.sm,
-    backgroundColor: `${Colors.prune}20`,
+    backgroundColor: `${Colors.primary}20`,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   timeBadgeActive: {
-    backgroundColor: `${Colors.sauge}20`,
+    backgroundColor: `${Colors.success}20`,
   },
   timeBadgeInactive: {
     backgroundColor: Colors.backgroundSubtle,
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.bold,
   },
   timeBadgeTextActive: {
-    color: Colors.greenStrong,
+    color: Colors.success,
   },
   timeBadgeTextInactive: {
     color: Colors.textMuted,
@@ -828,8 +828,8 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
   },
   periodBtnActive: {
-    backgroundColor: `${Colors.prune}20`,
-    borderColor: Colors.prune,
+    backgroundColor: `${Colors.primary}20`,
+    borderColor: Colors.primary,
   },
   periodEmoji: {
     fontSize: Typography.fontSize.sm,
@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   periodTextActive: {
-    color: Colors.prune,
+    color: Colors.primary,
   },
 
   // Hour grid
@@ -860,8 +860,8 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
   },
   hourCellActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   hourCellDisabled: {
     borderColor: Colors.borderLight,
@@ -903,8 +903,8 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
   },
   minuteCellActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   minuteText: {
     fontSize: Typography.fontSize.xs,
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
 
   // ── Confirm ───────────────────────────────────────────────────────────────
   confirmBtn: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.button,
     height: 56,
     alignItems: 'center',

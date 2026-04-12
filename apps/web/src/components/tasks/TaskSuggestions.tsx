@@ -44,7 +44,7 @@ export function TaskSuggestions({ query, variants, onSelect, visible }: TaskSugg
                 {matchIndex >= 0 ? (
                   <>
                     {title.substring(0, matchIndex)}
-                    <span className="font-bold text-terracotta">
+                    <span className="font-bold text-primary">
                       {title.substring(matchIndex, matchIndex + q.length)}
                     </span>
                     {title.substring(matchIndex + q.length)}

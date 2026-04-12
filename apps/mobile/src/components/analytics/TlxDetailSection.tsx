@@ -17,9 +17,9 @@ const TLX_DIMENSIONS = [
 ] as const;
 
 function getBarColor(value: number): string {
-  if (value < 40) return Colors.sauge;
-  if (value <= 70) return Colors.miel;
-  return Colors.rose;
+  if (value < 40) return Colors.success;
+  if (value <= 70) return Colors.joy;
+  return Colors.accent;
 }
 
 export function TlxDetailSection() {
@@ -70,12 +70,12 @@ export function TlxDetailSection() {
             <Ionicons
               name={tlxDelta.delta > 0 ? 'arrow-up' : 'arrow-down'}
               size={14}
-              color={tlxDelta.delta > 0 ? Colors.rose : Colors.sauge}
+              color={tlxDelta.delta > 0 ? Colors.accent : Colors.success}
             />
             <Text
               variant="caption"
               weight="semibold"
-              style={{ color: tlxDelta.delta > 0 ? Colors.rose : Colors.sauge }}
+              style={{ color: tlxDelta.delta > 0 ? Colors.accent : Colors.success }}
             >
               {Math.abs(tlxDelta.delta)} pts
             </Text>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.button,
   },
   ctaText: {

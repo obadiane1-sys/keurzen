@@ -42,7 +42,7 @@ export default function ListDetailPage() {
   if (!list) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -83,8 +83,8 @@ export default function ListDetailPage() {
                   className={cn(
                     'flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors',
                     item.checked
-                      ? 'border-sauge bg-sauge text-white'
-                      : 'border-border hover:border-terracotta',
+                      ? 'border-success bg-success text-white'
+                      : 'border-border hover:border-primary',
                   )}
                 >
                   {item.checked && <Check size={12} />}
@@ -97,7 +97,7 @@ export default function ListDetailPage() {
                 </div>
                 <button
                   onClick={() => deleteItem({ itemId: item.id, listId: id })}
-                  className="shrink-0 rounded p-1 text-text-muted transition-colors hover:bg-rose/10 hover:text-rose"
+                  className="shrink-0 rounded p-1 text-text-muted transition-colors hover:bg-accent/10 hover:text-accent"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -119,7 +119,7 @@ export default function ListDetailPage() {
           value={newItemTitle}
           onChange={(e) => setNewItemTitle(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-          className="h-11 flex-1 rounded-[var(--radius-md)] border border-border bg-background-card px-4 text-sm placeholder:text-text-muted focus:border-terracotta focus:outline-none"
+          className="h-11 flex-1 rounded-[var(--radius-md)] border border-border bg-background-card px-4 text-sm placeholder:text-text-muted focus:border-primary focus:outline-none"
         />
         <Button onClick={handleAddItem} isLoading={isAdding}>
           <Plus size={16} />

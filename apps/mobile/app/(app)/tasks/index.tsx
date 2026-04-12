@@ -227,8 +227,8 @@ export default function TasksScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.terracotta}
-              colors={[Colors.terracotta]}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
         />
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: BorderRadius.fab,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.lg,

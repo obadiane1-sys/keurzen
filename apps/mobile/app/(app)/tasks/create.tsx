@@ -40,9 +40,9 @@ const PRIORITY_CONFIG: {
   border: string;
   text: string;
 }[] = [
-  { value: 'low',    label: 'Faible',  description: 'Rapide et simple',          dot: Colors.sauge,       bg: `${Colors.sauge}14`, border: `${Colors.sauge}40`, text: Colors.greenStrong },
-  { value: 'medium', label: 'Moyenne', description: 'Effort modéré',             dot: Colors.miel,        bg: `${Colors.miel}14`, border: `${Colors.miel}40`, text: Colors.orangeStrong },
-  { value: 'high',   label: 'Haute',   description: "Demande de l'attention",    dot: Colors.rose,        bg: `${Colors.rose}14`, border: `${Colors.rose}40`, text: Colors.redStrong },
+  { value: 'low',    label: 'Faible',  description: 'Rapide et simple',          dot: Colors.success,       bg: `${Colors.success}14`, border: `${Colors.success}40`, text: Colors.success },
+  { value: 'medium', label: 'Moyenne', description: 'Effort modéré',             dot: Colors.joy,        bg: `${Colors.joy}14`, border: `${Colors.joy}40`, text: Colors.primary },
+  { value: 'high',   label: 'Haute',   description: "Demande de l'attention",    dot: Colors.accent,        bg: `${Colors.accent}14`, border: `${Colors.accent}40`, text: Colors.accent },
 ];
 
 const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string; icon: string }[] = [
@@ -383,7 +383,7 @@ const sheetStyles = StyleSheet.create({
     borderTopColor: Colors.borderLight,
   },
   validateBtn: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     height: 56,
     borderRadius: BorderRadius.button,
     alignItems: 'center',
@@ -661,7 +661,7 @@ export default function CreateTaskScreen() {
             style={styles.headerCreateBtn}
           >
             {createTask.isPending ? (
-              <ActivityIndicator size="small" color={Colors.terracotta} />
+              <ActivityIndicator size="small" color={Colors.primary} />
             ) : (
               <Text style={[styles.headerCreateText, isDisabled ? styles.headerCreateTextDisabled : undefined]}>
                 Créer
@@ -706,39 +706,39 @@ export default function CreateTaskScreen() {
         <View style={styles.optionsCard}>
           <OptionRow
             icon="calendar-outline"
-            iconColor={Colors.terracotta}
+            iconColor={Colors.primary}
             label="Date limite"
             value={datePreview}
-            valueColor={dueDate ? Colors.terracotta : undefined}
+            valueColor={dueDate ? Colors.primary : undefined}
             onPress={() => setActiveSheet('date')}
           />
           <OptionRow
             icon="person-outline"
-            iconColor={Colors.prune}
+            iconColor={Colors.primary}
             label="Assigné à"
             value={assigneePreview}
-            valueColor={assignedTo ? Colors.prune : undefined}
+            valueColor={assignedTo ? Colors.primary : undefined}
             onPress={() => setActiveSheet('assignee')}
           />
           <OptionRow
             icon="time-outline"
-            iconColor={Colors.miel}
+            iconColor={Colors.joy}
             label="Temps estimé"
             value={timePreview}
-            valueColor={estimatedMinutes ? Colors.miel : undefined}
+            valueColor={estimatedMinutes ? Colors.joy : undefined}
             onPress={() => setActiveSheet('time')}
           />
           <OptionRow
             icon="pricetag-outline"
-            iconColor={Colors.miel}
+            iconColor={Colors.joy}
             label="Catégorie"
             value={categoryPreview}
-            valueColor={Colors.miel}
+            valueColor={Colors.joy}
             onPress={() => setActiveSheet('category')}
           />
           <OptionRow
             icon="flag-outline"
-            iconColor={Colors.terracotta}
+            iconColor={Colors.primary}
             label="Priorité"
             value={currentPriority.label}
             valueColor={currentPriority.dot}
@@ -746,10 +746,10 @@ export default function CreateTaskScreen() {
           />
           <OptionRow
             icon="repeat-outline"
-            iconColor={Colors.prune}
+            iconColor={Colors.primary}
             label="Récurrence"
             value={recurrencePreview}
-            valueColor={recurrence !== 'none' ? Colors.prune : undefined}
+            valueColor={recurrence !== 'none' ? Colors.primary : undefined}
             onPress={() => setActiveSheet('recurrence')}
           />
           <OptionRow
@@ -834,7 +834,7 @@ export default function CreateTaskScreen() {
               </View>
               <Text style={styles.sheetListLabel}>Personne</Text>
               {!assignedTo && (
-                <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
               )}
             </TouchableOpacity>
             <View style={styles.sheetDivider} />
@@ -868,7 +868,7 @@ export default function CreateTaskScreen() {
                         {fullName}
                       </Text>
                       {selected && (
-                        <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                        <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
                       )}
                     </TouchableOpacity>
                     {i < members.length - 1 && <View style={styles.sheetDivider} />}
@@ -937,21 +937,21 @@ export default function CreateTaskScreen() {
                     onPress={() => setCategory(opt.value)}
                     activeOpacity={0.6}
                   >
-                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.prune}22` : Colors.gray50 }]}>
+                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.primary}22` : Colors.gray50 }]}>
                       <Ionicons
                         name={opt.icon as keyof typeof Ionicons.glyphMap}
                         size={18}
-                        color={active ? Colors.prune : Colors.textMuted}
+                        color={active ? Colors.primary : Colors.textMuted}
                       />
                     </View>
                     <Text style={[
                       styles.sheetListLabel,
-                      active ? { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
+                      active ? { color: Colors.primary, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
                     ]}>
                       {opt.label}
                     </Text>
                     {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
                     )}
                   </TouchableOpacity>
                   {i < CATEGORY_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
@@ -989,7 +989,7 @@ export default function CreateTaskScreen() {
                       <Text style={styles.priorityCardDesc}>{p.description}</Text>
                     </View>
                     {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
                     )}
                   </TouchableOpacity>
                 );
@@ -1015,21 +1015,21 @@ export default function CreateTaskScreen() {
                     onPress={() => setRecurrence(opt.value)}
                     activeOpacity={0.6}
                   >
-                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.prune}22` : Colors.gray50 }]}>
+                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.primary}22` : Colors.gray50 }]}>
                       <Ionicons
                         name={opt.icon as keyof typeof Ionicons.glyphMap}
                         size={18}
-                        color={active ? Colors.prune : Colors.textMuted}
+                        color={active ? Colors.primary : Colors.textMuted}
                       />
                     </View>
                     <Text style={[
                       styles.sheetListLabel,
-                      active ? { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
+                      active ? { color: Colors.primary, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
                     ]}>
                       {opt.label}
                     </Text>
                     {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.sauge} />
+                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
                     )}
                   </TouchableOpacity>
                   {i < RECURRENCE_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
@@ -1106,7 +1106,7 @@ const styles = StyleSheet.create({
   headerCreateText: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
   headerCreateTextDisabled: {
     opacity: 0.35,
@@ -1228,8 +1228,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
   },
   timeChipActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   timeChipText: {
     fontSize: Typography.fontSize.sm,
@@ -1298,7 +1298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     height: 56,
     borderRadius: BorderRadius.button,
   },

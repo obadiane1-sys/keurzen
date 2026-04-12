@@ -148,7 +148,7 @@ export default function JoinWebScreen() {
   if (pageState.kind === 'loading' || pageState.kind === 'no-session') {
     return (
       <View style={styles.page}>
-        <ActivityIndicator size="large" color={Colors.terracotta} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
   },
   brandName: {
     color: Colors.textPrimary,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   btnPrimary: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
   },
   btnDisabled: {
     opacity: 0.45,

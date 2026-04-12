@@ -156,7 +156,7 @@ export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: Ta
             <Ionicons
               name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
               size={24}
-              color={isDone ? Colors.sauge : Colors.gray300}
+              color={isDone ? Colors.success : Colors.gray300}
             />
           </TouchableOpacity>
 

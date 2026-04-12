@@ -161,7 +161,7 @@ export default function SignupScreen() {
           <Animated.View style={{ opacity: fadeAnim1 }}>
             {effectiveToken && (
               <View style={styles.inviteBanner}>
-                <Ionicons name="mail-unread-outline" size={16} color={Colors.sauge} />
+                <Ionicons name="mail-unread-outline" size={16} color={Colors.success} />
                 <Text variant="bodySmall" style={styles.inviteBannerText}>
                   {inviteContext ?? 'Vous avez été invité(e) à rejoindre un foyer Keurzen.'}
                 </Text>
@@ -286,7 +286,7 @@ export default function SignupScreen() {
               style={styles.joinCodeLink}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="key-outline" size={14} color={Colors.terracotta} />
+              <Ionicons name="key-outline" size={14} color={Colors.primary} />
               <Text variant="bodySmall" color="terracotta" weight="semibold">
                 J'ai un code d'invitation
               </Text>
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.sauge + '18',
+    backgroundColor: Colors.success + '18',
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     marginTop: Spacing.base,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.sauge,
+    backgroundColor: Colors.success,
     opacity: 0.1,
   },
   blobLavender: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     opacity: 0.08,
   },
   blobCoral: {
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     opacity: 0.09,
   },
 });

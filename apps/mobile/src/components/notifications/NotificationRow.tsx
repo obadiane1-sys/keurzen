@@ -14,11 +14,11 @@ dayjs.locale('fr');
 // ─── Icon map ────────────────────────────────────────────────────────────────
 
 const typeConfig: Record<InAppNotificationType, { icon: string; color: string }> = {
-  task_reminder: { icon: 'alarm-outline', color: Colors.miel },
-  overdue: { icon: 'warning-outline', color: Colors.rose },
-  digest: { icon: 'newspaper-outline', color: Colors.sauge },
-  imbalance: { icon: 'scale-outline', color: Colors.prune },
-  invitation: { icon: 'person-add-outline', color: Colors.miel },
+  task_reminder: { icon: 'alarm-outline', color: Colors.joy },
+  overdue: { icon: 'warning-outline', color: Colors.accent },
+  digest: { icon: 'newspaper-outline', color: Colors.success },
+  imbalance: { icon: 'scale-outline', color: Colors.primary },
+  invitation: { icon: 'person-add-outline', color: Colors.joy },
   system: { icon: 'information-circle-outline', color: Colors.gray400 },
 };
 
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   unread: {
-    backgroundColor: Colors.miel + '08',
+    backgroundColor: Colors.joy + '08',
   },
   iconContainer: {
     width: 40,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     marginTop: 6,
   },
 });

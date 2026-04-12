@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   bubbleOwn: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.lg,
     borderBottomRightRadius: 4,
   },

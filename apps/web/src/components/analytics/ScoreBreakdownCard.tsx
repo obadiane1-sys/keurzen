@@ -10,9 +10,9 @@ const CIRCUMFERENCE = 2 * Math.PI * GAUGE_R;
 const SVG_SIZE = (GAUGE_R + STROKE) * 2;
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return 'var(--color-sauge)';
-  if (score >= 40) return 'var(--color-miel)';
-  return 'var(--color-rose)';
+  if (score >= 70) return '#81C784';
+  if (score >= 40) return 'var(--color-joy)';
+  return 'var(--color-accent)';
 }
 
 function getScoreLevel(score: number): string {

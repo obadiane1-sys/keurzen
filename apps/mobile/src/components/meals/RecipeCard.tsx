@@ -5,9 +5,9 @@ import { Text } from '../ui/Text';
 import type { Recipe } from '../../types';
 
 const difficultyConfig = {
-  easy: { label: 'Facile', color: Colors.sauge },
-  medium: { label: 'Moyen', color: Colors.miel },
-  hard: { label: 'Difficile', color: Colors.rose },
+  easy: { label: 'Facile', color: Colors.success },
+  medium: { label: 'Moyen', color: Colors.joy },
+  hard: { label: 'Difficile', color: Colors.accent },
 };
 
 interface RecipeCardProps {
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardCompact: { minWidth: 150 },
-  imageArea: { height: 70, backgroundColor: Colors.terracotta, position: 'relative' },
+  imageArea: { height: 70, backgroundColor: Colors.primary, position: 'relative' },
   imageAreaCompact: { height: 80 },
   badge: {
     position: 'absolute',
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeText: { fontSize: 9, color: Colors.terracotta, fontWeight: '600' },
+  badgeText: { fontSize: 9, color: Colors.primary, fontWeight: '600' },
   diffBadge: {
     position: 'absolute',
     bottom: 6,

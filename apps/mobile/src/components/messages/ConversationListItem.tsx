@@ -54,13 +54,13 @@ export function ConversationListItem({
       <View
         style={[
           styles.avatar,
-          { backgroundColor: isHousehold ? Colors.sauge + '33' : Colors.terracotta + '22' },
+          { backgroundColor: isHousehold ? Colors.success + '33' : Colors.primary + '22' },
         ]}
       >
         <Ionicons
           name={isHousehold ? 'home' : 'person'}
           size={20}
-          color={isHousehold ? Colors.sauge : Colors.terracotta}
+          color={isHousehold ? Colors.success : Colors.primary}
         />
       </View>
 
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   badge: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.full,
     minWidth: 20,
     height: 20,

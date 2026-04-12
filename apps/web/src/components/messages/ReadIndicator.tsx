@@ -24,7 +24,7 @@ export function ReadIndicator({ message, members, currentUserId }: ReadIndicator
 
   return (
     <div className="flex items-center justify-end gap-1 px-4">
-      <CheckCheck size={14} className="text-sauge" strokeWidth={2} />
+      <CheckCheck size={14} className="text-success" strokeWidth={2} />
       <span className="text-xs text-text-muted">Vu par {names}</span>
     </div>
   );

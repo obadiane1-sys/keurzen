@@ -157,13 +157,13 @@ export function TrendsSection() {
         title="Taches completees"
         data={trends}
         accessor={(d) => d.totalTasks}
-        color={Colors.terracotta}
+        color={Colors.primary}
       />
       <MiniChart
         title="Charge mentale (TLX)"
         data={trends}
         accessor={(d) => d.avgTlxScore}
-        color={Colors.prune}
+        color={Colors.primary}
       />
     </View>
   );

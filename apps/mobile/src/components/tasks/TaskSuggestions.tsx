@@ -44,7 +44,7 @@ export const TaskSuggestions = React.memo(function TaskSuggestions({
               <Ionicons
                 name={cat.icon as keyof typeof Ionicons.glyphMap}
                 size={18}
-                color={Colors.terracotta}
+                color={Colors.primary}
               />
             </View>
             <View style={styles.textContainer}>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BorderRadius.sm,
-    backgroundColor: `${Colors.terracotta}14`,
+    backgroundColor: `${Colors.primary}14`,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   textHighlight: {
     fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
   subtitle: {
     fontSize: Typography.fontSize.sm,

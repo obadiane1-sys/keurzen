@@ -153,7 +153,7 @@ export function CreateExpenseModal({ open, onClose }: CreateExpenseModalProps) {
         />
 
         {/* Error */}
-        {error && <p className="text-sm text-rose">{error}</p>}
+        {error && <p className="text-sm text-accent">{error}</p>}
 
         {/* Submit */}
         <Button

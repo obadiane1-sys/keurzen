@@ -221,12 +221,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: Typography.fontSize.lg, fontWeight: '700', color: Colors.textPrimary },
   headerActions: { flexDirection: 'row', gap: Spacing.sm },
   headerBtn: {
-    backgroundColor: `${Colors.terracotta}22`,
+    backgroundColor: `${Colors.primary}22`,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  headerBtnText: { fontSize: Typography.fontSize.xs, color: Colors.terracotta, fontWeight: '600' },
+  headerBtnText: { fontSize: Typography.fontSize.xs, color: Colors.primary, fontWeight: '600' },
   weekNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: BorderRadius.fab,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.lg,

@@ -105,7 +105,7 @@ function IngredientRow({ index, control, onRemove, errors }: IngredientRowProps)
               style={ingredientStyles.removeBtn}
               accessibilityLabel="Supprimer l'ingrédient"
             >
-              <Ionicons name="close-circle" size={20} color={Colors.rose} />
+              <Ionicons name="close-circle" size={20} color={Colors.accent} />
             </TouchableOpacity>
           </View>
 
@@ -474,7 +474,7 @@ export default function CreateRecipeScreen() {
                       <Ionicons
                         name="remove"
                         size={20}
-                        color={value <= 1 ? Colors.textMuted : Colors.terracotta}
+                        color={value <= 1 ? Colors.textMuted : Colors.primary}
                       />
                     </TouchableOpacity>
                     <Text style={styles.counterValue}>{value}</Text>
@@ -487,7 +487,7 @@ export default function CreateRecipeScreen() {
                       <Ionicons
                         name="add"
                         size={20}
-                        color={value >= 20 ? Colors.textMuted : Colors.terracotta}
+                        color={value >= 20 ? Colors.textMuted : Colors.primary}
                       />
                     </TouchableOpacity>
                     <Text style={styles.counterUnit}>
@@ -584,7 +584,7 @@ export default function CreateRecipeScreen() {
               }
               activeOpacity={0.7}
             >
-              <Ionicons name="add-circle-outline" size={18} color={Colors.terracotta} />
+              <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
               <Text style={styles.addRowText}>Ajouter un ingrédient</Text>
             </TouchableOpacity>
 
@@ -636,7 +636,7 @@ export default function CreateRecipeScreen() {
                         style={styles.stepRemoveBtn}
                         accessibilityLabel="Supprimer l'étape"
                       >
-                        <Ionicons name="close-circle" size={20} color={Colors.rose} />
+                        <Ionicons name="close-circle" size={20} color={Colors.accent} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -649,7 +649,7 @@ export default function CreateRecipeScreen() {
               onPress={() => appendStep({ order: stepFields.length + 1, text: '' })}
               activeOpacity={0.7}
             >
-              <Ionicons name="add-circle-outline" size={18} color={Colors.terracotta} />
+              <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
               <Text style={styles.addRowText}>Ajouter une étape</Text>
             </TouchableOpacity>
 
@@ -848,8 +848,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chipActive: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   chipText: {
     fontSize: Typography.fontSize.sm,
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta + '1A',
+    backgroundColor: Colors.primary + '1A',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
@@ -881,7 +881,7 @@ const styles = StyleSheet.create({
   stepNumberText: {
     fontSize: Typography.fontSize.sm,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
   stepInputContainer: {
     flex: 1,
@@ -905,16 +905,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: Colors.terracotta + '60',
+    borderColor: Colors.primary + '60',
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.terracotta + '08',
+    backgroundColor: Colors.primary + '08',
     marginBottom: Spacing.lg,
     minHeight: 44,
   },
   addRowText: {
     fontSize: Typography.fontSize.sm,
     fontFamily: Typography.fontFamily.semibold,
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
 
   // Footer CTA
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.button,
     paddingVertical: Spacing.md + 2,
     minHeight: 52,
@@ -1136,7 +1136,7 @@ const ingredientStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   unitOptionSelected: {
-    backgroundColor: Colors.terracotta + '14',
+    backgroundColor: Colors.primary + '14',
   },
   unitOptionText: {
     fontSize: Typography.fontSize.sm,
@@ -1144,7 +1144,7 @@ const ingredientStyles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   unitOptionTextSelected: {
-    color: Colors.terracotta,
+    color: Colors.primary,
     fontFamily: Typography.fontFamily.semibold,
   },
 
@@ -1161,8 +1161,8 @@ const ingredientStyles = StyleSheet.create({
     alignItems: 'center',
   },
   optionalToggleActive: {
-    borderColor: Colors.miel,
-    backgroundColor: Colors.miel + '1A',
+    borderColor: Colors.joy,
+    backgroundColor: Colors.joy + '1A',
   },
   optionalText: {
     fontSize: Typography.fontSize.xs,
@@ -1170,7 +1170,7 @@ const ingredientStyles = StyleSheet.create({
     color: Colors.textMuted,
   },
   optionalTextActive: {
-    color: Colors.miel,
+    color: Colors.joy,
     fontFamily: Typography.fontFamily.semibold,
   },
 

@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,

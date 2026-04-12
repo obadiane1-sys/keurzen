@@ -8,14 +8,14 @@ import { Colors, Spacing, BorderRadius, Typography } from '../../constants/token
 // ─── Confetti dots ──────────────────────────────────────────────────────────
 
 const CONFETTI = [
-  { color: Colors.sauge, x: -30, y: -70, size: 10 },
-  { color: Colors.terracotta, x: 20, y: -80, size: 8 },
-  { color: Colors.prune, x: 45, y: -60, size: 12 },
-  { color: Colors.miel, x: -45, y: -55, size: 9 },
-  { color: Colors.sauge, x: 60, y: -75, size: 10 },
-  { color: Colors.terracotta, x: -15, y: -85, size: 8 },
-  { color: Colors.prune, x: 35, y: -65, size: 11 },
-  { color: Colors.sauge, x: -55, y: -70, size: 9 },
+  { color: Colors.success, x: -30, y: -70, size: 10 },
+  { color: Colors.primary, x: 20, y: -80, size: 8 },
+  { color: Colors.primary, x: 45, y: -60, size: 12 },
+  { color: Colors.joy, x: -45, y: -55, size: 9 },
+  { color: Colors.success, x: 60, y: -75, size: 10 },
+  { color: Colors.primary, x: -15, y: -85, size: 8 },
+  { color: Colors.primary, x: 35, y: -65, size: 11 },
+  { color: Colors.success, x: -55, y: -70, size: 9 },
 ];
 
 function ConfettiDot({

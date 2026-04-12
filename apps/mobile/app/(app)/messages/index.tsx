@@ -80,7 +80,7 @@ export default function MessagesScreen() {
         title="Messages"
         rightAction={
           <TouchableOpacity onPress={() => setSheetVisible(true)}>
-            <Ionicons name="create-outline" size={22} color={Colors.terracotta} />
+            <Ionicons name="create-outline" size={22} color={Colors.primary} />
           </TouchableOpacity>
         }
       />
@@ -102,8 +102,8 @@ export default function MessagesScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.terracotta}
-              colors={[Colors.terracotta]}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
         />

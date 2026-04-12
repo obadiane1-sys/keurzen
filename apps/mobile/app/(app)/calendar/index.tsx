@@ -268,7 +268,7 @@ export default function CalendarScreen() {
                 <View
                   style={[
                     styles.dot,
-                    { backgroundColor: day.isSelected ? Colors.textInverse : Colors.rose },
+                    { backgroundColor: day.isSelected ? Colors.textInverse : Colors.accent },
                   ]}
                 />
               )}
@@ -285,8 +285,8 @@ export default function CalendarScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={Colors.terracotta}
-            colors={[Colors.terracotta]}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
           />
         }
       >
@@ -313,11 +313,11 @@ export default function CalendarScreen() {
               style={styles.taskCard}
             >
               <View style={styles.taskRow}>
-                <View style={[styles.taskChip, { backgroundColor: isOverdue ? Colors.rose : Colors.sauge }]} />
+                <View style={[styles.taskChip, { backgroundColor: isOverdue ? Colors.accent : Colors.success }]} />
                 <Ionicons
                   name={task.status === 'done' ? 'checkmark-circle' : 'ellipse-outline'}
                   size={20}
-                  color={task.status === 'done' ? Colors.sauge : Colors.gray300}
+                  color={task.status === 'done' ? Colors.success : Colors.gray300}
                 />
                 <View style={styles.taskContent}>
                   <Text
@@ -335,7 +335,7 @@ export default function CalendarScreen() {
                     ) : null}
                     {task.recurrence && task.recurrence !== 'none' && (
                       <View style={styles.recurrenceBadge}>
-                        <Ionicons name="repeat-outline" size={11} color={Colors.prune} />
+                        <Ionicons name="repeat-outline" size={11} color={Colors.primary} />
                       </View>
                     )}
                   </View>
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     justifyContent: 'center',
     borderRadius: BorderRadius.full,
-    backgroundColor: `${Colors.terracotta}18`,
+    backgroundColor: `${Colors.primary}18`,
   },
   weekNav: {
     flexDirection: 'row',
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   dayCellSelected: {
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
   },
   dayCellToday: {
     backgroundColor: Colors.textPrimary,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: BorderRadius.sm,
-    backgroundColor: `${Colors.prune}22`,
+    backgroundColor: `${Colors.primary}22`,
     alignItems: 'center',
     justifyContent: 'center',
   },

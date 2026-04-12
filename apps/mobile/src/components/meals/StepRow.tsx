@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
