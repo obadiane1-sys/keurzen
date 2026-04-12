@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pill: {
+    alignSelf: 'flex-start',
     minWidth: 64,
     paddingHorizontal: 12,
     paddingVertical: 4,
