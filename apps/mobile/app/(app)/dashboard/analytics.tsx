@@ -66,7 +66,7 @@ export default function AnalyticsScreen() {
             <View style={styles.insightsList}>
               {insights.map((insight) => (
                 <View key={insight.id} style={styles.insightRow}>
-                  <Text variant="bodySmall" color="secondary">{insight.text ?? insight.message ?? String(insight.id)}</Text>
+                  <Text variant="bodySmall" color="secondary">{insight.message}</Text>
                 </View>
               ))}
             </View>

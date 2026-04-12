@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
             {insights.map((insight) => (
               <div key={insight.id} className="py-2 px-3 border-b border-border-light last:border-b-0">
                 <p className="text-sm text-text-secondary">
-                  {insight.text ?? insight.message ?? String(insight.id)}
+                  {insight.message}
                 </p>
               </div>
             ))}
