@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
-import { useTasks, useUpdateTaskStatus } from '../../../src/lib/queries/tasks';
+import { useTasks } from '../../../src/lib/queries/tasks';
+import { CompletionRatingSheet } from '../../../src/components/tasks/CompletionRatingSheet';
 import { useWeeklyBalance, useHouseholdScore } from '@keurzen/queries';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
@@ -26,7 +27,7 @@ export default function DashboardScreen() {
   const { data: tasks = [] } = useTasks();
   const { members } = useWeeklyBalance();
   const { score: scoreResult } = useHouseholdScore();
-  const { mutate: updateStatus } = useUpdateTaskStatus();
+  const [ratingTask, setRatingTask] = useState<{ id: string; title: string } | null>(null);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
@@ -57,7 +58,10 @@ export default function DashboardScreen() {
   const trend = 5; // Mock trend for now
 
   const handleToggleStatus = (taskId: string) => {
-    updateStatus({ id: taskId, status: 'done' });
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setRatingTask({ id: task.id, title: task.title });
+    }
   };
 
   return (
@@ -98,6 +102,13 @@ export default function DashboardScreen() {
         <View style={styles.gap} />
         <UpcomingTasksList tasks={tasks} onToggleStatus={handleToggleStatus} />
       </ScrollView>
+
+      <CompletionRatingSheet
+        visible={ratingTask !== null}
+        taskId={ratingTask?.id ?? ''}
+        taskTitle={ratingTask?.title ?? ''}
+        onComplete={() => setRatingTask(null)}
+      />
     </SafeAreaView>
   );
 }
