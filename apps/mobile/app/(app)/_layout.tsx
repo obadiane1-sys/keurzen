@@ -49,9 +49,9 @@ function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
             <MaterialCommunityIcons
               name={tab.icon}
               size={24}
-              color={isFocused ? '#00E5FF' : '#718096'}
+              color={isFocused ? '#90CAF9' : '#A0AEC0'}
             />
-            <Text style={[styles.label, { color: isFocused ? '#00E5FF' : '#718096' }]}>
+            <Text style={[styles.label, { color: isFocused ? '#90CAF9' : '#A0AEC0' }]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -95,9 +95,9 @@ export default function AppLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#E5E9EC',
     paddingTop: 6,
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: 'Nunito_700Bold',
     marginTop: 2,
     textTransform: 'uppercase',
   },
@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 24,
-    backgroundColor: '#00E5FF',
+    backgroundColor: '#90CAF9',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -32,
-    shadowColor: '#00E5FF',
+    shadowColor: '#90CAF9',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

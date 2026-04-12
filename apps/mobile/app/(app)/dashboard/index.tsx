@@ -1,22 +1,34 @@
 import React from 'react';
-import { View, ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Redirect } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Redirect, useRouter } from 'expo-router';
 
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
+import { useTasks, useUpdateTaskStatus } from '../../../src/lib/queries/tasks';
+import { useWeeklyBalance, useCurrentTlx } from '@keurzen/queries';
+import { computeHouseholdScore } from '@keurzen/shared';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { DashboardTabs } from '../../../src/components/dashboard/DashboardTabs';
-import { InsightsTab } from '../../../src/components/dashboard/InsightsTab';
+import { DreamHeader } from '../../../src/components/dashboard/DreamHeader';
+import { HouseholdScoreCard } from '../../../src/components/dashboard/HouseholdScoreCard';
+import { TaskEquityBar } from '../../../src/components/dashboard/TaskEquityBar';
+import { AlertCard } from '../../../src/components/dashboard/AlertCard';
+import { UpcomingTasksList } from '../../../src/components/dashboard/UpcomingTasksList';
+import { MOCK_ALERTS } from '../../../src/components/dashboard/constants';
+import { Colors } from '../../../src/constants/tokens';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
+  const { data: tasks = [] } = useTasks();
+  const { members } = useWeeklyBalance();
+  const { data: tlxEntry } = useCurrentTlx();
+  const { mutate: updateStatus } = useUpdateTaskStatus();
+
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
   if (profile && !profile.has_seen_onboarding) {
@@ -43,6 +55,29 @@ export default function DashboardScreen() {
     );
   }
 
+  // Compute household score
+  const completedTasks = tasks.filter((t) => t.status === 'done').length;
+  const totalTasks = tasks.length;
+  const maxImbalance = members.length > 0
+    ? Math.max(...members.map((m) => Math.abs(m.tasksDelta)))
+    : 0;
+  const averageTlx = tlxEntry?.score ?? 0;
+  const streakDays = 3; // Simplified for now
+
+  const scoreResult = computeHouseholdScore({
+    completedTasks,
+    totalTasks,
+    maxImbalance,
+    averageTlx,
+    streakDays,
+  });
+
+  const trend = 5; // Mock trend for now
+
+  const handleToggleStatus = (taskId: string) => {
+    updateStatus({ id: taskId, status: 'done' });
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
@@ -52,40 +87,34 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#00E5FF"
-            colors={['#00E5FF']}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
           />
         }
       >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {/* Avatar */}
-            <View style={styles.avatar}>
-              <Mascot size={40} expression="calm" />
+        <DreamHeader firstName={firstName} />
+
+        <View style={styles.gap} />
+        <HouseholdScoreCard score={scoreResult.total} trend={trend} />
+
+        <View style={styles.gap} />
+        <TaskEquityBar members={members} />
+
+        {/* Alert cards grid */}
+        <View style={styles.alertGrid}>
+          <View style={styles.alertRow}>
+            <View style={styles.alertHalf}>
+              <AlertCard alert={MOCK_ALERTS[0]} />
             </View>
-            <View>
-              <Text style={styles.greeting}>
-                Bonjour, <Text style={styles.greetingName}>{firstName}</Text> {'\u2728'}
-              </Text>
+            <View style={styles.alertHalf}>
+              <AlertCard alert={MOCK_ALERTS[1]} />
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.notifButton}
-            accessibilityLabel="Notifications"
-            onPress={() => router.push('/(app)/notifications')}
-          >
-            <MaterialCommunityIcons name="bell-outline" size={20} color="#2D3748" />
-            {/* Red dot */}
-            <View style={styles.notifDot} />
-          </TouchableOpacity>
+          <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
         </View>
 
-        {/* TABS */}
-        <DashboardTabs activeTab="insights" onTabChange={() => {}} />
-
-        {/* TAB CONTENT */}
-        <InsightsTab />
+        <View style={styles.gap} />
+        <UpcomingTasksList tasks={tasks} onToggleStatus={handleToggleStatus} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -94,10 +123,10 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 96,
+    paddingBottom: 120,
   },
   emptyHeader: {
     flexDirection: 'row',
@@ -109,69 +138,21 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 20,
     fontFamily: 'Nunito_700Bold',
-    color: '#2D3748',
+    color: Colors.textPrimary,
   },
-  header: {
+  gap: {
+    height: 24,
+  },
+  alertGrid: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    gap: 16,
+  },
+  alertRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 8,
+    gap: 16,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 2,
-    borderWidth: 2,
-    borderColor: 'rgba(0, 229, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  greeting: {
-    fontSize: 20,
-    fontFamily: 'Nunito_700Bold',
-    color: '#2D3748',
-  },
-  greetingName: {
-    color: '#00E5FF',
-  },
-  notifButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  notifDot: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FF6B6B',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+  alertHalf: {
+    flex: 1,
   },
 });
