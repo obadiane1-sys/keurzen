@@ -16,7 +16,7 @@ import { Card } from '../../../src/components/ui/Card';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { Loader } from '../../../src/components/ui/Loader';
-import { CircularGauge } from '../../../src/components/dashboard/CircularGauge';
+// CircularGauge removed — will be redesigned
 import {
   useWeeklyReview,
   useWeeklyReviewHistory,
@@ -270,20 +270,10 @@ export default function WeeklyReviewScreen() {
         {hasMetrics && (
           <Card padding="lg" radius="xl" style={styles.scoreCard}>
             <View style={styles.scoreRow}>
-              <CircularGauge
-                value={balanceScore ?? 0}
-                max={100}
-                color={
-                  (balanceScore ?? 0) >= 75
-                    ? Colors.sauge
-                    : (balanceScore ?? 0) >= 50
-                      ? Colors.miel
-                      : Colors.rose
-                }
-                size={90}
-                label={`${balanceScore}`}
-                subtitle="/100"
-              />
+              <View style={styles.scoreBadgeLarge}>
+                <Text style={styles.scoreBadgeLargeValue}>{balanceScore}</Text>
+                <Text style={styles.scoreBadgeLargeUnit}>/100</Text>
+              </View>
               <View style={styles.scoreInfo}>
                 <Mascot
                   size={56}
@@ -476,6 +466,27 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.md,
+  },
+
+  // Inline score badge (placeholder for CircularGauge)
+  scoreBadgeLarge: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.backgroundCard,
+    borderWidth: 3,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreBadgeLargeValue: {
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+  },
+  scoreBadgeLargeUnit: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textMuted,
   },
 
   // Score card

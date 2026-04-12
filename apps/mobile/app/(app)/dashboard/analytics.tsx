@@ -12,7 +12,7 @@ import { ScoreBreakdownCard } from '../../../src/components/analytics/ScoreBreak
 import { EquitySection } from '../../../src/components/analytics/EquitySection';
 import { TlxDetailSection } from '../../../src/components/analytics/TlxDetailSection';
 import { TrendsSection } from '../../../src/components/analytics/TrendsSection';
-import { InsightCard } from '../../../src/components/dashboard/InsightCard';
+// InsightCard removed — will be redesigned
 
 export default function AnalyticsScreen() {
   const router = useRouter();
@@ -65,7 +65,9 @@ export default function AnalyticsScreen() {
           {insights.length > 0 ? (
             <View style={styles.insightsList}>
               {insights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} />
+                <View key={insight.id} style={styles.insightRow}>
+                  <Text variant="bodySmall" color="secondary">{insight.text ?? insight.message ?? String(insight.id)}</Text>
+                </View>
               ))}
             </View>
           ) : (
@@ -84,11 +86,11 @@ export default function AnalyticsScreen() {
           onPress={() => router.push('/(app)/dashboard/weekly-review')}
           activeOpacity={0.7}
         >
-          <Ionicons name="document-text-outline" size={18} color={Colors.terracotta} />
+          <Ionicons name="document-text-outline" size={18} color={Colors.primary} />
           <Text variant="bodySmall" weight="semibold" style={styles.weeklyReviewText}>
             Voir le rapport IA de la semaine
           </Text>
-          <Ionicons name="arrow-forward" size={16} color={Colors.terracotta} />
+          <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
         </TouchableOpacity>
 
         <View style={styles.bottomSpacer} />
@@ -139,6 +141,12 @@ const styles = StyleSheet.create({
   insightsList: {
     gap: Spacing.sm,
   },
+  insightRow: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   insightFallback: {
     alignItems: 'center',
     paddingVertical: Spacing.lg,
@@ -154,7 +162,7 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   weeklyReviewText: {
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
   bottomSpacer: {
     height: Spacing['3xl'],

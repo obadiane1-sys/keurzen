@@ -7,7 +7,7 @@ import { ScoreBreakdownCard } from '@/components/analytics/ScoreBreakdownCard';
 import { EquitySection } from '@/components/analytics/EquitySection';
 import { TlxDetailSection } from '@/components/analytics/TlxDetailSection';
 import { TrendsSection } from '@/components/analytics/TrendsSection';
-import { InsightCard } from '@/components/dashboard/InsightCard';
+// InsightCard removed — will be redesigned
 
 export default function AnalyticsPage() {
   const router = useRouter();
@@ -54,7 +54,11 @@ export default function AnalyticsPage() {
         {insights.length > 0 ? (
           <div className="space-y-3">
             {insights.map((insight) => (
-              <InsightCard key={insight.id} insight={insight} />
+              <div key={insight.id} className="py-2 px-3 border-b border-border-light last:border-b-0">
+                <p className="text-sm text-text-secondary">
+                  {insight.text ?? insight.message ?? String(insight.id)}
+                </p>
+              </div>
             ))}
           </div>
         ) : (
