@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "context7": {
+      "source": "netresearch/context7-skill",
+      "sourceType": "github",
+      "computedHash": "922315d983642407e6d6a15c507be100f446090142f7df87883f8cf866df376b"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
+    "tdd-workflow": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "d10751717312fe7613c05c226013569edd1b6c1785a446897570c703cc9c5d02"
     }
   }
 }

@@ -663,7 +663,7 @@ export default function CreateTaskScreen() {
             {createTask.isPending ? (
               <ActivityIndicator size="small" color={Colors.terracotta} />
             ) : (
-              <Text style={[styles.headerCreateText, isDisabled && styles.headerCreateTextDisabled]}>
+              <Text style={[styles.headerCreateText, isDisabled ? styles.headerCreateTextDisabled : undefined]}>
                 Créer
               </Text>
             )}
@@ -863,7 +863,7 @@ export default function CreateTaskScreen() {
                       </View>
                       <Text style={[
                         styles.sheetListLabel,
-                        selected && { fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                        selected ? { fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
                       ]}>
                         {fullName}
                       </Text>
@@ -910,7 +910,7 @@ export default function CreateTaskScreen() {
                     style={[styles.timeChip, active && styles.timeChipActive]}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>
+                    <Text style={[styles.timeChipText, active ? styles.timeChipTextActive : undefined]}>
                       {chip.label}
                     </Text>
                   </TouchableOpacity>
@@ -946,7 +946,7 @@ export default function CreateTaskScreen() {
                     </View>
                     <Text style={[
                       styles.sheetListLabel,
-                      active && { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                      active ? { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
                     ]}>
                       {opt.label}
                     </Text>
@@ -1024,7 +1024,7 @@ export default function CreateTaskScreen() {
                     </View>
                     <Text style={[
                       styles.sheetListLabel,
-                      active && { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] },
+                      active ? { color: Colors.prune, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
                     ]}>
                       {opt.label}
                     </Text>

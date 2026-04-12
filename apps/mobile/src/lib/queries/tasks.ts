@@ -111,7 +111,7 @@ export function useUpdateTask() {
   const { currentHousehold } = useHouseholdStore();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TaskFormValues & { status: TaskStatus; completed_at: string | null }> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Omit<TaskFormValues, 'assigned_to'> & { status: TaskStatus; completed_at: string | null; assigned_to: string | null }> }) => {
       const { data, error } = await supabase
         .from('tasks')
         .update({ ...updates, updated_at: new Date().toISOString() })

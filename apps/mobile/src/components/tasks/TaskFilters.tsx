@@ -56,7 +56,7 @@ export function TaskFilters({ selectedStatus, onStatusChange, counts }: TaskFilt
               weight="semibold"
               style={[
                 styles.chipLabel,
-                active && styles.chipLabelActive,
+                active ? styles.chipLabelActive : undefined,
               ]}
             >
               {opt.label}
@@ -65,8 +65,8 @@ export function TaskFilters({ selectedStatus, onStatusChange, counts }: TaskFilt
               variant="caption"
               style={[
                 styles.chipCount,
-                active && styles.chipCountActive,
-                isOverdueInactive && styles.chipCountOverdue,
+                active ? styles.chipCountActive : undefined,
+                isOverdueInactive ? styles.chipCountOverdue : undefined,
               ]}
             >
               {count}
