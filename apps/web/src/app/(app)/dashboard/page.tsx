@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[800px] px-6 py-8 space-y-8">
-      <DreamHeader firstName={firstName} />
+      <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
       <HouseholdScoreCard score={scoreResult.total} trend={trend} />
       <TaskEquityBar members={members} />
 

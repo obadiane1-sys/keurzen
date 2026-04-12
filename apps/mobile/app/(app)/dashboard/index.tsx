@@ -111,7 +111,7 @@ export default function DashboardScreen() {
           />
         }
       >
-        <DreamHeader firstName={firstName} />
+        <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
 
         <View style={styles.gap} />
         <HouseholdScoreCard score={scoreResult.total} trend={trend} />

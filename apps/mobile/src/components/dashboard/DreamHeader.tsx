@@ -1,38 +1,29 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../ui/Text';
-import { Mascot } from '../ui/Mascot';
 import { Colors, Shadows } from '../../constants/tokens';
-import dayjs from 'dayjs';
-import 'dayjs/locale/fr';
-
-dayjs.locale('fr');
 
 interface DreamHeaderProps {
   firstName: string;
+  avatarUrl: string | null;
 }
 
-export function DreamHeader({ firstName }: DreamHeaderProps) {
+export function DreamHeader({ firstName, avatarUrl }: DreamHeaderProps) {
   const router = useRouter();
-  const today = dayjs();
-  const dateLabel = today.format('dddd D MMMM');
-  const dateDisplay = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
+  const initial = firstName.charAt(0).toUpperCase() || '?';
 
   return (
     <View style={styles.container}>
-      <View style={styles.left}>
-        <View style={styles.mascotWrapper}>
-          <Mascot size={40} expression="calm" />
+      {avatarUrl ? (
+        <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+      ) : (
+        <View style={styles.avatarFallback}>
+          <Text style={styles.avatarInitial}>{initial}</Text>
         </View>
-        <View>
-          <Text style={styles.date}>{dateDisplay}</Text>
-          <Text style={styles.greeting}>
-            Bonjour, <Text style={styles.name}>{firstName}</Text>
-          </Text>
-        </View>
-      </View>
+      )}
+
       <TouchableOpacity
         style={styles.notifButton}
         accessibilityLabel="Notifications"
@@ -54,38 +45,26 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: Colors.primary,
   },
-  mascotWrapper: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    transform: [{ rotate: '3deg' }],
     ...Shadows.sm,
   },
-  date: {
-    fontSize: 10,
+  avatarInitial: {
+    fontSize: 18,
     fontFamily: 'Nunito_700Bold',
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
-  greeting: {
-    fontSize: 16,
-    fontFamily: 'Nunito_700Bold',
-    color: Colors.textPrimary,
-  },
-  name: {
-    color: Colors.accent,
+    color: '#FFFFFF',
   },
   notifButton: {
     width: 40,
