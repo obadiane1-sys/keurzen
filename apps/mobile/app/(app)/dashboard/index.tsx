@@ -19,14 +19,47 @@ import { AlertCard } from '../../../src/components/dashboard/AlertCard';
 import { UpcomingTasksList } from '../../../src/components/dashboard/UpcomingTasksList';
 import { MOCK_ALERTS } from '../../../src/components/dashboard/constants';
 import { Colors } from '../../../src/constants/tokens';
+import type { Task } from '../../../src/types';
+
+/** Fallback: compute equity from all assigned tasks when weekly stats are empty */
+function computeEquityFromTasks(tasks: Task[]) {
+  const assigned = tasks.filter((t) => t.assigned_to);
+  if (assigned.length === 0) return [];
+
+  const byUser = new Map<string, { name: string; count: number }>();
+  for (const t of assigned) {
+    const userId = t.assigned_to!;
+    const existing = byUser.get(userId);
+    if (existing) {
+      existing.count++;
+    } else {
+      const name = (t as any).assigned_profile?.full_name ?? 'Membre';
+      byUser.set(userId, { name, count: 1 });
+    }
+  }
+
+  const total = assigned.length;
+  const expectedShare = 1 / byUser.size;
+
+  return Array.from(byUser.entries()).map(([userId, data]) => {
+    const tasksShare = data.count / total;
+    return {
+      userId,
+      name: data.name,
+      tasksShare,
+      tasksDelta: tasksShare - expectedShare,
+    };
+  }).sort((a, b) => b.tasksShare - a.tasksShare);
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
   const { data: tasks = [] } = useTasks();
-  const { members } = useWeeklyBalance();
+  const { members: weeklyMembers } = useWeeklyBalance();
   const { score: scoreResult } = useHouseholdScore();
+  const members = weeklyMembers.length >= 2 ? weeklyMembers : computeEquityFromTasks(tasks);
   const [ratingTask, setRatingTask] = useState<{ id: string; title: string } | null>(null);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';

@@ -11,11 +11,39 @@ import { AlertCard, MOCK_ALERTS } from '@/components/dashboard/AlertCard';
 import { UpcomingTasksList } from '@/components/dashboard/UpcomingTasksList';
 import { CompletionRatingDialog } from '@/components/dashboard/CompletionRatingDialog';
 
+/** Fallback: compute equity from all assigned tasks when weekly stats are empty */
+function computeEquityFromTasks(tasks: any[]) {
+  const assigned = tasks.filter((t) => t.assigned_to);
+  if (assigned.length === 0) return [];
+
+  const byUser = new Map<string, { name: string; count: number }>();
+  for (const t of assigned) {
+    const existing = byUser.get(t.assigned_to);
+    if (existing) {
+      existing.count++;
+    } else {
+      byUser.set(t.assigned_to, {
+        name: t.assigned_profile?.full_name ?? 'Membre',
+        count: 1,
+      });
+    }
+  }
+
+  const total = assigned.length;
+  const expectedShare = 1 / byUser.size;
+
+  return Array.from(byUser.entries()).map(([userId, data]) => {
+    const tasksShare = data.count / total;
+    return { userId, name: data.name, tasksShare, tasksDelta: tasksShare - expectedShare };
+  }).sort((a, b) => b.tasksShare - a.tasksShare);
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { profile } = useAuthStore();
   const { data: tasks = [] } = useTasks();
-  const { members } = useWeeklyBalance();
+  const { members: weeklyMembers } = useWeeklyBalance();
+  const members = weeklyMembers.length >= 2 ? weeklyMembers : computeEquityFromTasks(tasks);
   const { score: scoreResult } = useHouseholdScore();
   const [ratingTask, setRatingTask] = useState<{ id: string; title: string } | null>(null);
 
