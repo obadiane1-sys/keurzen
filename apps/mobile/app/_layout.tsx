@@ -21,6 +21,7 @@ import {
   Outfit_600SemiBold,
   Outfit_700Bold,
 } from '@expo-google-fonts/outfit';
+import { FredokaOne_400Regular } from '@expo-google-fonts/fredoka-one';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthInit } from '../src/hooks/useAuth';
 import { Toast } from '../src/components/ui/Toast';
@@ -57,6 +58,7 @@ export default function RootLayout() {
     Outfit_500Medium,
     Outfit_600SemiBold,
     Outfit_700Bold,
+    FredokaOne_400Regular,
   });
 
   const onLayoutRootView = useCallback(async () => {
