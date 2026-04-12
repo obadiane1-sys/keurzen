@@ -1,79 +1,63 @@
 /**
  * Keurzen Design Tokens
- * Charte graphique Cafe Cosy — palette chaude et cocon
+ * Charte graphique Dreamy — palette douce et rêveuse
  */
 
 export const Colors = {
-  // ─── Brand palette (Cafe Cosy) ───
-  terracotta: '#C4846C',   // Accent principal — CTA, FAB, liens actifs
-  sauge: '#8BA888',         // Accent secondaire — succes, validation
-  miel: '#D4A959',          // Accent tertiaire — warnings, highlights
-  rose: '#D4807A',          // Alerte douce — retard, erreurs
-  prune: '#9B8AA8',         // Charge mentale — TLX
+  // ─── Brand palette (Dreamy) ───
+  primary: '#90CAF9',
+  accent: '#F4C2C2',
+  joy: '#FFF9C4',
 
   // ─── Text ───
-  textPrimary: '#3D2C22',   // Brun profond
-  textSecondary: '#7A6B5D', // Brun moyen
-  textMuted: '#A89888',     // Brun clair
-  textInverse: '#FFFDF9',   // Blanc casse
+  textPrimary: '#4A5568',
+  textSecondary: '#5A6A85',
+  textMuted: '#A0AEC0',
+  textInverse: '#FFFFFF',
 
   // ─── Background ───
-  background: '#FAF6F1',       // Creme
-  backgroundCard: '#FFFDF9',   // Blanc casse
-  backgroundElevated: '#FFFDF9',
+  background: '#FAFCFF',
+  backgroundCard: '#F7F9FC',
+  backgroundCardEnd: '#EFF3F6',
+  backgroundElevated: '#FFFFFF',
 
   // ─── Border ───
-  border: '#E8DFD5',        // Sable
-  borderLight: '#F0EAE2',   // Sable clair
-  borderFocus: '#C4846C',   // Terracotta
+  border: '#E5E9EC',
+  borderLight: '#EDF2F7',
+  borderFocus: '#90CAF9',
 
   // ─── Feedback ───
-  success: '#8BA888',   // Sauge
-  warning: '#D4A959',   // Miel
-  error: '#D4807A',     // Rose
-  info: '#D4A959',      // Miel
+  success: '#81C784',
+  warning: '#FFF9C4',
+  error: '#F4C2C2',
+  info: '#90CAF9',
 
   // ─── Member colors ───
   memberColors: [
-    '#D4807A',
-    '#8BA888',
-    '#7EB3C4',
-    '#9B8AA8',
-    '#D4A959',
-    '#C4846C',
-    '#C48BA0',
-    '#6BA08F',
+    '#90CAF9', '#F4C2C2', '#B39DDB', '#80CBC4',
+    '#FFE082', '#FFAB91', '#A5D6A7', '#CE93D8',
   ],
 
-  // ─── Gray scale (warm) ───
-  gray50: '#FAF6F1',
-  gray100: '#F0EAE2',
-  gray200: '#E8DFD5',
-  gray300: '#B8A99A',
-  gray400: '#A89888',
-  gray500: '#7A6B5D',
-  gray600: '#5C4A3D',
-  gray700: '#4A3B30',
-  gray800: '#3D2C22',
-  gray900: '#2A1D14',
-
-  // ─── Badge text (strong contrast variants) ───
-  blueStrong: '#C4846C',
-  greenStrong: '#6B8F60',
-  redStrong: '#B5584E',
-  orangeStrong: '#C4846C',
-  blueDeep: '#C4846C',
-  redBgLight: '#D4807A1F',
+  // ─── Gray scale (cool) ───
+  gray50: '#FAFCFF',
+  gray100: '#EDF2F7',
+  gray200: '#E5E9EC',
+  gray300: '#CBD5E0',
+  gray400: '#A0AEC0',
+  gray500: '#5A6A85',
+  gray600: '#4A5568',
+  gray700: '#2D3748',
+  gray800: '#1A202C',
+  gray900: '#171923',
 
   // ─── Transparent overlays ───
-  overlay: 'rgba(61, 44, 34, 0.35)',
-  overlayLight: 'rgba(61, 44, 34, 0.08)',
+  overlay: 'rgba(45, 55, 72, 0.35)',
+  overlayLight: 'rgba(45, 55, 72, 0.08)',
 
   // ─── Component-specific ───
-  inputFocusedBg: '#FFFDF9',
-  backgroundSubtle: '#F0EAE2',
-  placeholder: '#B8A99A',
-
+  inputFocusedBg: '#FFFFFF',
+  backgroundSubtle: '#EDF2F7',
+  placeholder: '#A0AEC0',
 } as const;
 
 export const Spacing = {
@@ -94,11 +78,12 @@ export const BorderRadius = {
   md: 12,
   input: 12,
   lg: 16,
-  card: 16,
-  xl: 16,
-  button: 12,
-  '2xl': 24,
-  fab: 16,
+  card: 24,
+  xl: 24,
+  button: 16,
+  '2xl': 32,
+  '3xl': 40,
+  fab: 24,
   full: 9999,
 } as const;
 
@@ -109,6 +94,7 @@ export const Typography = {
     semibold: 'Nunito_600SemiBold',
     bold: 'Nunito_700Bold',
     extrabold: 'Nunito_800ExtraBold',
+    title: 'FredokaOne_400Regular',
   },
   fontSize: {
     xs: 11,
@@ -138,30 +124,30 @@ export const Typography = {
 
 export const Shadows = {
   sm: {
-    shadowColor: '#3D2C22',
+    shadowColor: '#90CAF9',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 1,
   },
   md: {
-    shadowColor: '#3D2C22',
+    shadowColor: '#90CAF9',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 3,
   },
   lg: {
-    shadowColor: '#3D2C22',
+    shadowColor: '#90CAF9',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 6,
   },
   card: {
-    shadowColor: '#3D2C22',
+    shadowColor: '#90CAF9',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 2,
   },
