@@ -75,10 +75,10 @@ export default function AnalyticsPage() {
         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-background-card shadow-card hover:opacity-90 transition-opacity"
       >
         <span>📄</span>
-        <span className="text-sm font-semibold text-terracotta">
+        <span className="text-sm font-semibold text-primary">
           Voir le rapport IA de la semaine
         </span>
-        <span className="text-terracotta">→</span>
+        <span className="text-primary">→</span>
       </button>
 
       <div className="h-8" />

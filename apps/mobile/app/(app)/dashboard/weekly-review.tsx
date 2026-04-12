@@ -153,7 +153,7 @@ function HistoryItem({
 }) {
   const score = item.balance_score !== null ? Math.round(item.balance_score) : null;
   const scoreColor = score !== null
-    ? score >= 75 ? Colors.sauge : score >= 50 ? Colors.miel : Colors.rose
+    ? score >= 75 ? Colors.success : score >= 50 ? Colors.joy : Colors.accent
     : Colors.textMuted;
 
   return (
@@ -261,7 +261,7 @@ export default function WeeklyReviewScreen() {
           <RefreshControl
             refreshing={false}
             onRefresh={() => refetch()}
-            tintColor={Colors.terracotta}
+            tintColor={Colors.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -291,19 +291,19 @@ export default function WeeklyReviewScreen() {
           <View style={styles.metricsRow}>
             <MetricCard
               icon="checkmark-done-outline"
-              iconColor={Colors.sauge}
+              iconColor={Colors.success}
               value={String(review.total_tasks_completed)}
               label="Tâches"
             />
             <MetricCard
               icon="time-outline"
-              iconColor={Colors.terracotta}
+              iconColor={Colors.primary}
               value={formatMinutes(review.total_minutes_logged)}
               label="Temps"
             />
             <MetricCard
               icon="pulse-outline"
-              iconColor={Colors.prune}
+              iconColor={Colors.primary}
               value={review.avg_tlx_score !== null ? String(Math.round(review.avg_tlx_score)) : '—'}
               label="TLX moy."
             />
@@ -325,7 +325,7 @@ export default function WeeklyReviewScreen() {
         {/* ── AI Report: Summary ─────────────────────────────────── */}
         <Card padding="none" radius="xl" style={styles.sectionCard}>
           <View style={styles.reportHeader}>
-            <Ionicons name="bar-chart-outline" size={20} color={Colors.prune} />
+            <Ionicons name="bar-chart-outline" size={20} color={Colors.primary} />
             <Text style={styles.cardTitle}>Rapport IA</Text>
           </View>
           <View style={styles.summaryContainer}>
@@ -338,7 +338,7 @@ export default function WeeklyReviewScreen() {
               <View style={styles.divider} />
               <SectionHeader
                 icon="warning-outline"
-                iconColor={Colors.rose}
+                iconColor={Colors.accent}
                 title="Points d'attention"
                 count={review.attention_points.length}
                 expanded={expandedSections.attention}
@@ -351,7 +351,7 @@ export default function WeeklyReviewScreen() {
                       <Ionicons
                         name={(item.icon ?? 'alert-circle') as keyof typeof Ionicons.glyphMap}
                         size={16}
-                        color={item.level === 'warning' ? Colors.rose : Colors.miel}
+                        color={item.level === 'warning' ? Colors.accent : Colors.joy}
                       />
                       <Text style={styles.itemText}>{item.text}</Text>
                     </View>
@@ -367,7 +367,7 @@ export default function WeeklyReviewScreen() {
               <View style={styles.divider} />
               <SectionHeader
                 icon="lightbulb-outline"
-                iconColor={Colors.prune}
+                iconColor={Colors.primary}
                 title="Insights"
                 count={review.insights.length}
                 expanded={expandedSections.insights}
@@ -377,7 +377,7 @@ export default function WeeklyReviewScreen() {
                 <View style={styles.aiSectionContent}>
                   {review.insights.map((item: Insight, i: number) => (
                     <View key={i} style={styles.itemRow}>
-                      <Ionicons name="lightbulb-outline" size={16} color={Colors.prune} />
+                      <Ionicons name="lightbulb-outline" size={16} color={Colors.primary} />
                       <Text style={styles.itemText}>{item.text}</Text>
                     </View>
                   ))}
@@ -392,7 +392,7 @@ export default function WeeklyReviewScreen() {
               <View style={styles.divider} />
               <SectionHeader
                 icon="compass-outline"
-                iconColor={Colors.sauge}
+                iconColor={Colors.success}
                 title="Orientations"
                 count={review.orientations.length}
                 expanded={expandedSections.orientations}
@@ -404,7 +404,7 @@ export default function WeeklyReviewScreen() {
                     <View key={i} style={styles.itemRow}>
                       <View style={[
                         styles.bulletDot,
-                        { backgroundColor: item.priority === 'high' ? Colors.sauge : Colors.textMuted },
+                        { backgroundColor: item.priority === 'high' ? Colors.success : Colors.textMuted },
                       ]} />
                       <Text style={styles.itemText}>{item.text}</Text>
                     </View>
@@ -722,10 +722,10 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
   generateBtn: {
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
