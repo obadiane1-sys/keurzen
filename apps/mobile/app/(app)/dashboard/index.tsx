@@ -6,8 +6,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
 import { useTasks, useUpdateTaskStatus } from '../../../src/lib/queries/tasks';
-import { useWeeklyBalance, useCurrentTlx } from '@keurzen/queries';
-import { computeHouseholdScore } from '@keurzen/shared';
+import { useWeeklyBalance, useHouseholdScore } from '@keurzen/queries';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -26,7 +25,7 @@ export default function DashboardScreen() {
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
   const { data: tasks = [] } = useTasks();
   const { members } = useWeeklyBalance();
-  const { data: tlxEntry } = useCurrentTlx();
+  const { score: scoreResult } = useHouseholdScore();
   const { mutate: updateStatus } = useUpdateTaskStatus();
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
@@ -54,23 +53,6 @@ export default function DashboardScreen() {
       </SafeAreaView>
     );
   }
-
-  // Compute household score
-  const completedTasks = tasks.filter((t) => t.status === 'done').length;
-  const totalTasks = tasks.length;
-  const maxImbalance = members.length > 0
-    ? Math.max(...members.map((m) => Math.abs(m.tasksDelta)))
-    : 0;
-  const averageTlx = tlxEntry?.score ?? 0;
-  const streakDays = 3; // Simplified for now
-
-  const scoreResult = computeHouseholdScore({
-    completedTasks,
-    totalTasks,
-    maxImbalance,
-    averageTlx,
-    streakDays,
-  });
 
   const trend = 5; // Mock trend for now
 

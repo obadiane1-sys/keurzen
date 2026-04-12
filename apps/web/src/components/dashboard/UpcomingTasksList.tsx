@@ -40,6 +40,14 @@ const CATEGORY_EMOJI: Record<string, string> = {
 
 const BLOB_COLORS = ['text-primary', 'text-accent'] as const;
 
+function formatDueDate(dueDate: string | null): string {
+  if (!dueDate) return '';
+  const date = dayjs(dueDate);
+  if (date.isToday()) return "Aujourd'hui";
+  if (date.isTomorrow()) return 'Demain';
+  return date.format('D MMM');
+}
+
 export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListProps) {
   const router = useRouter();
 
@@ -73,13 +81,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
           const emoji = CATEGORY_EMOJI[task.category] ?? '📌';
           const colorClass = BLOB_COLORS[index % BLOB_COLORS.length];
           const assignee = task.assigned_profile?.full_name?.split(' ')[0] ?? '';
-          const dateLabel = task.due_date
-            ? dayjs(task.due_date).isToday()
-              ? "Aujourd'hui"
-              : dayjs(task.due_date).isTomorrow()
-                ? 'Demain'
-                : dayjs(task.due_date).format('D MMM')
-            : '';
+          const dateLabel = formatDueDate(task.due_date);
 
           return (
             <div

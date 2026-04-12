@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@keurzen/stores';
-import { useWeeklyBalance, useCurrentTlx, useTasks, useUpdateTaskStatus } from '@keurzen/queries';
-import { computeHouseholdScore } from '@keurzen/shared';
+import { useWeeklyBalance, useTasks, useUpdateTaskStatus, useHouseholdScore } from '@keurzen/queries';
 import { DreamHeader } from '@/components/dashboard/DreamHeader';
 import { HouseholdScoreCard } from '@/components/dashboard/HouseholdScoreCard';
 import { TaskEquityBar } from '@/components/dashboard/TaskEquityBar';
@@ -15,7 +14,7 @@ export default function DashboardPage() {
   const { profile } = useAuthStore();
   const { data: tasks = [] } = useTasks();
   const { members } = useWeeklyBalance();
-  const { data: tlxEntry } = useCurrentTlx();
+  const { score: scoreResult } = useHouseholdScore();
   const { mutate: updateStatus } = useUpdateTaskStatus();
 
   if (profile && !profile.has_seen_onboarding) {
@@ -25,24 +24,7 @@ export default function DashboardPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
-  // Compute score
-  const completedTasks = tasks.filter((t: any) => t.status === 'done').length;
-  const totalTasks = tasks.length;
-  const maxImbalance = members.length > 0
-    ? Math.max(...members.map((m) => Math.abs(m.tasksDelta)))
-    : 0;
-  const averageTlx = tlxEntry?.score ?? 0;
-  const streakDays = 3;
-
-  const scoreResult = computeHouseholdScore({
-    completedTasks,
-    totalTasks,
-    maxImbalance,
-    averageTlx,
-    streakDays,
-  });
-
-  const trend = 5;
+  const trend = 5; // Mock trend for now
 
   const handleToggle = (id: string) => {
     updateStatus({ id, status: 'done' });

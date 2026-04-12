@@ -45,14 +45,10 @@ export function TaskEquityBar({ members }: TaskEquityBarProps) {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: 'rgba(144, 202, 249, 0.5)' }]} />
-          <View>
-            <Text style={styles.memberName}>{member1.name.split(' ')[0]}</Text>
-          </View>
+          <Text style={styles.memberName}>{member1.name.split(' ')[0]}</Text>
         </View>
         <View style={[styles.legendItem, { justifyContent: 'flex-end' }]}>
-          <View>
-            <Text style={[styles.memberName, { textAlign: 'right' }]}>{member2.name.split(' ')[0]}</Text>
-          </View>
+          <Text style={[styles.memberName, { textAlign: 'right' }]}>{member2.name.split(' ')[0]}</Text>
           <View style={[styles.legendDot, { backgroundColor: 'rgba(244, 194, 194, 0.5)' }]} />
         </View>
       </View>

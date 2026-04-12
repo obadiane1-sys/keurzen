@@ -15,6 +15,14 @@ dayjs.extend(isToday);
 dayjs.extend(isTomorrow);
 dayjs.locale('fr');
 
+function formatDueDate(dueDate: string | null): string {
+  if (!dueDate) return '';
+  const date = dayjs(dueDate);
+  if (date.isToday()) return "Aujourd'hui";
+  if (date.isTomorrow()) return 'Demain';
+  return date.format('D MMM');
+}
+
 interface UpcomingTasksListProps {
   tasks: Task[];
   onToggleStatus: (id: string) => void;
@@ -48,13 +56,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
           const iconName = CATEGORY_ICONS[task.category] ?? 'dots-horizontal';
           const blobColor = BLOB_COLORS[index % BLOB_COLORS.length];
           const assigneeName = (task as any).assigned_profile?.full_name?.split(' ')[0] ?? '';
-          const dateLabel = task.due_date
-            ? dayjs(task.due_date).isToday()
-              ? "Aujourd'hui"
-              : dayjs(task.due_date).isTomorrow()
-                ? 'Demain'
-                : dayjs(task.due_date).format('D MMM')
-            : '';
+          const dateLabel = formatDueDate(task.due_date);
 
           return (
             <View
