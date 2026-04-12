@@ -82,17 +82,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pill: {
+    minWidth: 64,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 9999,
     borderWidth: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    alignItems: 'center',
   },
   pillText: {
     fontSize: 10,
     fontFamily: 'Nunito_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 2,
+    textAlign: 'center',
   },
   blobIconSmall: {
     width: 24,

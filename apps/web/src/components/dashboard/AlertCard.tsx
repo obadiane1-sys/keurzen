@@ -51,7 +51,7 @@ export function AlertCard({ alert, fullWidth }: AlertCardProps) {
           </div>
           <div>
             <span
-              className="text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full border bg-white/50 inline-block mb-1"
+              className="text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full border bg-white/50 inline-block mb-1 min-w-16 text-center"
               style={{ color: alert.color, borderColor: 'rgba(255,255,255,0.8)' }}
             >
               {alert.label}
@@ -75,7 +75,7 @@ export function AlertCard({ alert, fullWidth }: AlertCardProps) {
     >
       <div className="flex items-center justify-between mb-2">
         <span
-          className="text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full border bg-white/50"
+          className="text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full border bg-white/50 min-w-16 text-center"
           style={{ color: alert.color, borderColor: 'rgba(255,255,255,0.8)' }}
         >
           {alert.label}
