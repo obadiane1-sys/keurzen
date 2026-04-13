@@ -160,7 +160,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
               </svg>
             </button>
             {showCategoryDropdown && (
-              <div className="absolute left-0 right-0 z-10 mt-1 overflow-hidden rounded-xl border border-border bg-white shadow-md">
+              <div className="absolute left-0 right-0 z-10 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-white shadow-md">
                 {CATEGORIES.map(cat => {
                   const active = category === cat.value;
                   return (
@@ -301,7 +301,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
               </svg>
             </button>
             {showRecurrenceDropdown && (
-              <div className="absolute left-0 right-0 z-10 mt-1 overflow-hidden rounded-xl border border-border bg-white shadow-md">
+              <div className="absolute left-0 right-0 z-10 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-white shadow-md">
                 {RECURRENCE_OPTIONS.map(opt => {
                   const active = recurrence === opt.value;
                   return (

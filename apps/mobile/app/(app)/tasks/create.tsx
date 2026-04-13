@@ -9,6 +9,8 @@ import {
   Platform,
   Alert,
   TextStyle,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -61,6 +63,65 @@ function formatDateDisplay(date: Date): string {
 
 function formatTimeDisplay(date: Date): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// ─── Option Sheet (overlay) ──────────────────────────────────────────────────
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+function OptionSheet<T extends string>({
+  visible,
+  title,
+  options,
+  selected,
+  onSelect,
+  onClose,
+  renderLabel,
+}: {
+  visible: boolean;
+  title: string;
+  options: { value: T; label: string }[];
+  selected: T;
+  onSelect: (value: T) => void;
+  onClose: () => void;
+  renderLabel?: (opt: { value: T; label: string }) => string;
+}) {
+  return (
+    <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
+      <TouchableOpacity
+        style={s.sheetOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <View style={s.sheetContainer}>
+          <View style={s.sheetHandle} />
+          <Text style={s.sheetTitle}>{title}</Text>
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false} style={s.sheetScroll}>
+            {options.map(opt => {
+              const active = selected === opt.value;
+              const label = renderLabel ? renderLabel(opt) : opt.label;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[s.sheetItem, active && s.sheetItemActive]}
+                  onPress={() => {
+                    onSelect(opt.value);
+                    onClose();
+                  }}
+                  activeOpacity={0.6}
+                >
+                  <Text style={[s.sheetItemText, active && s.sheetItemTextActive]}>
+                    {label}
+                  </Text>
+                  {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 }
 
 // ─── Label component ─────────────────────────────────────────────────────────
@@ -223,42 +284,12 @@ export default function CreateTaskScreen() {
           <FieldLabel>CATÉGORIE</FieldLabel>
           <TouchableOpacity
             style={s.selectField}
-            onPress={() => {
-              setShowCategoryDropdown(!showCategoryDropdown);
-              setShowRecurrenceDropdown(false);
-            }}
+            onPress={() => setShowCategoryDropdown(true)}
             activeOpacity={0.7}
           >
             <Text style={s.selectText}>{selectedCategory.emoji} {selectedCategory.label}</Text>
-            <Ionicons
-              name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color={Colors.primary}
-            />
+            <Ionicons name="chevron-down" size={20} color={Colors.primary} />
           </TouchableOpacity>
-          {showCategoryDropdown && (
-            <View style={s.dropdown}>
-              {CATEGORIES.map(cat => {
-                const active = category === cat.value;
-                return (
-                  <TouchableOpacity
-                    key={cat.value}
-                    style={[s.dropdownItem, active && s.dropdownItemActive]}
-                    onPress={() => {
-                      setCategory(cat.value);
-                      setShowCategoryDropdown(false);
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={[s.dropdownItemText, active && s.dropdownItemTextActive]}>
-                      {cat.emoji} {cat.label}
-                    </Text>
-                    {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
         </View>
 
         {/* ─── Assigné à ────────────────────────────────────────────────── */}
@@ -364,47 +395,36 @@ export default function CreateTaskScreen() {
           <FieldLabel>RÉPÉTER</FieldLabel>
           <TouchableOpacity
             style={s.selectField}
-            onPress={() => {
-              setShowRecurrenceDropdown(!showRecurrenceDropdown);
-              setShowCategoryDropdown(false);
-            }}
+            onPress={() => setShowRecurrenceDropdown(true)}
             activeOpacity={0.7}
           >
             <View style={s.selectFieldInner}>
               <Ionicons name="repeat-outline" size={20} color={Colors.primary} />
               <Text style={s.selectText}>{recurrenceLabel}</Text>
             </View>
-            <Ionicons
-              name={showRecurrenceDropdown ? 'chevron-up' : 'chevron-down'}
-              size={18}
-              color={Colors.textMuted}
-            />
+            <Ionicons name="chevron-down" size={18} color={Colors.textMuted} />
           </TouchableOpacity>
-          {showRecurrenceDropdown && (
-            <View style={s.dropdown}>
-              {RECURRENCE_OPTIONS.map(opt => {
-                const active = recurrence === opt.value;
-                return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[s.dropdownItem, active && s.dropdownItemActive]}
-                    onPress={() => {
-                      setRecurrence(opt.value);
-                      setShowRecurrenceDropdown(false);
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={[s.dropdownItemText, active && s.dropdownItemTextActive]}>
-                      {opt.label}
-                    </Text>
-                    {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
         </View>
       </ScrollView>
+
+      {/* ─── Option Sheets ─────────────────────────────────────────────── */}
+      <OptionSheet
+        visible={showCategoryDropdown}
+        title="Catégorie"
+        options={CATEGORIES}
+        selected={category}
+        onSelect={setCategory}
+        onClose={() => setShowCategoryDropdown(false)}
+        renderLabel={opt => `${opt.emoji} ${opt.label}`}
+      />
+      <OptionSheet
+        visible={showRecurrenceDropdown}
+        title="Récurrence"
+        options={RECURRENCE_OPTIONS}
+        selected={recurrence}
+        onSelect={setRecurrence}
+        onClose={() => setShowRecurrenceDropdown(false)}
+      />
 
       {/* ─── CTA Button ─────────────────────────────────────────────────── */}
       <SafeAreaView edges={['bottom']} style={s.ctaSafe}>
@@ -547,35 +567,57 @@ const s = StyleSheet.create({
     color: Colors.textPrimary,
   },
 
-  // Dropdown
-  dropdown: {
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    ...Shadows.md,
-    overflow: 'hidden',
+  // Option Sheet overlay
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  sheetContainer: {
+    backgroundColor: Colors.backgroundCard,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingBottom: Spacing['3xl'],
+    maxHeight: SCREEN_HEIGHT * 0.5,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.gray300,
+    alignSelf: 'center',
     marginTop: Spacing.sm,
   },
-  dropdownItem: {
+  sheetTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    paddingVertical: Spacing.base,
+  },
+  sheetScroll: {
+    paddingHorizontal: Spacing.lg,
+  },
+  sheetItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 2,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
-  dropdownItemActive: {
+  sheetItemActive: {
     backgroundColor: `${Colors.primarySurface}80`,
+    borderRadius: BorderRadius.md,
   },
-  dropdownItemText: {
-    fontSize: Typography.fontSize.sm,
+  sheetItemText: {
+    fontSize: Typography.fontSize.base,
     color: Colors.textPrimary,
   },
-  dropdownItemTextActive: {
+  sheetItemTextActive: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
   },
 
   // Pills
