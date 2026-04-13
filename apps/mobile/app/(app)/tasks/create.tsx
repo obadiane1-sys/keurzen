@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -9,561 +9,132 @@ import {
   Platform,
   Alert,
   TextStyle,
-  Animated,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { Text } from '../../../src/components/ui/Text';
-import { useCreateTask, useTasks } from '../../../src/lib/queries/tasks';
-import { TaskSuggestions } from '../../../src/components/tasks/TaskSuggestions';
-import { buildTaskVariants, filterVariants } from '../../../src/lib/utils/taskVariants';
-import type { TaskVariant } from '../../../src/lib/utils/taskVariants';
+import { useCreateTask } from '../../../src/lib/queries/tasks';
 import { useHouseholdStore } from '../../../src/stores/household.store';
-import { categoryLabels } from '../../../src/components/tasks/TaskCard';
-import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
-import type { TaskFormValues, TaskCategory, TaskPriority, RecurrenceType } from '../../../src/types';
+import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../../src/constants/tokens';
+import type { TaskFormValues, TaskCategory, TaskPriority, RecurrenceType, TaskType } from '../../../src/types';
 
+// ─── Category config with emojis ─────────────────────────────────────────────
 
-const PRIORITY_CONFIG: {
-  value: TaskPriority;
-  label: string;
-  description: string;
-  dot: string;
-  bg: string;
-  border: string;
-  text: string;
-}[] = [
-  { value: 'low',    label: 'Faible',  description: 'Rapide et simple',          dot: Colors.success,       bg: `${Colors.success}14`, border: `${Colors.success}40`, text: Colors.success },
-  { value: 'medium', label: 'Moyenne', description: 'Effort modéré',             dot: Colors.joy,        bg: `${Colors.joy}14`, border: `${Colors.joy}40`, text: Colors.primary },
-  { value: 'high',   label: 'Haute',   description: "Demande de l'attention",    dot: Colors.accent,        bg: `${Colors.accent}14`, border: `${Colors.accent}40`, text: Colors.accent },
+const CATEGORIES: { value: TaskCategory; label: string; emoji: string }[] = [
+  { value: 'cleaning', label: 'Ménage', emoji: '🧹' },
+  { value: 'cooking', label: 'Cuisine', emoji: '🍳' },
+  { value: 'shopping', label: 'Courses', emoji: '🛒' },
+  { value: 'admin', label: 'Admin', emoji: '📋' },
+  { value: 'children', label: 'Enfants', emoji: '👶' },
+  { value: 'pets', label: 'Animaux', emoji: '🐾' },
+  { value: 'garden', label: 'Jardin', emoji: '🌿' },
+  { value: 'repairs', label: 'Bricolage', emoji: '🔧' },
+  { value: 'health', label: 'Santé', emoji: '💊' },
+  { value: 'finances', label: 'Finances', emoji: '💰' },
+  { value: 'other', label: 'Autre', emoji: '📦' },
 ];
 
-const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string; icon: string }[] = [
-  { value: 'none',     label: 'Aucune',       icon: 'close-circle-outline' },
-  { value: 'daily',    label: 'Chaque jour',   icon: 'today-outline' },
-  { value: 'weekly',   label: 'Chaque semaine', icon: 'calendar-outline' },
-  { value: 'biweekly', label: 'Toutes les 2 sem.', icon: 'calendar-outline' },
-  { value: 'monthly',  label: 'Chaque mois',   icon: 'repeat-outline' },
+// ─── Recurrence options ──────────────────────────────────────────────────────
+
+const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
+  { value: 'none', label: 'Jamais' },
+  { value: 'daily', label: 'Quotidien' },
+  { value: 'weekly', label: 'Hebdomadaire' },
+  { value: 'biweekly', label: 'Bimensuel' },
+  { value: 'monthly', label: 'Mensuel' },
 ];
 
-// ─── Date helpers ───────────────────────────────────────────────────────────
+// ─── Date helpers ────────────────────────────────────────────────────────────
 
-const SHORT_DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-const SHORT_MONTHS = [
-  'janv.', 'fév.', 'mars', 'avr.', 'mai', 'juin',
-  'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+const LONG_MONTHS = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ];
+const LONG_DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
-function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+function formatDateDisplay(date: Date): string {
+  return `${LONG_DAYS[date.getDay()]} ${date.getDate()} ${LONG_MONTHS[date.getMonth()]}`;
 }
 
-function formatDatePill(date: Date): string {
-  const now = new Date();
-  if (isSameDay(date, now)) return "Aujourd'hui";
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  if (isSameDay(date, tomorrow)) return 'Demain';
-  return `${SHORT_DAYS[date.getDay()]} ${date.getDate()} ${SHORT_MONTHS[date.getMonth()]}`;
+function formatTimeDisplay(date: Date): string {
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
+// ─── Label component ─────────────────────────────────────────────────────────
 
-// ─── Wheel Picker ────────────────────────────────────────────────────────
-
-const WHEEL_ITEM_HEIGHT = 44;
-const WHEEL_VISIBLE_ITEMS = 5;
-const WHEEL_HEIGHT = WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE_ITEMS;
-const WHEEL_PADDING = WHEEL_ITEM_HEIGHT * Math.floor(WHEEL_VISIBLE_ITEMS / 2);
-
-function buildDateOptions(daysAhead = 90): { label: string; date: Date }[] {
-  const now = new Date();
-  return Array.from({ length: daysAhead }, (_, i) => {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-    return { label: formatDatePill(date), date };
-  });
+function FieldLabel({ children }: { children: string }) {
+  return <Text style={s.label}>{children}</Text>;
 }
 
-const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-const MINUTE_LABELS = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
-
-function WheelColumn({
-  items,
-  selectedIndex,
-  onSelect,
-  width,
-}: {
-  items: string[];
-  selectedIndex: number;
-  onSelect: (index: number) => void;
-  width: number;
-}) {
-  const scrollRef = useRef<ScrollView>(null);
-  const isUserScrolling = useRef(false);
-
-  useEffect(() => {
-    if (!isUserScrolling.current) {
-      scrollRef.current?.scrollTo({
-        y: selectedIndex * WHEEL_ITEM_HEIGHT,
-        animated: false,
-      });
-    }
-  }, [selectedIndex]);
-
-  const handleMomentumEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const idx = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT);
-      const clamped = Math.max(0, Math.min(idx, items.length - 1));
-      isUserScrolling.current = false;
-      onSelect(clamped);
-    },
-    [items.length, onSelect],
-  );
-
-  return (
-    <View style={[wheelStyles.column, { width, height: WHEEL_HEIGHT }]}>
-      {/* Highlight bar */}
-      <View style={wheelStyles.highlight} pointerEvents="none" />
-      <ScrollView
-        ref={scrollRef}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={WHEEL_ITEM_HEIGHT}
-        decelerationRate="fast"
-        onScrollBeginDrag={() => { isUserScrolling.current = true; }}
-        onMomentumScrollEnd={handleMomentumEnd}
-        contentContainerStyle={{ paddingVertical: WHEEL_PADDING }}
-      >
-        {items.map((label, i) => {
-          const isSelected = i === selectedIndex;
-          return (
-            <View key={`${label}-${i}`} style={wheelStyles.item}>
-              <Text
-                style={isSelected ? wheelStyles.itemTextSelected : wheelStyles.itemTextDimmed}
-                numberOfLines={1}
-              >
-                {label}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-const wheelStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  column: {
-    overflow: 'hidden',
-  },
-  highlight: {
-    position: 'absolute',
-    top: WHEEL_PADDING,
-    left: 0,
-    right: 0,
-    height: WHEEL_ITEM_HEIGHT,
-    backgroundColor: Colors.backgroundSubtle,
-    borderRadius: BorderRadius.sm,
-  },
-  item: {
-    height: WHEEL_ITEM_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemTextSelected: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  itemTextDimmed: {
-    color: Colors.textMuted,
-    fontSize: Typography.fontSize.base,
-  },
-  separator: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-    marginTop: WHEEL_PADDING,
-  },
-});
-
-// ─── Estimated time chips ─────────────────────────────────────────────────
-
-const TIME_CHIPS: { value: number; label: string }[] = [
-  { value: 5, label: '5 min' },
-  { value: 15, label: '15 min' },
-  { value: 30, label: '30 min' },
-  { value: 60, label: '1h' },
-  { value: 120, label: '2h' },
-];
-
-// ─── Sheet type ───────────────────────────────────────────────────────────
-
-type SheetKey = 'date' | 'assignee' | 'time' | 'category' | 'priority' | 'recurrence' | 'note' | null;
-
-const CATEGORY_OPTIONS = Object.entries(categoryLabels).map(([key, val]) => ({
-  value: key as TaskCategory,
-  label: val.label,
-  icon: val.icon,
-}));
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-
-// ─── BottomSheet component ────────────────────────────────────────────────
-
-function BottomSheet({
-  visible,
-  onClose,
-  title,
-  children,
-  renderContent,
-  noScroll,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
-  children?: React.ReactNode;
-  renderContent?: () => React.ReactNode;
-  noScroll?: boolean;
-}) {
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const [modalVisible, setModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
-          damping: 20,
-          stiffness: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: SCREEN_HEIGHT,
-          damping: 20,
-          stiffness: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlayOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setModalVisible(false);
-      });
-    }
-  }, [visible, translateY, overlayOpacity]);
-
-  if (!modalVisible && !visible) return null;
-
-  return (
-    <Modal transparent visible={modalVisible} animationType="none" statusBarTranslucent>
-      <View style={sheetStyles.wrapper}>
-        <Animated.View
-          style={[
-            sheetStyles.overlay,
-            { opacity: overlayOpacity },
-          ]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </Animated.View>
-
-        <Animated.View
-          style={[
-            sheetStyles.sheet,
-            { transform: [{ translateY }] },
-          ]}
-        >
-          <View style={sheetStyles.handleContainer}>
-            <View style={sheetStyles.handle} />
-          </View>
-
-          <Text style={sheetStyles.title}>{title}</Text>
-
-          {noScroll ? (
-            <View style={[sheetStyles.content, sheetStyles.contentContainer]}>
-              {renderContent ? renderContent() : children}
-            </View>
-          ) : (
-            <ScrollView
-              style={sheetStyles.content}
-              contentContainerStyle={sheetStyles.contentContainer}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              bounces={false}
-            >
-              {renderContent ? renderContent() : children}
-            </ScrollView>
-          )}
-
-          <SafeAreaView edges={['bottom']} style={sheetStyles.validateSafe}>
-            <TouchableOpacity
-              style={sheetStyles.validateBtn}
-              onPress={onClose}
-              activeOpacity={0.85}
-            >
-              <Text style={sheetStyles.validateText}>Valider</Text>
-            </TouchableOpacity>
-          </SafeAreaView>
-        </Animated.View>
-      </View>
-    </Modal>
-  );
-}
-
-const sheetStyles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.overlay,
-  },
-  sheet: {
-    backgroundColor: Colors.backgroundCard,
-    borderTopLeftRadius: BorderRadius['2xl'],
-    borderTopRightRadius: BorderRadius['2xl'],
-    maxHeight: SCREEN_HEIGHT * 0.7,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingTop: Spacing.sm,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.gray300,
-  },
-  title: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    paddingVertical: Spacing.base,
-  },
-  content: {
-    flexShrink: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.base,
-  },
-  validateSafe: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.base,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  validateBtn: {
-    backgroundColor: Colors.primary,
-    height: 56,
-    borderRadius: BorderRadius.button,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  validateText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textInverse,
-  },
-});
-
-// ─── OptionRow component ──────────────────────────────────────────────────
-
-function OptionRow({
-  icon,
-  iconColor,
-  label,
-  value,
-  valueColor,
-  onPress,
-  isLast,
-}: {
-  icon: string;
-  iconColor: string;
-  label: string;
-  value: string;
-  valueColor?: string;
-  onPress: () => void;
-  isLast?: boolean;
-}) {
-  return (
-    <>
-      <TouchableOpacity style={rowStyles.optionRow} onPress={onPress} activeOpacity={0.6}>
-        <View style={[rowStyles.optionIcon, { backgroundColor: `${iconColor}22` }]}>
-          <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={iconColor} />
-        </View>
-        <View style={rowStyles.optionContent}>
-          <Text style={rowStyles.optionLabel}>{label}</Text>
-          <Text
-            style={[rowStyles.optionValue, valueColor ? { color: valueColor } : undefined]}
-            numberOfLines={1}
-          >
-            {value}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-      </TouchableOpacity>
-      {!isLast && <View style={rowStyles.optionDivider} />}
-    </>
-  );
-}
-
-const rowStyles = StyleSheet.create({
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 56,
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.md,
-  },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionContent: {
-    flex: 1,
-    gap: 2,
-  },
-  optionLabel: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  optionValue: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-  },
-  optionDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginLeft: Spacing.lg + 40 + Spacing.md,
-  },
-});
-
-// ─── Screen ────────────────────────────────────────────────────────────────
+// ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function CreateTaskScreen() {
   const router = useRouter();
   const createTask = useCreateTask();
   const { members } = useHouseholdStore();
-  const { data: existingTasks = [] } = useTasks();
 
   // Form state
+  const [taskType, setTaskType] = useState<TaskType>('household');
   const [taskName, setTaskName] = useState('');
-
-  // Build deduplicated task variants for suggestions
-  const allVariants = useMemo(
-    () => buildTaskVariants(existingTasks),
-    [existingTasks]
-  );
-
-  const filteredVariants = useMemo(
-    () => filterVariants(allVariants, taskName),
-    [allVariants, taskName]
-  );
-  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [category, setCategory] = useState<TaskCategory>('shopping');
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
-  const [category, setCategory] = useState<TaskCategory>('cleaning');
-  const [priority, setPriority] = useState<TaskPriority>('medium');
-  const [notes, setNotes] = useState('');
-  const [estimatedMinutes, setEstimatedMinutes] = useState<string>('');
+  const [dueDate, setDueDate] = useState<Date>(new Date());
+  const [priority, setPriority] = useState<number>(1); // 0=low, 1=medium, 2=high
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
 
-  // Input focus state
-  const [inputFocused, setInputFocused] = useState(false);
+  // UI state
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showRecurrenceDropdown, setShowRecurrenceDropdown] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Sheet state
-  const [activeSheet, setActiveSheet] = useState<SheetKey>(null);
+  // ─── Derived ───────────────────────────────────────────────────────────────
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const selectedCategory = CATEGORIES.find(c => c.value === category)!;
+  const priorityLabel = priority === 0 ? 'low' : priority === 1 ? 'medium' : 'high';
+  const recurrenceLabel = RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Jamais';
+  const isDisabled = !taskName.trim();
 
-  const dateOptions = useMemo(() => buildDateOptions(90), []);
-  const dateLabels = useMemo(() => dateOptions.map(o => o.label), [dateOptions]);
-
-  const selectedDateIdx = useMemo(() => {
-    if (!dueDate) return 0;
-    const idx = dateOptions.findIndex(o => isSameDay(o.date, dueDate));
-    return idx >= 0 ? idx : 0;
-  }, [dueDate, dateOptions]);
-
-  const selectedHourIdx = dueDate ? dueDate.getHours() : 12;
-  const selectedMinuteIdx = dueDate ? Math.round(dueDate.getMinutes() / 5) : 0;
-
-  const handleDateColumnSelect = useCallback((idx: number) => {
-    const chosen = new Date(dateOptions[idx].date);
-    const current = dueDate ?? new Date();
-    chosen.setHours(current.getHours(), current.getMinutes(), 0, 0);
-    setDueDate(chosen);
-  }, [dateOptions, dueDate]);
-
-  const handleHourColumnSelect = useCallback((idx: number) => {
-    const d = dueDate ? new Date(dueDate) : new Date();
-    d.setHours(idx, d.getMinutes(), 0, 0);
-    setDueDate(d);
-  }, [dueDate]);
-
-  const handleMinuteColumnSelect = useCallback((idx: number) => {
-    const d = dueDate ? new Date(dueDate) : new Date();
-    d.setMinutes(idx * 5, 0, 0);
-    setDueDate(d);
-  }, [dueDate]);
-
-  const toggleAssignee = (userId: string) => {
-    setAssignedTo(prev => prev === userId ? null : userId);
+  const getInitial = (name?: string | null) => {
+    if (!name) return '?';
+    return name.trim()[0]?.toUpperCase() ?? '?';
   };
+
+  // ─── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      const updated = new Date(dueDate);
+      updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      setDueDate(updated);
+    }
+  }, [dueDate]);
+
+  const handleTimeChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
+    setShowTimePicker(false);
+    if (date) {
+      const updated = new Date(dueDate);
+      updated.setHours(date.getHours(), date.getMinutes(), 0, 0);
+      setDueDate(updated);
+    }
+  }, [dueDate]);
 
   const handleSubmit = async () => {
     if (!taskName.trim()) return;
 
-    let dueDateStr: string | undefined;
-    if (dueDate) {
-      dueDateStr = dueDate.toISOString().split('T')[0];
-    }
-
     const values: TaskFormValues = {
       title: taskName.trim(),
-      description: notes.trim() || undefined,
       category,
       zone: 'general',
-      priority,
+      priority: priorityLabel as TaskPriority,
       recurrence,
       assigned_to: assignedTo ?? '',
-      due_date: dueDateStr,
-      estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes, 10) : undefined,
-      task_type: 'household',
+      due_date: dueDate.toISOString().split('T')[0],
+      task_type: taskType,
     };
 
     try {
@@ -579,195 +150,266 @@ export default function CreateTaskScreen() {
     }
   };
 
-  const handleVariantSelect = useCallback((variant: TaskVariant) => {
-    setTaskName(variant.title);
-    setCategory(variant.category);
-    setPriority(variant.priority);
-    setRecurrence(variant.recurrence);
-    setEstimatedMinutes(variant.estimatedMinutes != null ? String(variant.estimatedMinutes) : '');
-    setNotes(variant.description ?? '');
-    setInputFocused(false);
-  }, []);
-
-  // ─── Derived data ─────────────────────────────────────────────────────────
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ').filter(Boolean);
-    if (parts.length === 0) return '?';
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
-  const getMemberColor = (index: number) => Colors.memberColors[index % Colors.memberColors.length];
-
-  const isDisabled = !taskName.trim();
-
-  // ─── Value previews ───────────────────────────────────────────────────────
-
-  const datePreview = useMemo(() => {
-    if (!dueDate) return 'Non définie';
-    const text = formatDatePill(dueDate);
-    const hours = dueDate.getHours().toString().padStart(2, '0');
-    const mins = dueDate.getMinutes().toString().padStart(2, '0');
-    return `${text} \u00B7 ${hours}:${mins}`;
-  }, [dueDate]);
-
-  const assigneePreview = useMemo(() => {
-    if (!assignedTo) return 'Personne';
-    const member = members.find(m => m.user_id === assignedTo);
-    if (!member) return 'Personne';
-    return member.profile?.full_name?.split(' ')[0] ?? 'Membre';
-  }, [assignedTo, members]);
-
-  const timePreview = (() => {
-    if (!estimatedMinutes) return 'Non défini';
-    const mins = parseInt(estimatedMinutes, 10);
-    if (mins >= 60) return `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}` : ''}`;
-    return `${estimatedMinutes} min`;
-  })();
-
-  const categoryPreview = categoryLabels[category]?.label ?? category;
-
-  const currentPriority = PRIORITY_CONFIG.find(p => p.value === priority)!;
-
-  const recurrencePreview = RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Aucune';
-
-  const notePreview = !notes.trim()
-    ? 'Aucune'
-    : notes.trim().length > 30 ? notes.trim().substring(0, 30) + '...' : notes.trim();
-
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <View style={styles.screen}>
+    <View style={s.screen}>
       {/* Header */}
-      <SafeAreaView edges={['top']} style={styles.headerSafe}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerBackBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={22} color={Colors.textSecondary} />
+      <SafeAreaView edges={['top']} style={s.headerSafe}>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()} style={s.headerBtn} activeOpacity={0.7}>
+            <Ionicons name="arrow-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Nouvelle tâche</Text>
-
+          <Text style={s.headerTitle}>Nouvelle tâche</Text>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={isDisabled || createTask.isPending}
+            style={s.headerBtn}
             activeOpacity={0.7}
-            style={styles.headerCreateBtn}
           >
             {createTask.isPending ? (
               <ActivityIndicator size="small" color={Colors.primary} />
             ) : (
-              <Text style={[styles.headerCreateText, isDisabled ? styles.headerCreateTextDisabled : undefined]}>
-                Créer
-              </Text>
+              <Text style={[s.headerCreateText, isDisabled && { opacity: 0.35 }]}>Créer</Text>
             )}
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      {/* Scrollable form */}
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={s.scrollView}
+        contentContainerStyle={s.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Title input */}
-        <View style={styles.titleSection}>
+        {/* ─── Task Type Toggle ─────────────────────────────────────────── */}
+        <View style={s.toggleContainer}>
+          <TouchableOpacity
+            style={[s.toggleBtn, taskType === 'household' && s.toggleBtnActive]}
+            onPress={() => setTaskType('household')}
+            activeOpacity={0.7}
+          >
+            <Text style={[s.toggleText, taskType === 'household' && s.toggleTextActive]}>
+              🏠 Ménage
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.toggleBtn, taskType === 'personal' && s.toggleBtnActive]}
+            onPress={() => setTaskType('personal')}
+            activeOpacity={0.7}
+          >
+            <Text style={[s.toggleText, taskType === 'personal' && s.toggleTextActive]}>
+              👤 Perso
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ─── Nom ──────────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>NOM</FieldLabel>
           <TextInput
-            style={[
-              styles.taskNameInput,
-              inputFocused && styles.taskNameInputFocused,
-            ]}
-            placeholder="Que faut-il faire ?"
+            style={s.input}
+            placeholder="Ex : Courses, Ménage salon..."
             placeholderTextColor={Colors.textMuted}
             value={taskName}
             onChangeText={setTaskName}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
             autoFocus
             returnKeyType="done"
           />
-          <TaskSuggestions
-            query={taskName}
-            variants={filteredVariants}
-            visible={inputFocused}
-            onSelect={handleVariantSelect}
-          />
         </View>
 
-        {/* Option rows card */}
-        <View style={styles.optionsCard}>
-          <OptionRow
-            icon="calendar-outline"
-            iconColor={Colors.primary}
-            label="Date limite"
-            value={datePreview}
-            valueColor={dueDate ? Colors.primary : undefined}
-            onPress={() => setActiveSheet('date')}
+        {/* ─── Catégorie ────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>CATÉGORIE</FieldLabel>
+          <TouchableOpacity
+            style={s.selectField}
+            onPress={() => {
+              setShowCategoryDropdown(!showCategoryDropdown);
+              setShowRecurrenceDropdown(false);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={s.selectText}>{selectedCategory.emoji} {selectedCategory.label}</Text>
+            <Ionicons
+              name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={Colors.primary}
+            />
+          </TouchableOpacity>
+          {showCategoryDropdown && (
+            <View style={s.dropdown}>
+              {CATEGORIES.map(cat => {
+                const active = category === cat.value;
+                return (
+                  <TouchableOpacity
+                    key={cat.value}
+                    style={[s.dropdownItem, active && s.dropdownItemActive]}
+                    onPress={() => {
+                      setCategory(cat.value);
+                      setShowCategoryDropdown(false);
+                    }}
+                    activeOpacity={0.6}
+                  >
+                    <Text style={[s.dropdownItemText, active && s.dropdownItemTextActive]}>
+                      {cat.emoji} {cat.label}
+                    </Text>
+                    {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
+        {/* ─── Assigné à ────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>ASSIGNÉ À</FieldLabel>
+          <View style={s.pillsRow}>
+            {members.map((m) => {
+              const selected = assignedTo === m.user_id;
+              const name = m.profile?.full_name?.split(' ')[0] ?? 'Membre';
+              return (
+                <TouchableOpacity
+                  key={m.user_id}
+                  style={[s.pill, selected ? s.pillActive : s.pillInactive]}
+                  onPress={() => setAssignedTo(selected ? null : m.user_id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[s.pillAvatar, selected ? s.pillAvatarActive : s.pillAvatarInactive]}>
+                    <Text style={[s.pillAvatarText, selected && { color: Colors.textPrimary }]}>
+                      {getInitial(m.profile?.full_name)}
+                    </Text>
+                  </View>
+                  <Text style={[s.pillName, selected && s.pillNameActive]}>{name}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* ─── Échéance ─────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>ÉCHÉANCE</FieldLabel>
+          <View style={s.dateTimeRow}>
+            <TouchableOpacity
+              style={s.dateSection}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+              <Text style={s.dateTimeText}>{formatDateDisplay(dueDate)}</Text>
+            </TouchableOpacity>
+            <View style={s.dateTimeSeparator} />
+            <TouchableOpacity
+              style={s.timeSection}
+              onPress={() => setShowTimePicker(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="time-outline" size={20} color={Colors.primary} />
+              <Text style={s.dateTimeText}>{formatTimeDisplay(dueDate)}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={dueDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+            locale="fr-FR"
           />
-          <OptionRow
-            icon="person-outline"
-            iconColor={Colors.primary}
-            label="Assigné à"
-            value={assigneePreview}
-            valueColor={assignedTo ? Colors.primary : undefined}
-            onPress={() => setActiveSheet('assignee')}
+        )}
+        {showTimePicker && (
+          <DateTimePicker
+            value={dueDate}
+            mode="time"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleTimeChange}
+            locale="fr-FR"
+            minuteInterval={5}
           />
-          <OptionRow
-            icon="time-outline"
-            iconColor={Colors.joy}
-            label="Temps estimé"
-            value={timePreview}
-            valueColor={estimatedMinutes ? Colors.joy : undefined}
-            onPress={() => setActiveSheet('time')}
-          />
-          <OptionRow
-            icon="pricetag-outline"
-            iconColor={Colors.joy}
-            label="Catégorie"
-            value={categoryPreview}
-            valueColor={Colors.joy}
-            onPress={() => setActiveSheet('category')}
-          />
-          <OptionRow
-            icon="flag-outline"
-            iconColor={Colors.primary}
-            label="Priorité"
-            value={currentPriority.label}
-            valueColor={currentPriority.dot}
-            onPress={() => setActiveSheet('priority')}
-          />
-          <OptionRow
-            icon="repeat-outline"
-            iconColor={Colors.primary}
-            label="Récurrence"
-            value={recurrencePreview}
-            valueColor={recurrence !== 'none' ? Colors.primary : undefined}
-            onPress={() => setActiveSheet('recurrence')}
-          />
-          <OptionRow
-            icon="document-text-outline"
-            iconColor={Colors.gray400}
-            label="Note"
-            value={notePreview}
-            valueColor={notes.trim() ? Colors.textPrimary : undefined}
-            onPress={() => setActiveSheet('note')}
-            isLast
-          />
+        )}
+
+        {/* ─── Priorité ─────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>PRIORITÉ</FieldLabel>
+          <View style={s.sliderContainer}>
+            <View style={s.sliderTrack}>
+              <View style={[s.sliderFill, { width: `${priority * 50}%` }]} />
+              {[0, 1, 2].map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={[
+                    s.sliderThumbTouchable,
+                    { left: `${val * 50}%` },
+                  ]}
+                  onPress={() => setPriority(val)}
+                  activeOpacity={0.7}
+                >
+                  {priority === val && <View style={s.sliderThumb} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={s.sliderLabels}>
+              <Text style={[s.sliderLabel, priority === 0 && s.sliderLabelActive]}>Basse</Text>
+              <Text style={[s.sliderLabel, s.sliderLabelCenter, priority === 1 && s.sliderLabelActive]}>Moyenne</Text>
+              <Text style={[s.sliderLabel, s.sliderLabelRight, priority === 2 && s.sliderLabelActive]}>Haute</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ─── Répéter ──────────────────────────────────────────────────── */}
+        <View style={s.fieldGroup}>
+          <FieldLabel>RÉPÉTER</FieldLabel>
+          <TouchableOpacity
+            style={s.selectField}
+            onPress={() => {
+              setShowRecurrenceDropdown(!showRecurrenceDropdown);
+              setShowCategoryDropdown(false);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={s.selectFieldInner}>
+              <Ionicons name="repeat-outline" size={20} color={Colors.primary} />
+              <Text style={s.selectText}>{recurrenceLabel}</Text>
+            </View>
+            <Ionicons
+              name={showRecurrenceDropdown ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={Colors.textMuted}
+            />
+          </TouchableOpacity>
+          {showRecurrenceDropdown && (
+            <View style={s.dropdown}>
+              {RECURRENCE_OPTIONS.map(opt => {
+                const active = recurrence === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[s.dropdownItem, active && s.dropdownItemActive]}
+                    onPress={() => {
+                      setRecurrence(opt.value);
+                      setShowRecurrenceDropdown(false);
+                    }}
+                    activeOpacity={0.6}
+                  >
+                    <Text style={[s.dropdownItemText, active && s.dropdownItemTextActive]}>
+                      {opt.label}
+                    </Text>
+                    {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
       </ScrollView>
 
-      {/* CTA fixed bottom */}
-      <SafeAreaView edges={['bottom']} style={styles.ctaSafe}>
+      {/* ─── CTA Button ─────────────────────────────────────────────────── */}
+      <SafeAreaView edges={['bottom']} style={s.ctaSafe}>
         <TouchableOpacity
-          style={[styles.ctaButton, isDisabled && styles.ctaButtonDisabled]}
+          style={[s.ctaButton, isDisabled && s.ctaButtonDisabled]}
           onPress={handleSubmit}
           activeOpacity={0.85}
           disabled={isDisabled || createTask.isPending}
@@ -775,304 +417,23 @@ export default function CreateTaskScreen() {
           {createTask.isPending ? (
             <ActivityIndicator size="small" color={Colors.textInverse} />
           ) : (
-            <>
-              <Ionicons name="add-circle-outline" size={20} color={Colors.textInverse} />
-              <Text style={styles.ctaText}>Ajouter la tâche</Text>
-            </>
+            <Text style={s.ctaText}>Créer la tâche</Text>
           )}
         </TouchableOpacity>
       </SafeAreaView>
-
-      {/* ─── Bottom Sheets ─────────────────────────────────────────────────── */}
-
-      {/* Date Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'date'}
-        onClose={() => setActiveSheet(null)}
-        title="Date limite"
-        noScroll
-        renderContent={() => (
-          <View style={wheelStyles.container}>
-            <WheelColumn
-              items={dateLabels}
-              selectedIndex={selectedDateIdx}
-              onSelect={handleDateColumnSelect}
-              width={150}
-            />
-            <WheelColumn
-              items={HOUR_LABELS}
-              selectedIndex={selectedHourIdx}
-              onSelect={handleHourColumnSelect}
-              width={60}
-            />
-            <Text style={wheelStyles.separator}>:</Text>
-            <WheelColumn
-              items={MINUTE_LABELS}
-              selectedIndex={selectedMinuteIdx}
-              onSelect={handleMinuteColumnSelect}
-              width={60}
-            />
-          </View>
-        )}
-      />
-
-      {/* Assignee Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'assignee'}
-        onClose={() => setActiveSheet(null)}
-        title="Assigné à"
-        renderContent={() => (
-          <>
-            {/* Aucun option */}
-            <TouchableOpacity
-              style={styles.sheetListRow}
-              onPress={() => setAssignedTo(null)}
-              activeOpacity={0.6}
-            >
-              <View style={[styles.sheetAvatar, { backgroundColor: Colors.gray100 }]}>
-                <Ionicons name="person-outline" size={18} color={Colors.textMuted} />
-              </View>
-              <Text style={styles.sheetListLabel}>Personne</Text>
-              {!assignedTo && (
-                <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-              )}
-            </TouchableOpacity>
-            <View style={styles.sheetDivider} />
-
-            {members.length === 0 ? (
-              <Text style={styles.emptyText}>Aucun membre dans le foyer</Text>
-            ) : (
-              members.map((m, i) => {
-                const selected = assignedTo === m.user_id;
-                const color = m.color ?? getMemberColor(i);
-                const fullName = m.profile?.full_name ?? 'Membre';
-                return (
-                  <React.Fragment key={m.user_id}>
-                    <TouchableOpacity
-                      style={styles.sheetListRow}
-                      onPress={() => toggleAssignee(m.user_id)}
-                      activeOpacity={0.6}
-                    >
-                      <View style={[styles.sheetAvatar, { backgroundColor: selected ? color : Colors.gray100 }]}>
-                        <Text style={[
-                          styles.sheetAvatarText,
-                          { color: selected ? Colors.textInverse : Colors.textSecondary },
-                        ]}>
-                          {getInitials(m.profile?.full_name)}
-                        </Text>
-                      </View>
-                      <Text style={[
-                        styles.sheetListLabel,
-                        selected ? { fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
-                      ]}>
-                        {fullName}
-                      </Text>
-                      {selected && (
-                        <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-                      )}
-                    </TouchableOpacity>
-                    {i < members.length - 1 && <View style={styles.sheetDivider} />}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </>
-        )}
-      />
-
-      {/* Estimated Time Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'time'}
-        onClose={() => setActiveSheet(null)}
-        title="Temps estimé"
-        renderContent={() => (
-          <>
-            <View style={styles.timeInputCenter}>
-              <TextInput
-                style={styles.timeInputLarge}
-                placeholder="0"
-                placeholderTextColor={Colors.textMuted}
-                value={estimatedMinutes}
-                onChangeText={setEstimatedMinutes}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-              <Text style={styles.timeInputSuffix}>min</Text>
-            </View>
-
-            <View style={styles.timeChipsRow}>
-              {TIME_CHIPS.map(chip => {
-                const active = estimatedMinutes === String(chip.value);
-                return (
-                  <TouchableOpacity
-                    key={chip.value}
-                    onPress={() => setEstimatedMinutes(active ? '' : String(chip.value))}
-                    style={[styles.timeChip, active && styles.timeChipActive]}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.timeChipText, active ? styles.timeChipTextActive : undefined]}>
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </>
-        )}
-      />
-
-      {/* Category Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'category'}
-        onClose={() => setActiveSheet(null)}
-        title="Catégorie"
-        renderContent={() => (
-          <>
-            {CATEGORY_OPTIONS.map((opt, i) => {
-              const active = category === opt.value;
-              return (
-                <React.Fragment key={opt.value}>
-                  <TouchableOpacity
-                    style={styles.sheetListRow}
-                    onPress={() => setCategory(opt.value)}
-                    activeOpacity={0.6}
-                  >
-                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.primary}22` : Colors.gray50 }]}>
-                      <Ionicons
-                        name={opt.icon as keyof typeof Ionicons.glyphMap}
-                        size={18}
-                        color={active ? Colors.primary : Colors.textMuted}
-                      />
-                    </View>
-                    <Text style={[
-                      styles.sheetListLabel,
-                      active ? { color: Colors.primary, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
-                    ]}>
-                      {opt.label}
-                    </Text>
-                    {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-                    )}
-                  </TouchableOpacity>
-                  {i < CATEGORY_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
-                </React.Fragment>
-              );
-            })}
-          </>
-        )}
-      />
-
-      {/* Priority Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'priority'}
-        onClose={() => setActiveSheet(null)}
-        title="Priorité"
-        renderContent={() => (
-          <>
-            <View style={styles.priorityCards}>
-              {PRIORITY_CONFIG.map(p => {
-                const active = priority === p.value;
-                return (
-                  <TouchableOpacity
-                    key={p.value}
-                    onPress={() => setPriority(p.value)}
-                    style={[
-                      styles.priorityCard,
-                      { borderColor: active ? p.dot : Colors.borderLight },
-                      active && { borderWidth: 2 },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.priorityDot, { backgroundColor: p.dot }]} />
-                    <View style={styles.priorityCardContent}>
-                      <Text style={[styles.priorityCardLabel, { color: p.text }]}>{p.label}</Text>
-                      <Text style={styles.priorityCardDesc}>{p.description}</Text>
-                    </View>
-                    {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </>
-        )}
-      />
-
-      {/* Recurrence Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'recurrence'}
-        onClose={() => setActiveSheet(null)}
-        title="Récurrence"
-        renderContent={() => (
-          <>
-            {RECURRENCE_OPTIONS.map((opt, i) => {
-              const active = recurrence === opt.value;
-              return (
-                <React.Fragment key={opt.value}>
-                  <TouchableOpacity
-                    style={styles.sheetListRow}
-                    onPress={() => setRecurrence(opt.value)}
-                    activeOpacity={0.6}
-                  >
-                    <View style={[styles.sheetIconCircle, { backgroundColor: active ? `${Colors.primary}22` : Colors.gray50 }]}>
-                      <Ionicons
-                        name={opt.icon as keyof typeof Ionicons.glyphMap}
-                        size={18}
-                        color={active ? Colors.primary : Colors.textMuted}
-                      />
-                    </View>
-                    <Text style={[
-                      styles.sheetListLabel,
-                      active ? { color: Colors.primary, fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'] } : undefined,
-                    ]}>
-                      {opt.label}
-                    </Text>
-                    {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-                    )}
-                  </TouchableOpacity>
-                  {i < RECURRENCE_OPTIONS.length - 1 && <View style={styles.sheetDivider} />}
-                </React.Fragment>
-              );
-            })}
-          </>
-        )}
-      />
-
-      {/* Note Sheet */}
-      <BottomSheet
-        visible={activeSheet === 'note'}
-        onClose={() => setActiveSheet(null)}
-        title="Note"
-        renderContent={() => (
-          <>
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Ajouter une note..."
-              placeholderTextColor={Colors.textMuted}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              textAlignVertical="top"
-              autoFocus={activeSheet === 'note'}
-            />
-          </>
-        )}
-      />
     </View>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
   },
 
-  // ── Header ──────────────────────────────────────────────────────────────
+  // Header
   headerSafe: {
     backgroundColor: Colors.background,
     borderBottomWidth: 1,
@@ -1081,232 +442,302 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
-    height: 52,
+    height: 56,
   },
-  headerBackBtn: {
+  headerBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    flex: 1,
-    textAlign: 'center',
     fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
     color: Colors.textPrimary,
-  },
-  headerCreateBtn: {
-    paddingHorizontal: Spacing.sm,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerCreateText: {
     fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
     color: Colors.primary,
   },
-  headerCreateTextDisabled: {
-    opacity: 0.35,
-  },
 
-  // ── ScrollView ──────────────────────────────────────────────────────────
-  scrollView: {
-    flex: 1,
-  },
+  // ScrollView
+  scrollView: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 100,
-  },
-
-  // ── Title input ─────────────────────────────────────────────────────────
-  titleSection: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: 120,
+    gap: Spacing.xl,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.lg,
-  },
-  taskNameInput: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.input,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  taskNameInputFocused: {
-    borderColor: Colors.borderFocus,
   },
 
-  // ── Options card ────────────────────────────────────────────────────────
-  optionsCard: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.card,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-
-
-  // ── Sheet list rows (assignee, category, recurrence) ────────────────────
-  sheetListRow: {
+  // Toggle
+  toggleContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
-  },
-  sheetAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetAvatarText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-  },
-  sheetIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetListLabel: {
-    flex: 1,
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-  },
-  sheetDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-  },
-  emptyText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    paddingVertical: Spacing.lg,
-  },
-
-  // ── Estimated time (inside sheet) ───────────────────────────────────────
-  timeInputCenter: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  timeInputLarge: {
-    fontSize: Typography.fontSize['4xl'],
-    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    minWidth: 80,
-    padding: 0,
-  },
-  timeInputSuffix: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  timeChipsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  timeChip: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundCard,
-  },
-  timeChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  timeChipText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-    color: Colors.textSecondary,
-  },
-  timeChipTextActive: {
-    color: Colors.textInverse,
-  },
-
-  // ── Priority (inside sheet) ─────────────────────────────────────────────
-  priorityCards: {
-    gap: Spacing.md,
-  },
-  priorityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.base,
+    backgroundColor: Colors.primarySurface,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.borderLight,
-    backgroundColor: Colors.backgroundCard,
-    gap: Spacing.md,
+    padding: 4,
   },
-  priorityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: BorderRadius.sm / 2,
-  },
-  priorityCardContent: {
+  toggleBtn: {
     flex: 1,
-    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.md + 2,
   },
-  priorityCardLabel: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
-  },
-  priorityCardDesc: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-  },
-
-  // ── Note (inside sheet) ─────────────────────────────────────────────────
-  noteInput: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
-    minHeight: 200,
-    textAlignVertical: 'top',
+  toggleBtnActive: {
     backgroundColor: Colors.background,
+    ...Shadows.sm,
+  },
+  toggleText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textMuted,
+  },
+  toggleTextActive: {
+    color: Colors.primary,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+  },
+
+  // Field group
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
+    color: `${Colors.primary}B3`,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginLeft: 4,
+  },
+
+  // Input
+  input: {
+    backgroundColor: `${Colors.primarySurface}4D`,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+  },
+
+  // Select field
+  selectField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: `${Colors.primarySurface}4D`,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+  },
+  selectFieldInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  selectText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+  },
+
+  // Dropdown
+  dropdown: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.md,
+    overflow: 'hidden',
+    marginTop: Spacing.sm,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  dropdownItemActive: {
+    backgroundColor: `${Colors.primarySurface}80`,
+  },
+  dropdownItemText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+  },
+  dropdownItemTextActive: {
+    color: Colors.primary,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+  },
+
+  // Pills
+  pillsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 4,
+    paddingRight: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.sm,
+  },
+  pillActive: {
+    backgroundColor: Colors.primaryLight,
+  },
+  pillInactive: {
     borderWidth: 1,
     borderColor: Colors.border,
   },
-
-  // ── CTA ─────────────────────────────────────────────────────────────────
-  ctaSafe: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-  },
-  ctaButton: {
-    flexDirection: 'row',
+  pillAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pillAvatarActive: {
+    backgroundColor: Colors.background,
+  },
+  pillAvatarInactive: {
+    backgroundColor: Colors.primarySurface,
+  },
+  pillAvatarText: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textMuted,
+  },
+  pillName: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textMuted,
+  },
+  pillNameActive: {
+    color: Colors.textPrimary,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+  },
+
+  // Date/Time
+  dateTimeRow: {
+    flexDirection: 'row',
+    backgroundColor: `${Colors.primarySurface}4D`,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  dateSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+  },
+  dateTimeSeparator: {
+    width: 1,
+    backgroundColor: Colors.border,
+  },
+  timeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+  },
+  dateTimeText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textPrimary,
+  },
+
+  // Priority slider
+  sliderContainer: {
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.sm,
+  },
+  sliderTrack: {
+    height: 6,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: 3,
+    position: 'relative',
+  },
+  sliderFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  sliderThumbTouchable: {
+    position: 'absolute',
+    top: -17,
+    width: 40,
+    height: 40,
+    marginLeft: -20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sliderThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
+    borderWidth: 3,
+    borderColor: Colors.background,
+    ...Shadows.sm,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.md,
+  },
+  sliderLabel: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  sliderLabelActive: {
+    color: Colors.primary,
+  },
+  sliderLabelCenter: {
+    textAlign: 'center',
+  },
+  sliderLabelRight: {
+    textAlign: 'right',
+  },
+
+  // CTA
+  ctaSafe: {
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.base,
+  },
+  ctaButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.primary,
     height: 56,
-    borderRadius: BorderRadius.button,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.lg,
   },
   ctaButtonDisabled: {
     opacity: 0.35,
   },
   ctaText: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.bold as TextStyle['fontWeight'],
     color: Colors.textInverse,
   },
