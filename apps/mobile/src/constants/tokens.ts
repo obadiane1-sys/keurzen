@@ -1,63 +1,65 @@
 /**
  * Keurzen Design Tokens
- * Charte graphique Dreamy — palette douce et rêveuse
+ * Charte graphique Lavender — palette douce et élégante
  */
 
 export const Colors = {
-  // ─── Brand palette (Dreamy) ───
-  primary: '#90CAF9',
+  // ─── Brand palette (Lavender) ───
+  primary: '#967BB6',
+  primaryLight: '#E5DBFF',
+  primarySurface: '#F3F0FF',
   accent: '#F4C2C2',
   joy: '#FFF9C4',
 
   // ─── Text ───
-  textPrimary: '#4A5568',
-  textSecondary: '#5A6A85',
-  textMuted: '#A0AEC0',
+  textPrimary: '#5F5475',
+  textSecondary: 'rgba(95, 84, 117, 0.8)',
+  textMuted: 'rgba(95, 84, 117, 0.6)',
   textInverse: '#FFFFFF',
 
   // ─── Background ───
-  background: '#FAFCFF',
-  backgroundCard: '#F7F9FC',
-  backgroundCardEnd: '#EFF3F6',
+  background: '#FFFFFF',
+  backgroundCard: '#F9F8FD',
+  backgroundCardEnd: '#F3F0FF',
   backgroundElevated: '#FFFFFF',
 
   // ─── Border ───
-  border: '#E5E9EC',
-  borderLight: '#EDF2F7',
-  borderFocus: '#90CAF9',
+  border: '#DCD7E8',
+  borderLight: '#F3F0FF',
+  borderFocus: '#967BB6',
 
   // ─── Feedback ───
   success: '#81C784',
   warning: '#FFF9C4',
   error: '#F4C2C2',
-  info: '#90CAF9',
+  info: '#967BB6',
 
   // ─── Member colors ───
   memberColors: [
-    '#90CAF9', '#F4C2C2', '#B39DDB', '#80CBC4',
+    '#967BB6', '#F4C2C2', '#B39DDB', '#80CBC4',
     '#FFE082', '#FFAB91', '#A5D6A7', '#CE93D8',
   ],
 
-  // ─── Gray scale (cool) ───
-  gray50: '#FAFCFF',
-  gray100: '#EDF2F7',
-  gray200: '#E5E9EC',
-  gray300: '#CBD5E0',
-  gray400: '#A0AEC0',
-  gray500: '#5A6A85',
-  gray600: '#4A5568',
-  gray700: '#2D3748',
-  gray800: '#1A202C',
-  gray900: '#171923',
+  // ─── Gray scale (warm) ───
+  gray50: '#F9F8FD',
+  gray100: '#F3F0FF',
+  gray200: '#DCD7E8',
+  gray300: '#C4BDD4',
+  gray400: '#9B93AC',
+  gray500: '#7A7190',
+  gray600: '#5F5475',
+  gray700: '#483F5C',
+  gray800: '#312944',
+  gray900: '#1E1730',
 
   // ─── Transparent overlays ───
-  overlay: 'rgba(45, 55, 72, 0.35)',
-  overlayLight: 'rgba(45, 55, 72, 0.08)',
+  overlay: 'rgba(95, 84, 117, 0.35)',
+  overlayLight: 'rgba(95, 84, 117, 0.08)',
 
   // ─── Component-specific ───
   inputFocusedBg: '#FFFFFF',
-  backgroundSubtle: '#EDF2F7',
-  placeholder: '#A0AEC0',
+  backgroundSubtle: '#F3F0FF',
+  placeholder: 'rgba(95, 84, 117, 0.6)',
 } as const;
 
 export const Spacing = {
@@ -124,28 +126,28 @@ export const Typography = {
 
 export const Shadows = {
   sm: {
-    shadowColor: '#90CAF9',
+    shadowColor: '#967BB6',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 1,
   },
   md: {
-    shadowColor: '#90CAF9',
+    shadowColor: '#967BB6',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 3,
   },
   lg: {
-    shadowColor: '#90CAF9',
+    shadowColor: '#967BB6',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 6,
   },
   card: {
-    shadowColor: '#90CAF9',
+    shadowColor: '#967BB6',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
