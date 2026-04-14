@@ -30,6 +30,13 @@ const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
   { value: 'monthly', label: 'Mensuel' },
 ];
 
+const PRIORITY_VALUES: TaskPriority[] = ['low', 'medium', 'high'];
+
+function getInitial(name?: string | null): string {
+  if (!name) return '?';
+  return name.trim()[0]?.toUpperCase() ?? '?';
+}
+
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface CreateTaskModalProps {
@@ -48,7 +55,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('10:00');
-  const [priority, setPriority] = useState(1); // 0=low, 1=medium, 2=high
+  const [priority, setPriority] = useState(1);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
 
   // UI state
@@ -56,7 +63,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
   const [showRecurrenceDropdown, setShowRecurrenceDropdown] = useState(false);
 
   const selectedCategory = CATEGORIES.find(c => c.value === category)!;
-  const priorityValue: TaskPriority = priority === 0 ? 'low' : priority === 1 ? 'medium' : 'high';
+  const recurrenceLabel = RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Jamais';
   const isDisabled = !title.trim();
 
   const resetForm = useCallback(() => {
@@ -79,7 +86,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
       title: title.trim(),
       category,
       zone: 'general',
-      priority: priorityValue,
+      priority: PRIORITY_VALUES[priority],
       recurrence,
       assigned_to: assignedTo ?? '',
       due_date: dueDate || undefined,
@@ -89,11 +96,6 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
     await createTask(values);
     resetForm();
     onClose();
-  };
-
-  const getInitial = (name?: string | null) => {
-    if (!name) return '?';
-    return name.trim()[0]?.toUpperCase() ?? '?';
   };
 
   return (
@@ -294,7 +296,7 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               <span className="flex-1 text-left font-medium text-text-primary">
-                {RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label}
+                {recurrenceLabel}
               </span>
               <svg className={`h-4 w-4 text-text-muted transition-transform ${showRecurrenceDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

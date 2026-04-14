@@ -130,6 +130,13 @@ function FieldLabel({ children }: { children: string }) {
   return <Text style={s.label}>{children}</Text>;
 }
 
+const PRIORITY_VALUES: TaskPriority[] = ['low', 'medium', 'high'];
+
+function getInitial(name?: string | null): string {
+  if (!name) return '?';
+  return name.trim()[0]?.toUpperCase() ?? '?';
+}
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function CreateTaskScreen() {
@@ -143,7 +150,7 @@ export default function CreateTaskScreen() {
   const [category, setCategory] = useState<TaskCategory>('shopping');
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState<Date>(new Date());
-  const [priority, setPriority] = useState<number>(1); // 0=low, 1=medium, 2=high
+  const [priority, setPriority] = useState(1);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
 
   // UI state
@@ -152,17 +159,9 @@ export default function CreateTaskScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
-
   const selectedCategory = CATEGORIES.find(c => c.value === category)!;
-  const priorityLabel = priority === 0 ? 'low' : priority === 1 ? 'medium' : 'high';
   const recurrenceLabel = RECURRENCE_OPTIONS.find(r => r.value === recurrence)?.label ?? 'Jamais';
   const isDisabled = !taskName.trim();
-
-  const getInitial = (name?: string | null) => {
-    if (!name) return '?';
-    return name.trim()[0]?.toUpperCase() ?? '?';
-  };
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -191,7 +190,7 @@ export default function CreateTaskScreen() {
       title: taskName.trim(),
       category,
       zone: 'general',
-      priority: priorityLabel as TaskPriority,
+      priority: PRIORITY_VALUES[priority],
       recurrence,
       assigned_to: assignedTo ?? '',
       due_date: dueDate.toISOString().split('T')[0],
