@@ -29,7 +29,7 @@ Core modules :
 | Forms | react-hook-form + zod |
 | Charts | victory-native (mobile) |
 | Icons | @expo/vector-icons Ionicons (mobile), lucide-react (web) |
-| UI | Design system custom "Cafe Cosy" |
+| UI | Design system custom "Lavender" |
 
 ---
 
@@ -296,7 +296,7 @@ Files :
 
 ## UX rules
 
-- Premium "Cafe Cosy" UI — warm browns, terracotta accents, never hardcode values, always use tokens
+- Premium "Lavender" UI — soft purples, lavender accents, never hardcode values, always use tokens
 - Rounded cards, soft shadows, clear hierarchy
 - Mobile-first, touch targets >= 44px
 - Always include empty states
@@ -306,30 +306,35 @@ Files :
 
 ---
 
-## Design system — Palette "Cafe Cosy"
+## Design system — Palette "Lavender"
 
-### Brand (accents)
+### Brand
 ```
-Terracotta: #C4846C   ← CTA principale, FAB, liens actifs
-Sauge:      #8BA888   ← Succes, validation, accent secondaire
-Miel:       #D4A959   ← Warnings, highlights, info
-Rose:       #D4807A   ← Alertes douces, retard, erreurs
-Prune:      #9B8AA8   ← Charge mentale, TLX
+Primary:        #967BB6   ← CTA principale, FAB, liens actifs
+PrimaryLight:   #E5DBFF   ← Fonds sélectionnés, pills actives
+PrimarySurface: #F3F0FF   ← Fonds inputs, toggles inactifs
+```
+
+### Feedback
+```
+Success: #81C784   ← Validation, succès
+Warning: #FFF9C4   ← Warnings, highlights
+Error:   #F4C2C2   ← Alertes, erreurs
 ```
 
 ### Texte & Fonds
 ```
-Text:       #3D2C22   ← texte principal (brun profond)
-Secondary:  #7A6B5D   ← texte secondaire
-Muted:      #A89888   ← placeholders
-Background: #FAF6F1   ← fond global (creme)
-Card:       #FFFDF9   ← fond cartes (blanc casse)
-Border:     #E8DFD5   ← bordures (sable)
+Text:       #5F5475           ← texte principal (violet profond)
+Secondary:  rgba(95,84,117,0.8) ← texte secondaire
+Muted:      rgba(95,84,117,0.6) ← placeholders
+Background: #FFFFFF           ← fond global (blanc)
+Card:       #F9F8FD           ← fond cartes
+Border:     #DCD7E8           ← bordures (lavande)
 ```
 
 ### Principes
 - Flat UI strict — pas de gradients
-- Ombres subtiles brunes (jamais #000) — opacity 0.04-0.08
+- Ombres subtiles lavande (jamais #000) — opacity 0.04-0.12
 - Typographie Nunito (regular, medium, semibold, bold, extrabold)
 - Coins arrondis 12-16px pour cartes et boutons
 - Touch targets >= 44px
