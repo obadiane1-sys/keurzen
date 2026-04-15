@@ -125,8 +125,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 22,
     backgroundColor: '#967BB6',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   ctaText: {
     fontFamily: 'Nunito_700Bold',
@@ -139,6 +141,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
+    minHeight: 44,
+    paddingVertical: 12,
   },
   footerText: {
     fontFamily: 'Nunito_700Bold',
