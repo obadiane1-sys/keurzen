@@ -21,13 +21,13 @@ Le Hub remplace le dashboard actuel comme landing page, tout en laissant `dashbo
 
 | Décision | Choix retenu |
 |---|---|
-| Scope route | Nouvelle home : le stub existant `apps/mobile/app/(app)/hub/index.tsx` est rempli ; création de `apps/web/src/app/(app)/hub/page.tsx` |
-| Landing après login | Redirect `/(app)` → `/(app)/hub` (mobile + web) |
+| Scope route | Remplir le stub existant `apps/mobile/app/(app)/hub/index.tsx` ; créer `apps/web/src/app/(app)/hub/page.tsx` |
+| Landing après login | **Inchangée** : on reste sur `/(app)/dashboard`. Le Hub est accessible via l'onglet "Hub" déjà présent dans la bottom nav mobile et un nouvel item sidebar côté web |
 | Fidélité design | **Esprit Stitch, DS Keurzen** : Nunito partout, cartes flat lavande, zéro glassmorphism, zéro serif |
 | Carousel (3 cartes) | Score équilibre du jour · Tâches du jour · Activité récente |
 | Grille launcher | 7 tuiles toutes navigables : Tableau de bord (accent mint léger), Liste de course, Budget, Réglages, Charge mentale (TLX), Calendrier, Messages |
-| FAB | Comportement identique au `+` existant de Tasks → `router.push('/tasks/create')` |
-| Bottom nav | On **garde** la bottom nav existante et on **superpose** le FAB central (pas de remplacement) |
+| FAB | **Déjà en place** : le FAB central du `CustomTabBar` existe et navigue déjà vers `/tasks/create`. Rien à ajouter sur mobile. Côté web, pas de FAB — la sidebar suffit |
+| Bottom nav | **Inchangée** : la structure à 4 onglets + FAB est déjà en place dans `apps/mobile/app/(app)/_layout.tsx` |
 | Header | Greeting `Bonjour {prénom}` + date du jour + nom du foyer, cloche notifications (badge unread) à gauche du bloc droit, avatar utilisateur à droite → `/settings` |
 | États loading/empty | Skeletons lavande partout + empty states doux (jamais masquer une carte) |
 
@@ -36,8 +36,9 @@ Le Hub remplace le dashboard actuel comme landing page, tout en laissant `dashbo
 ### Mobile (`apps/mobile/`)
 
 **Routes modifiées**
-- `app/(app)/hub/index.tsx` — container thin (<100 lignes) qui compose header, carousel, grid, FAB.
-- `app/(app)/_layout.tsx` — redirection session valide vers `/(app)/hub` au lieu de `/(app)/dashboard`. Onglet "home" de la bottom nav pointe vers `hub`.
+- `app/(app)/hub/index.tsx` — container thin (<100 lignes) qui compose header, carousel, grid. Le FAB est déjà rendu par `CustomTabBar` au niveau `_layout.tsx`, rien à ajouter ici.
+
+**Pas de modification** de `app/(app)/_layout.tsx` : l'onglet `hub` existe déjà, les routes secondaires sont déjà masquées.
 
 **Nouveaux composants** sous `apps/mobile/src/components/hub/`
 
@@ -50,7 +51,6 @@ Le Hub remplace le dashboard actuel comme landing page, tout en laissant `dashbo
 | `HubActivityCard.tsx` | 3 dernières actions foyer (initiale membre + verbe + temps relatif), CTA "Voir le tableau de bord" → `/dashboard` | `useRecentActivity` (à créer si absent) |
 | `HubTilesGrid.tsx` | Grille 2 colonnes, 7 tuiles à partir de `HUB_TILES` | — |
 | `HubTile.tsx` | Carte flat lavande ; icône Ionicons + label uppercase tracking ; `Pressable` scale 0.98 | — |
-| `HubFab.tsx` | Bouton violet 64px flottant centré au-dessus de la bottom nav ; `router.push('/tasks/create')` ; respecte `safeAreaInsets.bottom` | — |
 
 **Icônes** : Ionicons (cf. convention mobile CLAUDE.md).
 
@@ -58,8 +58,9 @@ Le Hub remplace le dashboard actuel comme landing page, tout en laissant `dashbo
 
 **Routes nouvelles / modifiées**
 - `src/app/(app)/hub/page.tsx` — nouvelle page.
-- `src/app/(app)/layout.tsx` et/ou `src/lib/supabase/middleware.ts` — redirect racine `(app)` → `/hub`.
-- `src/components/layout/Sidebar.tsx` — item "Accueil" pointant vers `/hub` en tête de liste.
+- `src/components/layout/Sidebar.tsx` — nouvel item "Hub" (avant ou après "Accueil/Dashboard" selon l'ordre des priorités produit).
+
+**Pas de changement de redirect** : landing reste `/dashboard` après login.
 
 **Nouveaux composants** sous `apps/web/src/components/hub/` — mêmes noms que mobile, icônes **lucide-react**, Tailwind + tokens CSS existants de `globals.css`.
 
@@ -121,20 +122,18 @@ Chaque composant listé ci-dessus est livré en binôme mobile + web dans la mê
 
 ## 8. Risques et inconnues
 
-1. **Redirect breaking change** : les liens deep vers `/dashboard` depuis des notifications antérieures restent valides, mais ne sont plus la landing. À valider avec les deep-link handlers existants.
-2. **Onglet "home" de la bottom nav mobile** : vérifier la structure actuelle de `apps/mobile/app/(app)/_layout.tsx` — si un tab pointe déjà sur `dashboard`, le repointer sur `hub`.
-3. **`useRecentActivity` data source** : ce hook peut ne pas exister aujourd'hui. Si absent, la phase d'implémentation doit décider : créer le hook à partir d'une vue/agrégation Supabase existante, ou faire un agrégat côté client à partir de `useTasks` completions récentes. À clarifier dans le plan d'implémentation.
-4. **FAB + safe area iOS** : le FAB doit flotter sans chevaucher le home indicator et sans casser la bottom nav existante.
-5. **Sidebar web** : vérifier si `Sidebar.tsx` utilise une liste statique de routes — si oui, insertion directe ; sinon revoir.
+1. **`useRecentActivity` data source** : ce hook peut ne pas exister aujourd'hui. Si absent, la phase d'implémentation doit décider : créer le hook à partir d'une vue/agrégation Supabase existante, ou faire un agrégat côté client à partir de `useTasks` completions récentes. À clarifier dans le plan d'implémentation.
+2. **Sidebar web** : vérifier si `Sidebar.tsx` utilise une liste statique de routes — si oui, insertion directe ; sinon revoir.
+3. **DS drift FAB mobile existant** : le FAB actuel dans `_layout.tsx` utilise `#90CAF9` (bleu) au lieu du violet lavande. Hors scope de cette feature, mais à noter comme dette DS pour un pass séparé.
 
 ## 9. Critères d'acceptation
 
-- Après login, mobile et web atterrissent sur `/hub`.
+- Le 4ème onglet "Hub" de la bottom nav mobile affiche désormais l'écran Hub complet (au lieu du stub).
+- Un item "Hub" est présent dans la sidebar web et mène à `/hub`.
 - Le carousel affiche 3 cartes swipeables avec dots de pagination.
 - Chaque carte a ses trois états (loading skeleton, empty doux, data réelle).
 - La grille 2×4 affiche les 7 tuiles, toutes cliquables et naviguant vers le module correspondant.
 - La tuile "Tableau de bord" est visuellement mise en avant (accent mint léger).
-- Le FAB central navigue vers `/tasks/create`.
-- La bottom nav existante reste intacte, le FAB est superposé dessus sans chevauchement.
+- La landing après login reste `/dashboard` — pas de régression de redirect.
 - Le design respecte strictement les tokens lavande — zéro hardcoded color, zéro nouvelle police, zéro glassmorphism.
 - Lint + tests passent sur mobile et web.
