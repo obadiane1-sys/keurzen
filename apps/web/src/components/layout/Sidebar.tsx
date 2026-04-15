@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import {
   Home, CheckCircle, Calendar, List, Wallet,
-  Users, Mail, Settings, LogOut, X, MessageCircle,
+  Users, Mail, Settings, LogOut, X, MessageCircle, LayoutGrid,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { Avatar } from '@/components/ui/Avatar';
@@ -12,6 +12,7 @@ import { useAuthStore } from '@keurzen/stores';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
+  { href: '/hub', icon: LayoutGrid, label: 'Hub' },
   { href: '/tasks', icon: CheckCircle, label: 'Taches' },
   { href: '/calendar', icon: Calendar, label: 'Agenda' },
   { href: '/lists', icon: List, label: 'Listes' },
