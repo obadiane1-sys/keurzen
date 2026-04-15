@@ -5,10 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
-import { useAuthStore } from '@keurzen/stores';
-import { useHouseholdStore } from '@keurzen/stores';
+import { useAuthStore, useHouseholdStore } from '@keurzen/stores';
 import { useNotifications } from '@keurzen/queries';
-import type { InAppNotification } from '@keurzen/shared';
 
 dayjs.locale('fr');
 
@@ -21,7 +19,7 @@ export function HubHeader() {
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
   const dateLabel = dayjs().format('dddd D MMMM').toUpperCase();
   const householdName = currentHousehold?.name ?? 'MON FOYER';
-  const unreadCount = (notifications as InAppNotification[]).filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
   const initial = firstName.slice(0, 1).toUpperCase() || '?';
 
   return (

@@ -22,9 +22,7 @@ export function HubHeader() {
   const dateLabel = dayjs().format('dddd D MMMM').toUpperCase();
   const householdName = currentHousehold?.name ?? 'MON FOYER';
 
-  const unreadCount = notifications.filter(
-    (n: { read: boolean }) => !n.read,
-  ).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const avatarInitial = firstName.slice(0, 1).toUpperCase() || '?';
 
