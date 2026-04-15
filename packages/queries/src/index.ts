@@ -23,3 +23,4 @@ export * from './hooks/useCoachingInsights';
 export * from './hooks/useHouseholdScore';
 export * from './hooks/useAnalyticsTrends';
 export * from './hooks/useStats';
+export * from './hooks/useRecentActivity';
