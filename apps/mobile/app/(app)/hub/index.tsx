@@ -1,19 +1,24 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text } from '../../../src/components/ui/Text';
+import {
+  HubHeader,
+  HubCarousel,
+  HubTilesGrid,
+} from '../../../src/components/hub';
 
 export default function HubScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-lg" style={{ fontFamily: 'Nunito_700Bold', color: '#2D3748' }}>
-          Hub
-        </Text>
-        <Text className="text-sm mt-2 text-center" style={{ fontFamily: 'Outfit_400Regular', color: '#718096' }}>
-          Votre centre de commandes
-        </Text>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top']}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <HubHeader />
+        <HubCarousel />
+        <View style={{ height: 24 }} />
+        <HubTilesGrid />
+      </ScrollView>
     </SafeAreaView>
   );
 }
