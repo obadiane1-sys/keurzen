@@ -13,7 +13,7 @@ const TLX_DIMENSIONS = [
 ] as const;
 
 function getBarColor(value: number): string {
-  if (value < 40) return '#81C784';
+  if (value < 40) return 'var(--color-success)';
   if (value <= 70) return 'var(--color-joy)';
   return 'var(--color-accent)';
 }
@@ -61,7 +61,7 @@ export function TlxDetailSection() {
         {tlxDelta?.hasComparison && tlxDelta.delta !== null && (
           <span
             className="ml-2 text-xs font-semibold"
-            style={{ color: tlxDelta.delta > 0 ? 'var(--color-accent)' : '#81C784' }}
+            style={{ color: tlxDelta.delta > 0 ? 'var(--color-accent)' : 'var(--color-success)' }}
           >
             {tlxDelta.delta > 0 ? '▲' : '▼'} {Math.abs(tlxDelta.delta)} pts
           </span>

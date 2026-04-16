@@ -10,6 +10,7 @@ import { TaskEquityBar } from '@/components/dashboard/TaskEquityBar';
 import { AlertCard, MOCK_ALERTS } from '@/components/dashboard/AlertCard';
 import { UpcomingTasksList } from '@/components/dashboard/UpcomingTasksList';
 import { CompletionRatingDialog } from '@/components/dashboard/CompletionRatingDialog';
+import { StaggerChild } from '@/components/ui/AnimatedPage';
 
 /** Fallback: compute equity from all assigned tasks when weekly stats are empty */
 function computeEquityFromTasks(tasks: any[]) {
@@ -65,20 +66,30 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[800px] px-6 py-8 space-y-8">
-      <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
-      <HouseholdScoreCard score={scoreResult.total} trend={trend} />
-      <TaskEquityBar members={members} />
+      <StaggerChild index={0}>
+        <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
+      </StaggerChild>
+      <StaggerChild index={1}>
+        <HouseholdScoreCard score={scoreResult.total} trend={trend} />
+      </StaggerChild>
+      <StaggerChild index={2}>
+        <TaskEquityBar members={members} />
+      </StaggerChild>
 
       {/* Alert cards */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <AlertCard alert={MOCK_ALERTS[0]} />
-          <AlertCard alert={MOCK_ALERTS[1]} />
+      <StaggerChild index={3}>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <AlertCard alert={MOCK_ALERTS[0]} />
+            <AlertCard alert={MOCK_ALERTS[1]} />
+          </div>
+          <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
         </div>
-        <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
-      </div>
+      </StaggerChild>
 
-      <UpcomingTasksList tasks={tasks as any} onToggleStatus={handleToggle} />
+      <StaggerChild index={4}>
+        <UpcomingTasksList tasks={tasks as any} onToggleStatus={handleToggle} />
+      </StaggerChild>
 
       {ratingTask && (
         <CompletionRatingDialog

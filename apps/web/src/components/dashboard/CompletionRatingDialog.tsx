@@ -37,9 +37,16 @@ export function CompletionRatingDialog({ taskId, taskTitle, onClose }: Completio
         <h3 className="text-center font-bold text-text-primary mb-1">
           Comment etait cette tache ?
         </h3>
-        <p className="text-center text-sm text-text-secondary mb-6">
+        <p className="text-center text-sm text-text-secondary mb-2">
           {taskTitle}
         </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mx-auto block text-xs text-text-muted hover:text-text-secondary mb-4"
+        >
+          Passer
+        </button>
 
         <div className="space-y-3">
           {RATING_OPTIONS.map((option) => {

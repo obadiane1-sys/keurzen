@@ -6,13 +6,20 @@ import {
   HubCarousel,
   HubTilesGrid,
 } from '@/components/hub';
+import { StaggerChild } from '@/components/ui/AnimatedPage';
 
 export default function HubPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 py-6">
-      <HubHeader />
-      <HubCarousel />
-      <HubTilesGrid />
+      <StaggerChild index={0}>
+        <HubHeader />
+      </StaggerChild>
+      <StaggerChild index={1}>
+        <HubCarousel />
+      </StaggerChild>
+      <StaggerChild index={2}>
+        <HubTilesGrid />
+      </StaggerChild>
     </div>
   );
 }

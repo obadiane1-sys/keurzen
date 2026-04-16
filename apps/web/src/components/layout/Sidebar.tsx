@@ -1,14 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import {
   Home, CheckCircle, Calendar, List, Wallet,
-  Users, Mail, Settings, LogOut, X, MessageCircle, LayoutGrid,
+  Users, Mail, Settings, LogOut, X, MessageCircle, LayoutGrid, BarChart3,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
-import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@keurzen/stores';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
@@ -17,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/calendar', icon: Calendar, label: 'Agenda' },
   { href: '/lists', icon: List, label: 'Listes' },
   { href: '/budget', icon: Wallet, label: 'Budget' },
+  { href: '/stats', icon: BarChart3, label: 'Statistiques' },
 ];
 
 const HOUSEHOLD_ITEMS = [
@@ -31,10 +29,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ asDrawer, onClose }: SidebarProps) {
-  const { profile } = useAuthStore();
-  const router = useRouter();
-  const displayName = profile?.full_name || 'Utilisateur';
-
   if (asDrawer) {
     return (
       <>
@@ -55,7 +49,7 @@ export function Sidebar({ asDrawer, onClose }: SidebarProps) {
               <X size={16} />
             </button>
           </div>
-          <SidebarContent collapsed={false} router={router} displayName={displayName} onNavigate={onClose} />
+          <SidebarContent collapsed={false} onNavigate={onClose} />
         </aside>
       </>
     );
@@ -72,20 +66,16 @@ export function Sidebar({ asDrawer, onClose }: SidebarProps) {
         <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-v2-primary" />
         <span className="hidden xl:inline text-sm font-semibold tracking-wider text-v2-on-surface">Keurzen</span>
       </div>
-      <SidebarContent collapsed router={router} displayName={displayName} />
+      <SidebarContent collapsed />
     </aside>
   );
 }
 
 function SidebarContent({
   collapsed,
-  router,
-  displayName,
   onNavigate,
 }: {
   collapsed: boolean;
-  router: ReturnType<typeof useRouter>;
-  displayName: string;
   onNavigate?: () => void;
 }) {
   return (
@@ -115,23 +105,6 @@ function SidebarContent({
       </nav>
 
       <div className="space-y-1 px-2 py-3">
-        <button
-          onClick={() => {
-            router.push('/settings');
-            onNavigate?.();
-          }}
-          className={cn(
-            'flex w-full items-center gap-3 rounded-[var(--radius-v2-md)] px-3 py-2 text-sm transition-colors hover:bg-v2-surface',
-            collapsed && 'lg:justify-center lg:px-2 xl:justify-start xl:px-3',
-          )}
-        >
-          <Avatar name={displayName} size={28} className="bg-v2-primary-container text-v2-primary" />
-          {collapsed ? (
-            <span className="hidden xl:inline truncate text-v2-on-surface font-medium">{displayName}</span>
-          ) : (
-            <span className="truncate text-v2-on-surface font-medium">{displayName}</span>
-          )}
-        </button>
         <SidebarItem href="/settings" icon={Settings} label="Reglages" collapsed={collapsed} onNavigate={onNavigate} />
         <button
           onClick={() => onNavigate?.()}

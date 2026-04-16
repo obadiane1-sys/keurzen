@@ -38,8 +38,16 @@ export default function ListsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="space-y-4 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between py-2">
+          <div className="h-7 w-16 animate-pulse rounded-lg bg-primary-surface" />
+          <div className="h-8 w-20 animate-pulse rounded-lg bg-primary-surface" />
+        </div>
+        <div className="grid grid-cols-3 gap-4 max-md:grid-cols-2 max-sm:grid-cols-1">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-primary-surface" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -60,9 +68,7 @@ export default function ListsPage() {
 
       {lists.length === 0 ? (
         <EmptyState
-          icon={ListIcon}
-          title="Aucune liste"
-          subtitle="Creez une liste pour organiser vos courses ou taches"
+          variant="lists"
           action={{ label: 'Creer une liste', onClick: () => setShowCreate(true) }}
         />
       ) : (

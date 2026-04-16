@@ -5,7 +5,7 @@ import type { MemberBalance } from '@keurzen/queries';
 const MEMBER_COLORS = [
   'var(--color-primary)',
   'var(--color-primary)',
-  '#81C784',
+  'var(--color-success)',
   'var(--color-joy)',
   'var(--color-accent)',
 ];

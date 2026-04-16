@@ -35,6 +35,16 @@
 
   --font-heading: 'Fredoka One', cursive;
   --font-body: 'Open Sans', sans-serif;
+
+  --color-v2-primary: #967BB6;
+  --color-v2-secondary: rgba(95, 84, 117, 0.6);
+  --color-v2-surface-container: #F9F8FD;
+  --color-v2-surface-lowest: #FFFFFF;
+  --color-v2-surface: #F3F0FF;
+  --color-v2-on-surface: #5F5475;
+  --color-v2-on-surface-variant: rgba(95, 84, 117, 0.6);
+  --color-v2-outline-variant: #DCD7E8;
+  --color-success: #81C784;
 }
 
 /* ─── shadcn semantic tokens → Cafe Cosy mapping ─── */
@@ -114,6 +124,7 @@
   --sidebar-accent-foreground: #5F5475;
   --sidebar-border: #DCD7E8;
   --sidebar-ring: #967BB6;
+  --radius-v2-md: 12px;
 }
 
 body {
@@ -164,6 +175,28 @@ body {
   height: 8px;
   border-radius: 9999px;
   background: transparent;
+}
+
+/* ─── Mascot animations ─── */
+@keyframes breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes pop {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(4deg); }
 }
 
 @layer base {

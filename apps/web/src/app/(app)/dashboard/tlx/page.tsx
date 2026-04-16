@@ -32,7 +32,7 @@ const DIMENSIONS: {
   { key: 'mental_demand', label: 'Exigence mentale', description: 'Reflexion, concentration, memoire requises', color: 'var(--color-primary)', Icon: Brain },
   { key: 'physical_demand', label: 'Exigence physique', description: 'Activite physique necessaire', color: 'var(--color-accent)', Icon: Dumbbell },
   { key: 'temporal_demand', label: 'Pression temporelle', description: 'Sentiment de manquer de temps', color: 'var(--color-joy)', Icon: Clock },
-  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: '#81C784', Icon: Trophy },
+  { key: 'performance', label: 'Performance', description: 'Satisfaction de votre travail (100 = tres satisfait)', color: 'var(--color-success)', Icon: Trophy },
   { key: 'effort', label: 'Effort', description: "Intensite de l'effort fourni", color: 'var(--color-primary)', Icon: Flame },
   { key: 'frustration', label: 'Frustration', description: 'Sentiment de decouragement, stress', color: 'var(--color-accent)', Icon: Frown },
 ];
@@ -40,7 +40,7 @@ const DIMENSIONS: {
 // ─── Score helpers ──────────────────────────────────────────────────────────
 
 function tlxColor(score: number): string {
-  if (score <= 33) return '#81C784';
+  if (score <= 33) return 'var(--color-success)';
   if (score <= 66) return 'var(--color-primary)';
   return 'var(--color-accent)';
 }

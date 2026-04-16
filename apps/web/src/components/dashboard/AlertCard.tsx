@@ -29,7 +29,7 @@ export const MOCK_ALERTS: AlertData[] = [
     label: 'Plan',
     title: 'Prenez 15 minutes ce soir pour planifier.',
     actionLabel: 'Détails',
-    color: '#90CAF9',
+    color: '#967BB6',
   },
   {
     id: 'social-1',
@@ -37,7 +37,7 @@ export const MOCK_ALERTS: AlertData[] = [
     label: 'Social',
     title: 'Thomas a complété 5 tâches. Remerciez-le !',
     actionLabel: 'Envoyer',
-    color: '#90CAF9',
+    color: '#967BB6',
   },
 ];
 
@@ -88,7 +88,7 @@ export function AlertCard({ alert, fullWidth }: AlertCardProps) {
         {alert.title}
       </h3>
       <button
-        className="text-[10px] font-bold uppercase tracking-wider font-heading flex items-center gap-1"
+        className="text-[10px] font-bold uppercase tracking-wider font-heading flex items-center gap-1 hover:opacity-70 active:scale-[0.97] transition-all duration-150"
         style={{ color: alert.color }}
       >
         {alert.actionLabel} →

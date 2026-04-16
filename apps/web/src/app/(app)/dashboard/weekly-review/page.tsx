@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -29,7 +29,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getScoreColor(score: number): string {
-  if (score >= 75) return '#81C784';
+  if (score >= 75) return 'var(--color-success)';
   if (score >= 50) return 'var(--color-joy)';
   return 'var(--color-accent)';
 }
@@ -57,7 +57,7 @@ function formatWeekDate(weekStart: string): string {
 
 const MEMBER_COLORS = [
   'var(--color-primary)',
-  '#81C784',
+  'var(--color-success)',
   'var(--color-primary)',
   'var(--color-joy)',
   'var(--color-accent)',
@@ -173,6 +173,20 @@ function HistoryItem({
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function WeeklyReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <WeeklyReviewContent />
+    </Suspense>
+  );
+}
+
+function WeeklyReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const weekParam = searchParams.get('week') ?? undefined;
@@ -417,7 +431,7 @@ export default function WeeklyReviewPage() {
             <div className="h-px bg-border-light" />
             <CollapsibleSection
               icon={Compass}
-              iconColor="#81C784"
+              iconColor="var(--color-success)"
               title="Orientations"
               count={review.orientations.length}
               expanded={expandedSections.orientations}
@@ -429,7 +443,7 @@ export default function WeeklyReviewPage() {
                     className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                     style={{
                       backgroundColor: item.priority === 'high'
-                        ? '#81C784'
+                        ? 'var(--color-success)'
                         : 'var(--color-text-muted)',
                     }}
                   />

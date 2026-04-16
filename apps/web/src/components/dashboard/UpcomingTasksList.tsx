@@ -70,7 +70,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
         </h2>
         <button
           onClick={() => router.push('/tasks')}
-          className="text-[10px] font-bold text-primary uppercase font-heading border-b-2 border-primary/20"
+          className="text-[10px] font-bold text-primary uppercase font-heading border-b-2 border-primary/20 hover:opacity-70 active:scale-[0.97] transition-all duration-150"
         >
           Voir tout
         </button>
@@ -103,7 +103,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
               </div>
               <button
                 onClick={() => onToggleStatus(task.id)}
-                className="w-8 h-8 border-2 border-primary/20 rounded-full flex items-center justify-center hover:bg-primary/10 transition-colors"
+                className="w-8 h-8 border-2 border-primary/20 rounded-full flex items-center justify-center hover:bg-primary/10 hover:border-primary hover:scale-110 active:scale-90 transition-all duration-150"
                 aria-label={`Marquer ${task.title} comme terminée`}
               >
                 <div className="w-2 h-2 rounded-full bg-primary/20" />

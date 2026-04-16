@@ -1,110 +1,77 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { Plus, Search, CheckCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTasks, useDeleteTask } from '@keurzen/queries';
-import { useAuthStore } from '@keurzen/stores';
+import { useHouseholdStore } from '@keurzen/stores';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskDetail } from '@/components/tasks/TaskDetail';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
+import { AnimatedPage } from '@/components/ui/AnimatedPage';
+import { TasksSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
-import type { Task } from '@keurzen/shared';
+import type { Task, TaskType } from '@keurzen/shared';
 import dayjs from 'dayjs';
 
-type Tab = 'all' | 'today' | 'overdue' | 'done';
-
 export default function TasksPage() {
-  const { profile } = useAuthStore();
+  const { members } = useHouseholdStore();
   const { data: tasks = [], isLoading } = useTasks();
   const { mutate: deleteTask } = useDeleteTask();
-  const [activeTab, setActiveTab] = useState<Tab>('all');
-  const [search, setSearch] = useState('');
+  const [taskTypeTab, setTaskTypeTab] = useState<TaskType>('household');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  const now = dayjs();
-  const today = now.format('YYYY-MM-DD');
-  const firstName = profile?.full_name?.split(' ')[0] ?? '';
+  // ─── Member list ────────────────────────────────────────────────────────
 
-  // ─── Counts ──────────────────────────────────────────────────────────────
+  const memberList = useMemo(
+    () =>
+      members.map((m) => ({
+        userId: m.user_id,
+        name: m.profile?.full_name?.split(' ')[0] ?? '',
+        color: m.color ?? '#967BB6',
+      })),
+    [members],
+  );
 
-  const counts = useMemo(() => {
-    let allCount = 0;
-    let todayCount = 0;
-    let overdueCount = 0;
-    let doneCount = 0;
+  // ─── Filter & split ─────────────────────────────────────────────────────
 
-    for (const t of tasks) {
+  const { todoTasks, doneTasks } = useMemo(() => {
+    const now = dayjs();
+    let filtered = tasks.filter((t) => (t.task_type ?? 'household') === taskTypeTab);
+
+    if (selectedMemberId) {
+      filtered = filtered.filter((t) => t.assigned_to === selectedMemberId);
+    }
+
+    const todo: Task[] = [];
+    const done: Task[] = [];
+
+    for (const t of filtered) {
       if (t.status === 'done') {
-        doneCount++;
-        continue;
+        done.push(t);
+      } else {
+        todo.push(t);
       }
-      allCount++;
-      if (t.due_date === today) todayCount++;
-      if (t.due_date && dayjs(t.due_date).isBefore(now, 'day')) overdueCount++;
     }
 
-    return { all: allCount, today: todayCount, overdue: overdueCount, done: doneCount };
-  }, [tasks, today, now]);
+    todo.sort((a, b) => {
+      const aOverdue = a.due_date && dayjs(a.due_date).isBefore(now, 'day');
+      const bOverdue = b.due_date && dayjs(b.due_date).isBefore(now, 'day');
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+      if (a.due_date) return -1;
+      if (b.due_date) return 1;
+      return b.created_at.localeCompare(a.created_at);
+    });
 
-  // ─── Hero message ────────────────────────────────────────────────────────
+    done.sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-  const heroMessage = useMemo(() => {
-    if (counts.all === 0 && counts.done > 0) return 'Tout est fait, beau travail !';
-    const parts: string[] = [];
-    if (counts.overdue > 0) parts.push(`${counts.overdue} en retard`);
-    if (counts.today > 0) parts.push(`${counts.today} pour aujourd'hui`);
-    if (parts.length === 0) return `${counts.all} tâche${counts.all > 1 ? 's' : ''} en cours`;
-    return parts.join(' · ');
-  }, [counts]);
-
-  // ─── Tabs definition ────────────────────────────────────────────────────
-
-  const TABS: { key: Tab; label: string; count: number }[] = [
-    { key: 'all', label: 'Toutes', count: counts.all },
-    { key: 'today', label: "Aujourd'hui", count: counts.today },
-    { key: 'overdue', label: 'En retard', count: counts.overdue },
-    { key: 'done', label: 'Faites', count: counts.done },
-  ];
-
-  const filteredTasks = useMemo(() => {
-    let result = tasks;
-
-    switch (activeTab) {
-      case 'today':
-        result = result.filter(
-          (t) => t.due_date === today && t.status !== 'done',
-        );
-        break;
-      case 'overdue':
-        result = result.filter(
-          (t) =>
-            t.status !== 'done' &&
-            t.due_date &&
-            dayjs(t.due_date).isBefore(now, 'day'),
-        );
-        break;
-      case 'done':
-        result = result.filter((t) => t.status === 'done');
-        break;
-      default: // 'all' — non-done only
-        result = result.filter((t) => t.status !== 'done');
-        break;
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.assigned_profile?.full_name?.toLowerCase().includes(q),
-      );
-    }
-
-    return result;
-  }, [tasks, activeTab, search, today, now]);
+    return { todoTasks: todo, doneTasks: done.slice(0, 5) };
+  }, [tasks, taskTypeTab, selectedMemberId]);
 
   const handleDelete = useCallback(
     (id: string) => {
@@ -120,93 +87,80 @@ export default function TasksPage() {
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <TasksSkeleton />;
   }
 
   return (
-    <>
-      {/* Hero Header */}
+    <AnimatedPage>
+      {/* Header */}
       <div className="flex items-center justify-between px-1 pt-2 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">
-            Bonjour {firstName}
-          </h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            {heroMessage}
-          </p>
-        </div>
+        <h1 className="text-xl font-bold text-text-primary">Tâches</h1>
         <Button size="default" onClick={() => setShowCreate(true)}>
           <Plus size={16} />
-          Creer
+          Créer
         </Button>
       </div>
 
-      {/* Tabs with counters */}
-      <div className="mb-4 flex items-center gap-1 border-b border-border-light">
-        {TABS.map(({ key, label, count }) => {
-          const isOverdueTab = key === 'overdue' && activeTab !== key && count > 0;
-          return (
-            <button
-              key={key}
-              onClick={() => {
-                setActiveTab(key);
-                setSelectedTaskId(null);
-              }}
-              className={cn(
-                'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-                activeTab === key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-text-muted hover:text-text-primary',
-              )}
-            >
-              {label}
-              <span
-                className={cn(
-                  'ml-1.5 text-xs',
-                  activeTab === key ? 'text-primary' : isOverdueTab ? 'text-accent' : 'text-text-muted',
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+      {/* Tabs Maison / Perso */}
+      <div className="mb-4 flex rounded-xl bg-primary-surface p-1">
+        <button
+          onClick={() => { setTaskTypeTab('household'); setSelectedTaskId(null); }}
+          className={cn(
+            'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 text-center',
+            taskTypeTab === 'household'
+              ? 'bg-white text-text-primary font-bold shadow-sm'
+              : 'text-text-muted hover:text-text-primary',
+          )}
+        >
+          Maison
+        </button>
+        <button
+          onClick={() => { setTaskTypeTab('personal'); setSelectedTaskId(null); }}
+          className={cn(
+            'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 text-center',
+            taskTypeTab === 'personal'
+              ? 'bg-white text-text-primary font-bold shadow-sm'
+              : 'text-text-muted hover:text-text-primary',
+          )}
+        >
+          Perso
+        </button>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-        />
-        <input
-          type="text"
-          placeholder="Rechercher..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-10 w-full rounded-[var(--radius-md)] border border-border bg-background-card pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none"
-        />
+      {/* Member filters */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <button
+          onClick={() => setSelectedMemberId(null)}
+          className={cn(
+            'px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors',
+            selectedMemberId === null
+              ? 'bg-primary text-white'
+              : 'bg-background-card text-text-primary hover:bg-border-light',
+          )}
+        >
+          Tous
+        </button>
+        {memberList.map((member) => (
+          <button
+            key={member.userId}
+            onClick={() => setSelectedMemberId(member.userId)}
+            className={cn(
+              'px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors',
+              selectedMemberId === member.userId
+                ? 'bg-primary text-white'
+                : 'bg-background-card text-text-primary hover:bg-border-light',
+            )}
+          >
+            {member.name}
+          </button>
+        ))}
       </div>
 
-      {/* Split View */}
-      {filteredTasks.length === 0 ? (
+      {/* Task sections */}
+      {todoTasks.length === 0 && doneTasks.length === 0 ? (
         <EmptyState
-          icon={CheckCircle}
-          title="Aucune tache"
-          subtitle={
-            activeTab === 'done'
-              ? 'Rien de termine pour le moment'
-              : 'Creez votre premiere tache'
-          }
-          action={
-            activeTab !== 'done'
-              ? { label: 'Creer une tache', onClick: () => setShowCreate(true) }
-              : undefined
-          }
+          variant="tasks"
+          action={{ label: 'Créer une tâche', onClick: () => setShowCreate(true) }}
         />
       ) : (
         <div className="flex gap-4">
@@ -217,7 +171,8 @@ export default function TasksPage() {
             )}
           >
             <TaskList
-              tasks={filteredTasks}
+              todoTasks={todoTasks}
+              doneTasks={doneTasks}
               selectedId={selectedTaskId}
               onSelect={setSelectedTaskId}
               onDelete={handleDelete}
@@ -252,6 +207,6 @@ export default function TasksPage() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
       />
-    </>
+    </AnimatedPage>
   );
 }

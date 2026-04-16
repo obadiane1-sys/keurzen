@@ -16,8 +16,8 @@ export function Card({ children, className, style, hoverable, onClick }: CardPro
       style={style}
       className={cn(
         'rounded-[var(--radius-lg)] bg-background-card p-4 shadow-card',
-        hoverable && 'cursor-pointer transition-all duration-150 hover:-translate-y-px hover:shadow-md',
-        onClick && 'text-left w-full',
+        hoverable && 'cursor-pointer transition-all duration-150 hover:-translate-y-px hover:shadow-md active:scale-[0.99]',
+        onClick && 'text-left w-full cursor-pointer transition-all duration-150 hover:-translate-y-px hover:shadow-md active:scale-[0.99]',
         className,
       )}
     >

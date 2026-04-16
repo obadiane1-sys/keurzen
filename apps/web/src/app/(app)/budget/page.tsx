@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useHouseholdStore } from '@keurzen/stores';
 import type { BudgetCategory, BudgetExpense } from '@keurzen/shared';
 import { Card } from '@/components/ui/Card';
@@ -41,8 +41,7 @@ export default function BudgetPage() {
   if (!currentHousehold) {
     return (
       <EmptyState
-        icon={Wallet}
-        title="Pas de foyer"
+        variant="household"
         subtitle="Creez ou rejoignez un foyer pour utiliser le budget."
       />
     );
@@ -50,8 +49,17 @@ export default function BudgetPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="space-y-4 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between">
+          <div className="h-7 w-20 animate-pulse rounded-lg bg-primary-surface" />
+          <div className="h-8 w-24 animate-pulse rounded-lg bg-primary-surface" />
+        </div>
+        <div className="h-24 animate-pulse rounded-2xl bg-primary-surface" />
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-primary-surface" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -114,9 +122,7 @@ export default function BudgetPage() {
       {/* Expense list */}
       {expenses.length === 0 ? (
         <EmptyState
-          icon={Wallet}
-          title="Aucune depense"
-          subtitle="Ajoutez votre premiere depense pour ce mois."
+          variant="budget"
           action={{ label: 'Ajouter une depense', onClick: () => setShowCreate(true) }}
         />
       ) : (

@@ -28,35 +28,21 @@ export function HubHeader() {
         type="button"
         aria-label="Notifications"
         onClick={() => router.push('/notifications')}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full"
-        style={{ backgroundColor: '#F3F0FF' }}
+        className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary-surface hover:bg-primary-light active:scale-95 transition-all duration-150"
       >
-        <Bell size={20} color="#967BB6" />
+        <Bell size={20} className="text-primary" />
         {unreadCount > 0 && (
-          <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-            style={{ backgroundColor: '#967BB6' }}
-          >
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       <div className="flex-1 text-center">
-        <h1
-          className="truncate text-2xl font-bold"
-          style={{ color: '#5F5475', fontFamily: 'Nunito, sans-serif' }}
-        >
+        <h1 className="truncate text-2xl font-bold text-text-primary font-[Nunito,sans-serif]">
           Bonjour {firstName || 'toi'}
         </h1>
-        <p
-          className="mt-1 truncate text-[10px] font-semibold"
-          style={{
-            color: 'rgba(95,84,117,0.7)',
-            letterSpacing: 2,
-            fontFamily: 'Nunito, sans-serif',
-          }}
-        >
+        <p className="mt-1 truncate text-[10px] font-semibold tracking-[2px] text-text-muted font-[Nunito,sans-serif]">
           {dateLabel} · {householdName.toUpperCase()}
         </p>
       </div>
@@ -65,13 +51,9 @@ export function HubHeader() {
         type="button"
         aria-label="Profil"
         onClick={() => router.push('/settings')}
-        className="flex h-11 w-11 items-center justify-center rounded-full"
-        style={{ backgroundColor: '#E5DBFF' }}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light hover:bg-primary/20 active:scale-95 transition-all duration-150"
       >
-        <span
-          className="font-bold"
-          style={{ color: '#5F5475', fontFamily: 'Nunito, sans-serif' }}
-        >
+        <span className="font-bold text-text-primary font-[Nunito,sans-serif]">
           {initial}
         </span>
       </button>
