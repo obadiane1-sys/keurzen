@@ -27,9 +27,9 @@ interface CompletionRatingSheetProps {
 // ─── Rating Options ──────────────────────────────────────────────────────────
 
 const RATING_OPTIONS = [
-  { value: 1 as const, label: 'Légère', description: 'Rapide et simple', icon: 'leaf-outline' as const, color: Colors.sauge },
-  { value: 2 as const, label: 'Moyenne', description: 'Effort modéré', icon: 'time-outline' as const, color: Colors.miel },
-  { value: 3 as const, label: 'Lourde', description: 'Demande beaucoup d\'énergie', icon: 'barbell-outline' as const, color: Colors.rose },
+  { value: 1 as const, label: 'Légère', description: 'Rapide et simple', icon: 'leaf-outline' as const, color: Colors.success },
+  { value: 2 as const, label: 'Moyenne', description: 'Effort modéré', icon: 'time-outline' as const, color: Colors.joy },
+  { value: 3 as const, label: 'Lourde', description: 'Demande beaucoup d\'énergie', icon: 'barbell-outline' as const, color: Colors.accent },
 ];
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -102,11 +102,14 @@ export function CompletionRatingSheet({
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
-      {/* Overlay — NOT touchable */}
-      <Animated.View
-        style={[styles.overlay, { opacity: overlayOpacity }]}
-        pointerEvents="none"
-      />
+      {/* Overlay — tap to dismiss */}
+      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onComplete}
+        />
+      </Animated.View>
 
       {/* Sheet */}
       <Animated.View
@@ -127,6 +130,11 @@ export function CompletionRatingSheet({
         <Text variant="bodySmall" color="secondary" style={styles.subtitle}>
           {taskTitle}
         </Text>
+
+        {/* Skip link */}
+        <TouchableOpacity onPress={onComplete} style={styles.skipButton}>
+          <Text variant="bodySmall" color="muted">Passer</Text>
+        </TouchableOpacity>
 
         {/* Rating buttons */}
         <View style={styles.buttonsContainer}>
@@ -198,6 +206,11 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     marginBottom: Spacing.xl,
+  },
+  skipButton: {
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
+    padding: Spacing.xs,
   },
   buttonsContainer: {
     gap: Spacing.md,

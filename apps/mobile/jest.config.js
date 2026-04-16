@@ -7,10 +7,13 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '\\.claude/worktrees/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@keurzen/shared$': '<rootDir>/../../packages/shared/src/index.ts',
+    '^@keurzen/shared/(.*)$': '<rootDir>/../../packages/shared/src/$1',
   },
   collectCoverageFrom: [
     'src/lib/queries/*.ts',
     'src/utils/*.ts',
+    '../../packages/shared/src/utils/*.ts',
     '!src/**/*.d.ts',
   ],
 };

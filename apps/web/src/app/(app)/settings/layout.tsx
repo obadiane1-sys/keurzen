@@ -27,7 +27,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               className={cn(
                 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
                 isActive
-                  ? 'border-terracotta text-terracotta'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-text-muted hover:text-text-primary',
               )}
             >

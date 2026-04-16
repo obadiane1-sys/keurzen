@@ -9,9 +9,9 @@ import type { SharedList, SharedListType } from '../../types';
 // ─── Label Map ───────────────────────────────────────────────────────────────
 
 export const typeLabels: Record<SharedListType, { label: string; color: string; defaultIcon: string }> = {
-  shopping: { label: 'Courses', color: Colors.sauge, defaultIcon: 'cart-outline' },
-  todo: { label: 'Todo', color: Colors.prune, defaultIcon: 'checkmark-circle-outline' },
-  custom: { label: 'Perso', color: Colors.miel, defaultIcon: 'list-outline' },
+  shopping: { label: 'Courses', color: Colors.success, defaultIcon: 'cart-outline' },
+  todo: { label: 'Todo', color: Colors.primary, defaultIcon: 'checkmark-circle-outline' },
+  custom: { label: 'Perso', color: Colors.joy, defaultIcon: 'list-outline' },
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

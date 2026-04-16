@@ -149,8 +149,8 @@ export default function NotificationsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.terracotta}
-              colors={[Colors.terracotta]}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
         />

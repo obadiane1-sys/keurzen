@@ -109,8 +109,8 @@ export default function ListsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.terracotta}
-              colors={[Colors.terracotta]}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
         />
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.lg,

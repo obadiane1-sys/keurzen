@@ -92,7 +92,7 @@ export default function HelpScreen() {
         <Card onPress={handleContact} padding="md">
           <View style={styles.contactRow}>
             <View style={styles.contactIcon}>
-              <Ionicons name="mail-outline" size={20} color={Colors.terracotta} />
+              <Ionicons name="mail-outline" size={20} color={Colors.primary} />
             </View>
             <View style={styles.contactText}>
               <Text variant="label">Envoyer un email</Text>
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.terracotta + '18',
+    backgroundColor: Colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },

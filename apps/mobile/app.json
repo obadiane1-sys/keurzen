@@ -14,7 +14,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.keurzen.mobile",
-      "associatedDomains": ["applinks:app.keurzen.app"]
+      "associatedDomains": [
+        "applinks:app.keurzen.app"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -35,7 +37,10 @@
               "pathPrefix": "/join/"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         },
         {
           "action": "VIEW",
@@ -47,7 +52,10 @@
               "pathPrefix": "/join-code"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -56,7 +64,8 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

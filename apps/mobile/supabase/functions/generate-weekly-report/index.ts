@@ -150,6 +150,43 @@ serve(async (req: Request) => {
       memberNames[m.user_id] = name.split(' ')[0];
     }
 
+    // ─── Compute aggregate metrics ───────────────────────────────────────
+    const totalTasksCompleted = completedTasks?.length ?? 0;
+    const totalMinutesLogged = (timeLogs ?? []).reduce(
+      (sum: number, l: any) => sum + (l.minutes ?? 0), 0
+    );
+
+    const tlxScores = (tlxEntries ?? []).map((t: any) => t.score).filter(Boolean);
+    const avgTlxScore = tlxScores.length > 0
+      ? Math.round((tlxScores.reduce((s: number, v: number) => s + v, 0) / tlxScores.length) * 100) / 100
+      : null;
+
+    const taskDeltas = (weeklyStats ?? []).map((s: any) => Math.abs(s.tasks_delta ?? 0));
+    const balanceScore = taskDeltas.length > 0
+      ? Math.max(0, Math.min(100, Math.round(
+          (100 - (taskDeltas.reduce((s: number, v: number) => s + v, 0) / taskDeltas.length) * 100) * 100
+        ) / 100))
+      : null;
+
+    const memberMetricsData = (members ?? []).map((m: any) => {
+      const userId = m.user_id;
+      const name = memberNames[userId] ?? 'Membre';
+      const stat = (weeklyStats ?? []).find((s: any) => s.user_id === userId);
+      const tlx = (tlxEntries ?? []).find((t: any) => t.user_id === userId);
+      const memberMinutes = (timeLogs ?? [])
+        .filter((l: any) => l.user_id === userId)
+        .reduce((s: number, l: any) => s + (l.minutes ?? 0), 0);
+
+      return {
+        user_id: userId,
+        name,
+        tasks_count: stat?.tasks_count ?? 0,
+        minutes: memberMinutes,
+        tlx_score: tlx?.score ?? null,
+        tasks_share: stat?.tasks_share ?? 0,
+      };
+    });
+
     // ─── Check data sufficiency ───────────────────────────────────────────
 
     const totalCompleted = completedTasks?.length ?? 0;
@@ -292,6 +329,11 @@ serve(async (req: Request) => {
           orientations,
           model: CLAUDE_MODEL,
           generated_at: new Date().toISOString(),
+          total_tasks_completed: totalTasksCompleted,
+          total_minutes_logged: totalMinutesLogged,
+          avg_tlx_score: avgTlxScore,
+          balance_score: balanceScore,
+          member_metrics: memberMetricsData,
         },
         { onConflict: 'household_id,week_start' }
       )

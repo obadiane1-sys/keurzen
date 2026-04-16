@@ -172,6 +172,24 @@ export interface WeeklyStat {
   profile?: Profile;
 }
 
+// ─── Weekly Objectives ────────────────────────────────────────────────────────
+
+export type ObjectiveType = 'completion' | 'balance' | 'tlx' | 'streak' | 'maintenance';
+
+export interface WeeklyObjective {
+  id: string;
+  household_id: string;
+  week_start: string;
+  type: ObjectiveType;
+  target_value: number;
+  baseline_value: number;
+  current_value: number;
+  achieved: boolean;
+  achieved_at: string | null;
+  label: string;
+  created_at: string;
+}
+
 export type AlertLevel = 'balanced' | 'watch' | 'unbalanced';
 export type AlertType = 'task_imbalance' | 'time_imbalance' | 'overload';
 
@@ -390,6 +408,15 @@ export interface Orientation {
   priority: 'high' | 'medium';
 }
 
+export interface MemberMetric {
+  user_id: string;
+  name: string;
+  tasks_count: number;
+  minutes: number;
+  tlx_score: number | null;
+  tasks_share: number; // 0-1
+}
+
 export interface WeeklyReport {
   id: string;
   household_id: string;
@@ -401,6 +428,12 @@ export interface WeeklyReport {
   model: string;
   generated_at: string;
   created_at: string;
+  // Computed metrics (nullable for older reports)
+  total_tasks_completed: number;
+  total_minutes_logged: number;
+  avg_tlx_score: number | null;
+  balance_score: number | null;
+  member_metrics: MemberMetric[];
 }
 
 // ─── Meals & Recipes ──────────────────────────────────────────────────────────
@@ -502,6 +535,42 @@ export interface MealPlanFormValues {
   assigned_to?: string;
 }
 
+// ─── Messaging ───────────────────────────────────────────────────────────────
+
+export type ConversationType = 'household' | 'direct';
+
+export interface Conversation {
+  id: string;
+  household_id: string;
+  type: ConversationType;
+  created_by: string;
+  created_at: string;
+  // Joined / computed
+  members?: ConversationMember[];
+  last_message?: Message;
+  unread_count?: number;
+}
+
+export interface ConversationMember {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  last_read_at: string;
+  joined_at: string;
+  // Joined
+  profile?: Profile;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  // Joined
+  sender?: Profile;
+}
+
 // ─── Utility Types ─────────────────────────────────────────────────────────────
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -557,4 +626,19 @@ export interface SignUpFormValues {
 
 export interface SignInFormValues {
   email: string;
+}
+
+export * from './onboarding';
+
+// ─── Coaching Insights ───
+export type InsightType = 'alert' | 'conseil' | 'wellbeing';
+
+export interface CoachingInsight {
+  id: string;
+  type: InsightType;
+  icon: string;
+  label: string;
+  message: string;
+  cta_label: string;
+  priority: number;
 }

@@ -10,9 +10,13 @@ import { getSupabaseClient } from '../client';
 export async function sendOtpForLogin(email: string): Promise<{ error: string | null }> {
   const supabase = getSupabaseClient();
 
-  const { data: isRegistered } = await supabase.rpc('check_email_registered', {
+  const { data: isRegistered, error: rpcError } = await supabase.rpc('check_email_registered', {
     p_email: email,
   });
+
+  if (rpcError) {
+    return { error: 'Erreur technique. Veuillez reessayer.' };
+  }
 
   if (!isRegistered) {
     return { error: 'Aucun compte trouvé avec cette adresse. Créez un compte.' };

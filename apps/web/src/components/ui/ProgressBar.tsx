@@ -6,7 +6,7 @@ interface ProgressBarProps {
   className?: string;
 }
 
-export function ProgressBar({ value, color = 'var(--color-terracotta)', className }: ProgressBarProps) {
+export function ProgressBar({ value, color = 'var(--color-primary)', className }: ProgressBarProps) {
   return (
     <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-border-light', className)}>
       <div

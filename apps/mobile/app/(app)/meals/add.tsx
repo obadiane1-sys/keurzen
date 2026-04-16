@@ -137,11 +137,11 @@ export default function AddMealScreen() {
             {recipeId ? (
               <View style={styles.recipeSelected}>
                 {recipeLoading ? (
-                  <ActivityIndicator size="small" color={Colors.terracotta} />
+                  <ActivityIndicator size="small" color={Colors.primary} />
                 ) : (
                   <>
                     <View style={styles.recipeIconContainer}>
-                      <Ionicons name="restaurant" size={18} color={Colors.terracotta} />
+                      <Ionicons name="restaurant" size={18} color={Colors.primary} />
                     </View>
                     <Text style={styles.recipeTitle} numberOfLines={1}>
                       {recipe?.title ?? 'Recette sélectionnée'}
@@ -155,7 +155,7 @@ export default function AddMealScreen() {
                 onPress={handleChooseRecipe}
                 activeOpacity={0.7}
               >
-                <Ionicons name="search" size={18} color={Colors.terracotta} />
+                <Ionicons name="search" size={18} color={Colors.primary} />
                 <Text style={styles.chooseRecipeText}>Choisir une recette</Text>
                 <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
               </TouchableOpacity>
@@ -298,7 +298,7 @@ export default function AddMealScreen() {
                 <Ionicons
                   name="remove"
                   size={20}
-                  color={servings <= 1 ? Colors.textMuted : Colors.terracotta}
+                  color={servings <= 1 ? Colors.textMuted : Colors.primary}
                 />
               </TouchableOpacity>
               <Text style={styles.servingsValue}>{servings}</Text>
@@ -311,7 +311,7 @@ export default function AddMealScreen() {
                 <Ionicons
                   name="add"
                   size={20}
-                  color={servings >= 20 ? Colors.textMuted : Colors.terracotta}
+                  color={servings >= 20 ? Colors.textMuted : Colors.primary}
                 />
               </TouchableOpacity>
               <Text style={styles.servingsUnit}>
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.terracotta + '1A',
+    backgroundColor: Colors.primary + '1A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -440,10 +440,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.terracotta + '0F',
+    backgroundColor: Colors.primary + '0F',
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
-    borderColor: Colors.terracotta + '40',
+    borderColor: Colors.primary + '40',
     borderStyle: 'dashed',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.fontSize.base,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.terracotta,
+    color: Colors.primary,
   },
 
   // Date pills
@@ -473,8 +473,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   datePillSelected: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   datePillText: {
     fontSize: Typography.fontSize.sm,
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mealTypeChipSelected: {
-    backgroundColor: Colors.terracotta,
-    borderColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   mealTypeChipText: {
     fontSize: Typography.fontSize.sm,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
   },
   memberItemSelected: {
-    backgroundColor: Colors.terracotta + '12',
+    backgroundColor: Colors.primary + '12',
   },
   memberAvatar: {
     width: 40,
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   memberNameSelected: {
-    color: Colors.terracotta,
+    color: Colors.primary,
     fontFamily: Typography.fontFamily.semibold,
   },
 
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.button,
     paddingVertical: Spacing.md + 2,
     minHeight: 52,

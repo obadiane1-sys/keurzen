@@ -1,85 +1,165 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../ui/Text';
-import { IconAlert, IconBrain, IconBell, IconChevronRight } from './Icons';
-import { DCOLORS, DFONT } from './constants';
-
-export interface AlertItem {
-  type: 'overdue' | 'imbalance' | 'reminder';
-  message: string;
-}
+import { Colors, Shadows } from '../../constants/tokens';
+import type { MockAlert } from './constants';
 
 interface AlertCardProps {
-  alerts: AlertItem[];
-  onPressAlert?: (alert: AlertItem) => void;
+  alert: MockAlert;
+  fullWidth?: boolean;
 }
 
-const iconMap = {
-  overdue: (props: { size: number; color: string }) => <IconAlert {...props} />,
-  imbalance: (props: { size: number; color: string }) => <IconBrain {...props} />,
-  reminder: (props: { size: number; color: string }) => <IconBell {...props} />,
-};
+export function AlertCard({ alert, fullWidth }: AlertCardProps) {
+  const isSocial = alert.type === 'social';
 
-const colorMap = {
-  overdue: { icon: DCOLORS.coral, bg: DCOLORS.coralLight, border: DCOLORS.coral + '40' },
-  imbalance: { icon: DCOLORS.lavender, bg: DCOLORS.lavenderLight, border: DCOLORS.lavender + '40' },
-  reminder: { icon: DCOLORS.blue, bg: DCOLORS.blueLight, border: DCOLORS.blue + '40' },
-};
-
-export function AlertCard({ alerts, onPressAlert }: AlertCardProps) {
-  if (!alerts.length) return null;
+  if (isSocial && fullWidth) {
+    return (
+      <View style={[styles.card, styles.socialCard]}>
+        <View style={styles.socialContent}>
+          <View style={styles.blobIcon}>
+            <MaterialCommunityIcons
+              name={alert.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+              size={24}
+              color={alert.color}
+            />
+          </View>
+          <View style={styles.socialText}>
+            <View style={[styles.pill, { borderColor: alert.color }]}>
+              <Text style={[styles.pillText, { color: alert.color }]}>{alert.label}</Text>
+            </View>
+            <Text style={styles.socialTitle}>{alert.title}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.sendButton} activeOpacity={0.8}>
+          <Text style={styles.sendButtonText}>{alert.actionLabel}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      {alerts.map((alert, i) => {
-        const colors = colorMap[alert.type];
-        const Icon = iconMap[alert.type];
-
-        return (
-          <TouchableOpacity
-            key={i}
-            style={[
-              styles.alertRow,
-              {
-                backgroundColor: colors.bg,
-                borderColor: colors.border,
-              },
-            ]}
-            activeOpacity={0.85}
-            onPress={() => onPressAlert?.(alert)}
-          >
-            <Icon size={18} color={colors.icon} />
-            <View style={styles.messageContainer}>
-              <Text
-                variant="body"
-                weight="medium"
-                style={{ color: DCOLORS.navy, fontSize: DFONT.body.size }}
-              >
-                {alert.message}
-              </Text>
-            </View>
-            <IconChevronRight size={16} color={DCOLORS.textMuted} />
-          </TouchableOpacity>
-        );
-      })}
+    <View style={[styles.card, styles.smallCard, { borderTopColor: alert.color }]}>
+      <View style={styles.smallHeader}>
+        <View style={[styles.pill, { borderColor: alert.color }]}>
+          <Text style={[styles.pillText, { color: alert.color }]}>{alert.label}</Text>
+        </View>
+        <View style={styles.blobIconSmall}>
+          <MaterialCommunityIcons
+            name={alert.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+            size={14}
+            color={alert.color}
+          />
+        </View>
+      </View>
+      <Text style={styles.smallTitle}>{alert.title}</Text>
+      <TouchableOpacity activeOpacity={0.7}>
+        <Text style={[styles.actionText, { color: alert.color }]}>
+          {alert.actionLabel}{' '}
+          <MaterialCommunityIcons name="chevron-right" size={12} color={alert.color} />
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 10,
+  card: {
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundCard,
+    ...Shadows.card,
   },
-  alertRow: {
+  smallCard: {
+    padding: 16,
+    borderTopWidth: 4,
+  },
+  smallHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pill: {
+    alignSelf: 'flex-start',
+    minWidth: 64,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    alignItems: 'center',
+  },
+  pillText: {
+    fontSize: 10,
+    fontFamily: 'Nunito_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  blobIconSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smallTitle: {
+    fontSize: 12,
+    fontFamily: 'Nunito_700Bold',
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  actionText: {
+    fontSize: 10,
+    fontFamily: 'Nunito_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  socialCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    justifyContent: 'space-between',
+    padding: 16,
   },
-  messageContainer: {
+  socialContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     flex: 1,
+  },
+  blobIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialText: {
+    flex: 1,
+  },
+  socialTitle: {
+    fontSize: 12,
+    fontFamily: 'Nunito_700Bold',
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  sendButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    ...Shadows.md,
+  },
+  sendButtonText: {
+    fontSize: 10,
+    fontFamily: 'Nunito_700Bold',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
 });

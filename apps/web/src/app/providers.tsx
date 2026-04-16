@@ -2,9 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { setSupabaseClient } from '@keurzen/queries';
+import { setSupabaseClient, useMyHousehold } from '@keurzen/queries';
 import { createBrowserClient } from '@supabase/ssr';
 import { useAuthInit } from '@/hooks/useAuthInit';
+import { useAuthStore } from '@keurzen/stores';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -17,6 +18,13 @@ if (supabaseUrl && supabaseAnonKey) {
 
 function AuthInit() {
   useAuthInit();
+  return null;
+}
+
+function HouseholdInit() {
+  const { user } = useAuthStore();
+  useMyHousehold();
+  if (!user) return null;
   return null;
 }
 
@@ -33,6 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInit />
+      <HouseholdInit />
       {children}
     </QueryClientProvider>
   );

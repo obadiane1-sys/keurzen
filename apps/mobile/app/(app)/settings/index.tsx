@@ -28,8 +28,8 @@ function SettingsRow({ icon, label, onPress, color, danger }: SettingsRowProps) 
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={[styles.rowIcon, { backgroundColor: (color ?? Colors.terracotta) + '18' }]}>
-        <Ionicons name={icon} size={18} color={color ?? Colors.terracotta} />
+      <View style={[styles.rowIcon, { backgroundColor: (color ?? Colors.primary) + '18' }]}>
+        <Ionicons name={icon} size={18} color={color ?? Colors.primary} />
       </View>
       <Text
         variant="body"
@@ -126,19 +126,19 @@ export default function SettingsScreen() {
             icon="mail-outline"
             label="Invitations"
             onPress={() => router.push('/(app)/settings/invite')}
-            color={Colors.miel}
+            color={Colors.joy}
           />
           <SettingsRow
             icon="lock-closed-outline"
             label="Securite"
             onPress={() => router.push('/(app)/settings/security')}
-            color={Colors.prune}
+            color={Colors.primary}
           />
           <SettingsRow
             icon="notifications-outline"
             label="Notifications"
             onPress={() => router.push('/(app)/settings/notifications')}
-            color={Colors.rose}
+            color={Colors.accent}
           />
         </View>
 

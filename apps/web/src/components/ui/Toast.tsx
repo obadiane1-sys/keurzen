@@ -18,15 +18,15 @@ const icons = {
 };
 
 const colors = {
-  success: 'border-sauge/30 bg-sauge/8',
-  error: 'border-rose/30 bg-rose/8',
-  info: 'border-miel/30 bg-miel/8',
+  success: 'border-success/30 bg-success/8',
+  error: 'border-accent/30 bg-accent/8',
+  info: 'border-joy/30 bg-joy/8',
 };
 
 const iconColors = {
-  success: 'text-sauge',
-  error: 'text-rose',
-  info: 'text-miel',
+  success: 'text-success',
+  error: 'text-accent',
+  info: 'text-joy',
 };
 
 export function Toast({ message, type = 'info', onDismiss, duration = 4000 }: ToastProps) {

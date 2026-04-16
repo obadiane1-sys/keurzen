@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  chipActive: { backgroundColor: Colors.terracotta, borderColor: Colors.terracotta },
+  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { fontSize: Typography.fontSize.xs, color: Colors.textSecondary },
   chipTextActive: { color: Colors.textInverse, fontWeight: '600' },
 });

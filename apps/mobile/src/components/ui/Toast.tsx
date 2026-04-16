@@ -7,19 +7,19 @@ import { useUiStore } from '../../stores/ui.store';
 
 const typeConfig = {
   success: {
-    accent: Colors.sauge,
+    accent: Colors.success,
     icon: 'checkmark-circle' as const,
-    iconColor: Colors.sauge,
+    iconColor: Colors.success,
   },
   error: {
-    accent: Colors.rose,
+    accent: Colors.accent,
     icon: 'alert-circle' as const,
-    iconColor: Colors.rose,
+    iconColor: Colors.accent,
   },
   info: {
-    accent: Colors.miel,
+    accent: Colors.joy,
     icon: 'information-circle' as const,
-    iconColor: Colors.miel,
+    iconColor: Colors.joy,
   },
 };
 

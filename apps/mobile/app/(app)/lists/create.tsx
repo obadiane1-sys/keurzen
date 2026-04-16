@@ -35,9 +35,9 @@ const TYPE_CHIPS: {
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }[] = [
-  { value: 'shopping', label: 'Courses', icon: 'cart-outline', color: Colors.sauge },
-  { value: 'todo', label: 'Todo', icon: 'checkmark-circle-outline', color: Colors.prune },
-  { value: 'custom', label: 'Perso', icon: 'list-outline', color: Colors.miel },
+  { value: 'shopping', label: 'Courses', icon: 'cart-outline', color: Colors.success },
+  { value: 'todo', label: 'Todo', icon: 'checkmark-circle-outline', color: Colors.primary },
+  { value: 'custom', label: 'Perso', icon: 'list-outline', color: Colors.joy },
 ];
 
 const ICON_CHOICES: (keyof typeof Ionicons.glyphMap)[] = [
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.full,
     height: 48,
     ...Shadows.sm,

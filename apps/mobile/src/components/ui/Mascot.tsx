@@ -28,7 +28,7 @@ interface MascotProps {
 export function Mascot({
   size = 80,
   expression = 'calm',
-  color = Colors.sauge,
+  color = Colors.success,
   style,
 }: MascotProps) {
   const s = size;
@@ -89,7 +89,7 @@ export function Mascot({
           cy={blushY}
           rx={blushR}
           ry={blushR * 0.55}
-          fill={Colors.rose}
+          fill={Colors.accent}
           opacity={0.35}
         />
         <Ellipse
@@ -97,7 +97,7 @@ export function Mascot({
           cy={blushY}
           rx={blushR}
           ry={blushR * 0.55}
-          fill={Colors.rose}
+          fill={Colors.accent}
           opacity={0.35}
         />
 
@@ -182,9 +182,9 @@ export function Mascot({
         {/* Celebrate sparkles */}
         {expression === 'celebrate' && (
           <>
-            <Circle cx={cx - s * 0.35} cy={cy - s * 0.3} r={s * 0.025} fill={Colors.rose} opacity={0.7} />
-            <Circle cx={cx + s * 0.35} cy={cy - s * 0.28} r={s * 0.02} fill={Colors.prune} opacity={0.8} />
-            <Circle cx={cx + s * 0.3} cy={cy - s * 0.38} r={s * 0.015} fill={Colors.miel} opacity={0.7} />
+            <Circle cx={cx - s * 0.35} cy={cy - s * 0.3} r={s * 0.025} fill={Colors.accent} opacity={0.7} />
+            <Circle cx={cx + s * 0.35} cy={cy - s * 0.28} r={s * 0.02} fill={Colors.primary} opacity={0.8} />
+            <Circle cx={cx + s * 0.3} cy={cy - s * 0.38} r={s * 0.015} fill={Colors.joy} opacity={0.7} />
           </>
         )}
       </Svg>

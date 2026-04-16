@@ -103,14 +103,14 @@ function VerifyForm() {
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="h-12 w-11 rounded-[var(--radius-md)] border border-border bg-background-card text-center text-lg font-semibold text-text-primary transition-colors focus:border-terracotta focus:outline-none"
+              className="h-12 w-11 rounded-[var(--radius-md)] border border-border bg-background-card text-center text-lg font-semibold text-text-primary transition-colors focus:border-primary focus:outline-none"
             />
           ))}
         </div>
 
         {error && (
-          <div className="rounded-[var(--radius-md)] bg-rose/10 px-3 py-2">
-            <p className="text-[13px] text-rose">{error}</p>
+          <div className="rounded-[var(--radius-md)] bg-accent/10 px-3 py-2">
+            <p className="text-[13px] text-accent">{error}</p>
           </div>
         )}
 
@@ -127,7 +127,7 @@ export default function VerifyPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-12">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       }
     >

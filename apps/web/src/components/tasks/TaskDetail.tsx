@@ -33,7 +33,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
   // Sync title when task changes
   useEffect(() => {
-    setTitle(task.title);
+    setTitle(task.title); // eslint-disable-line react-hooks/set-state-in-effect
   }, [task.id, task.title]);
 
   const handleTitleBlur = () => {
@@ -113,7 +113,7 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
 
       {/* Delete */}
       <div className="mt-6 pt-4 border-t border-border-light">
-        <Button variant="danger" size="sm" onClick={handleDelete}>
+        <Button variant="destructive" size="sm" onClick={handleDelete}>
           <Trash2 size={14} />
           Supprimer
         </Button>

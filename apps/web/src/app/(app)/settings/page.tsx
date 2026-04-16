@@ -56,7 +56,7 @@ export default function ProfilePage() {
         <Button onClick={handleSave} isLoading={saving}>
           Enregistrer
         </Button>
-        {success && <span className="text-sm text-sauge font-medium">Enregistre</span>}
+        {success && <span className="text-sm text-success font-medium">Enregistre</span>}
       </div>
     </Card>
   );

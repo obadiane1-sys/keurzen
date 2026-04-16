@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { verifyOtp, sendOtp, sendOtpForLogin } from '../../src/lib/supabase/auth';
 import { useUiStore } from '../../src/stores/ui.store';
+import type { RelativePathString } from 'expo-router';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Button } from '../../src/components/ui/Button';
@@ -24,7 +25,7 @@ const RESEND_COOLDOWN = 30;
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { email, mode } = useLocalSearchParams<{ email?: string; mode?: string }>();
-  const { showToast } = useUiStore();
+  const { showToast, pendingInviteToken, pendingInviteCode } = useUiStore();
 
   const resolvedEmail: string =
     email ??
@@ -81,8 +82,15 @@ export default function VerifyEmailScreen() {
     }
 
     showToast('Connexion réussie !', 'success');
-    router.replace('/(app)/dashboard');
-  }, [code, resolvedEmail, showToast, router]);
+
+    if (pendingInviteToken) {
+      router.replace(`/join/${pendingInviteToken}` as RelativePathString);
+    } else if (pendingInviteCode) {
+      router.replace(`/(auth)/join-code?code=${pendingInviteCode}` as RelativePathString);
+    } else {
+      router.replace('/(app)/dashboard');
+    }
+  }, [code, resolvedEmail, showToast, router, pendingInviteToken, pendingInviteCode]);
 
   const handleResend = useCallback(async () => {
     if (!resolvedEmail || cooldown > 0) return;
@@ -180,7 +188,7 @@ export default function VerifyEmailScreen() {
                 Vous n'avez pas reçu le code ?{' '}
               </Text>
               {isResending ? (
-                <ActivityIndicator size="small" color={Colors.terracotta} />
+                <ActivityIndicator size="small" color={Colors.primary} />
               ) : cooldown > 0 ? (
                 <Text variant="bodySmall" color="muted">
                   Renvoyer dans {cooldown}s
@@ -268,7 +276,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     opacity: 0.1,
   },
   blobLavender: {
@@ -278,7 +286,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     opacity: 0.08,
   },
   blobCoral: {
@@ -288,7 +296,7 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     opacity: 0.09,
   },
 });

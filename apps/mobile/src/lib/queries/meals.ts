@@ -296,31 +296,7 @@ export function useGenerateGroceryList() {
       let listId: string;
 
       if (params.mergeWithExisting) {
-        const { data: existingLists } = await supabase
-          .from('shared_lists')
-          .select('id')
-          .eq('household_id', householdId)
-          .eq('type', 'shopping')
-          .eq('archived', false)
-          .order('updated_at', { ascending: false })
-          .limit(1);
-
-        if (existingLists && existingLists.length > 0) {
-          listId = existingLists[0].id;
-        } else {
-          const { data: newList, error: listErr } = await supabase
-            .from('shared_lists')
-            .insert({
-              household_id: householdId,
-              title: 'Courses semaine',
-              type: 'shopping',
-              created_by: userId,
-            })
-            .select('id')
-            .single();
-          if (listErr) throw new Error(listErr.message);
-          listId = newList.id;
-        }
+        listId = await findOrCreateGroceryList(householdId, userId, 'Courses semaine');
       } else {
         const { data: newList, error: listErr } = await supabase
           .from('shared_lists')
@@ -361,6 +337,40 @@ export function useGenerateGroceryList() {
   });
 }
 
+// ─── Helper: Find or create the active grocery list ──────────────────────────
+
+async function findOrCreateGroceryList(
+  householdId: string,
+  userId: string,
+  title = 'Courses'
+): Promise<string> {
+  const { data: existingLists } = await supabase
+    .from('shared_lists')
+    .select('id')
+    .eq('household_id', householdId)
+    .eq('type', 'shopping')
+    .eq('archived', false)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+
+  if (existingLists && existingLists.length > 0) {
+    return existingLists[0].id;
+  }
+
+  const { data: newList, error } = await supabase
+    .from('shared_lists')
+    .insert({
+      household_id: householdId,
+      title,
+      type: 'shopping',
+      created_by: userId,
+    })
+    .select('id')
+    .single();
+  if (error) throw new Error(error.message);
+  return newList.id;
+}
+
 // ─── Helper: Add recipe ingredients to active grocery list ───────────────────
 
 async function addIngredientsToGroceryList(
@@ -386,33 +396,7 @@ async function addIngredientsToGroceryList(
     .single();
 
   const ratio = servings / (recipe?.servings ?? 4);
-
-  const { data: existingLists } = await supabase
-    .from('shared_lists')
-    .select('id')
-    .eq('household_id', householdId)
-    .eq('type', 'shopping')
-    .eq('archived', false)
-    .order('updated_at', { ascending: false })
-    .limit(1);
-
-  let listId: string;
-  if (existingLists && existingLists.length > 0) {
-    listId = existingLists[0].id;
-  } else {
-    const { data: newList, error } = await supabase
-      .from('shared_lists')
-      .insert({
-        household_id: householdId,
-        title: 'Courses',
-        type: 'shopping',
-        created_by: userId,
-      })
-      .select('id')
-      .single();
-    if (error) throw new Error(error.message);
-    listId = newList.id;
-  }
+  const listId = await findOrCreateGroceryList(householdId, userId);
 
   const items = recipeIngs
     .filter((ri) => !(ri as { optional: boolean }).optional)

@@ -1,32 +1,130 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Keurzen "Lavender" tokens ─── */
 @theme {
-  --color-terracotta: #C07A62;
-  --color-sauge: #82A47E;
-  --color-miel: #CFA24F;
-  --color-rose: #CF7B74;
-  --color-prune: #9585A3;
-  --color-background: #FDFBF8;
-  --color-background-card: #FFFFFF;
-  --color-text-primary: #2D1F17;
-  --color-text-secondary: #6B5D50;
-  --color-text-muted: #9E8F80;
-  --color-text-inverse: #FFFDF9;
-  --color-border: #EBE5DD;
-  --color-border-light: #F3EDE6;
+  --color-primary: #967BB6;
+  --color-primary-light: #E5DBFF;
+  --color-primary-surface: #F3F0FF;
+  --color-accent: #F4C2C2;
+  --color-joy: #FFF9C4;
+  --color-background: #FFFFFF;
+  --color-background-card: #F9F8FD;
+  --color-background-card-end: #F3F0FF;
+  --color-text-primary: #5F5475;
+  --color-text-secondary: rgba(95, 84, 117, 0.8);
+  --color-text-muted: rgba(95, 84, 117, 0.6);
+  --color-text-inverse: #FFFFFF;
+  --color-border: #DCD7E8;
+  --color-border-light: #F3F0FF;
 
-  --shadow-sm: 0 1px 2px rgba(45, 31, 23, 0.04);
-  --shadow-md: 0 2px 8px rgba(45, 31, 23, 0.05);
-  --shadow-lg: 0 4px 16px rgba(45, 31, 23, 0.07);
-  --shadow-card: 0 1px 4px rgba(45, 31, 23, 0.04), 0 0 0 1px rgba(45, 31, 23, 0.03);
+  --shadow-sm: 0 1px 2px rgba(150, 123, 182, 0.08);
+  --shadow-md: 0 2px 8px rgba(150, 123, 182, 0.1);
+  --shadow-lg: 0 4px 16px rgba(150, 123, 182, 0.12);
+  --shadow-card: 0 3px 10px rgba(150, 123, 182, 0.1);
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
 
-  --font-heading: var(--font-instrument-sans), sans-serif;
-  --font-body: var(--font-inter), sans-serif;
+  --font-heading: 'Fredoka One', cursive;
+  --font-body: 'Open Sans', sans-serif;
+
+  --color-v2-primary: #967BB6;
+  --color-v2-secondary: rgba(95, 84, 117, 0.6);
+  --color-v2-surface-container: #F9F8FD;
+  --color-v2-surface-lowest: #FFFFFF;
+  --color-v2-surface: #F3F0FF;
+  --color-v2-on-surface: #5F5475;
+  --color-v2-on-surface-variant: rgba(95, 84, 117, 0.6);
+  --color-v2-outline-variant: #DCD7E8;
+  --color-success: #81C784;
+}
+
+/* ─── shadcn semantic tokens → Cafe Cosy mapping ─── */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #5F5475;
+  --card: #F9F8FD;
+  --card-foreground: #5F5475;
+  --popover: #FFFFFF;
+  --popover-foreground: #5F5475;
+  --primary: #967BB6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E5DBFF;
+  --secondary-foreground: #5F5475;
+  --muted: #F3F0FF;
+  --muted-foreground: rgba(95, 84, 117, 0.8);
+  --accent: #F3F0FF;
+  --accent-foreground: #5F5475;
+  --destructive: #F4C2C2;
+  --border: #DCD7E8;
+  --input: #DCD7E8;
+  --ring: #967BB6;
+  --chart-1: #967BB6;
+  --chart-2: #F4C2C2;
+  --chart-3: #FFF9C4;
+  --chart-4: #B39DDB;
+  --chart-5: #80CBC4;
+  --radius: 0.75rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #5F5475;
+  --sidebar-primary: #967BB6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F3F0FF;
+  --sidebar-accent-foreground: #5F5475;
+  --sidebar-border: #DCD7E8;
+  --sidebar-ring: #967BB6;
+  --radius-v2-md: 12px;
 }
 
 body {
@@ -36,6 +134,109 @@ body {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-terracotta);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* TLX range slider */
+.tlx-slider {
+  background: linear-gradient(
+    to right,
+    var(--slider-color) 0%,
+    var(--slider-color) var(--slider-pct),
+    var(--color-border-light) var(--slider-pct),
+    var(--color-border-light) 100%
+  );
+}
+.tlx-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-color);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(150, 123, 182, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.tlx-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+.tlx-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-color);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(150, 123, 182, 0.15);
+  cursor: pointer;
+}
+.tlx-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+/* ─── Mascot animations ─── */
+@keyframes breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes pop {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(4deg); }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Priority slider */
+.priority-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--color-primary-light);
+  border-radius: 5px;
+  outline: none;
+}
+.priority-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.priority-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

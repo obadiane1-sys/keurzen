@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text } from '../ui/Text';
-import { ProgressBar } from '../dashboard/ProgressBar';
-import { Colors, BorderRadius, Spacing } from '../../constants/tokens';
+import { Colors, BorderRadius } from '../../constants/tokens';
 
 interface Member {
   name: string;
@@ -57,12 +56,12 @@ export function MemberBreakdown({ members, totalMinutes }: MemberBreakdownProps)
                   </Text>
                 </View>
               </View>
-              <ProgressBar
-                value={member.tasksShare}
-                max={maxShare}
-                color={member.color}
-                height={10}
-              />
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, {
+                  width: `${Math.round((member.tasksShare / maxShare) * 100)}%`,
+                  backgroundColor: member.color,
+                }]} />
+              </View>
             </View>
           );
         })}
@@ -121,5 +120,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 4,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.borderLight,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 5,
   },
 });

@@ -1,6 +1,8 @@
+import { Calendar, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/Avatar';
 import { useUpdateTaskStatus } from '@keurzen/queries';
+import { categoryEmoji, formatDueDate } from '@keurzen/shared';
 import type { Task } from '@keurzen/shared';
 import dayjs from 'dayjs';
 
@@ -8,25 +10,19 @@ interface TaskRowProps {
   task: Task;
   isSelected: boolean;
   onClick: () => void;
+  onDelete?: () => void;
 }
 
-const priorityColors: Record<string, string> = {
-  high: 'var(--color-rose)',
-  urgent: 'var(--color-rose)',
-  medium: 'var(--color-miel)',
-  low: 'var(--color-sauge)',
-};
-
-export function TaskRow({ task, isSelected, onClick }: TaskRowProps) {
+export function TaskRow({ task, isSelected, onClick, onDelete }: TaskRowProps) {
   const { mutate: updateStatus } = useUpdateTaskStatus();
   const isDone = task.status === 'done';
+  const isOverdue = !isDone && task.due_date && dayjs(task.due_date).isBefore(dayjs(), 'day');
+  const emoji = categoryEmoji[task.category] ?? categoryEmoji.other;
+  const dateLabel = formatDueDate(task.due_date);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    updateStatus({
-      id: task.id,
-      status: isDone ? 'todo' : 'done',
-    });
+    updateStatus({ id: task.id, status: isDone ? 'todo' : 'done' });
   };
 
   return (
@@ -38,67 +34,81 @@ export function TaskRow({ task, isSelected, onClick }: TaskRowProps) {
         if (e.key === 'Enter' || e.key === ' ') onClick();
       }}
       className={cn(
-        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-border-light/50 cursor-pointer',
-        isSelected && 'bg-terracotta/5',
+        'group flex w-full items-center gap-4 px-4 py-3 text-left transition-all duration-200 cursor-pointer hover:bg-background-card/80 hover:shadow-sm',
+        isSelected && 'ring-1 ring-primary/20',
       )}
     >
-      {/* Checkbox */}
-      <button
-        onClick={handleToggle}
-        className={cn(
-          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-          isDone
-            ? 'border-sauge bg-sauge text-white'
-            : 'border-border hover:border-terracotta',
-        )}
-      >
-        {isDone && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path
-              d="M1 4L3.5 6.5L9 1"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
-
-      {/* Priority dot */}
-      <div
-        className="h-2 w-2 shrink-0 rounded-full"
-        style={{
-          backgroundColor:
-            priorityColors[task.priority] || priorityColors.medium,
-        }}
+      {/* Avatar */}
+      <Avatar
+        name={task.assigned_profile?.full_name || undefined}
+        src={task.assigned_profile?.avatar_url}
+        size={40}
       />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p
           className={cn(
-            'text-sm font-medium truncate',
+            'text-sm font-semibold truncate',
             isDone && 'line-through text-text-muted',
           )}
         >
-          {task.title}
+          {emoji} {task.title}
         </p>
-        {task.due_date && (
-          <p className="text-xs text-text-muted">
-            {dayjs(task.due_date).format('DD MMM')}
+        {dateLabel && (
+          <p className={cn(
+            'text-xs mt-0.5 flex items-center gap-1',
+            isOverdue ? 'text-accent' : 'text-text-muted',
+          )}>
+            <Calendar size={12} />
+            {dateLabel}
           </p>
         )}
       </div>
 
-      {/* Assignee */}
-      {task.assigned_profile && (
-        <Avatar
-          name={task.assigned_profile.full_name || undefined}
-          src={task.assigned_profile.avatar_url}
-          size={24}
+      {/* Checkbox / Delete */}
+      {!isDone ? (
+        <button
+          onClick={handleToggle}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border hover:border-primary hover:bg-primary/10 hover:scale-110 active:scale-90 transition-all duration-150"
+          aria-label="Marquer comme terminée"
         />
-      )}
+      ) : onDelete ? (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="hidden group-hover:flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-text-muted hover:bg-accent/10 hover:text-accent transition-colors"
+          aria-label="Supprimer"
+        >
+          <Trash2 size={14} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Compact row for completed tasks ────────────────────────────────────────
+
+interface CompletedTaskRowProps {
+  task: Task;
+}
+
+export function CompletedTaskRow({ task }: CompletedTaskRowProps) {
+  const emoji = categoryEmoji[task.category] ?? categoryEmoji.other;
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-3 border border-border-light rounded-[var(--radius-md)] bg-white">
+      <Avatar
+        name={task.assigned_profile?.full_name || undefined}
+        src={task.assigned_profile?.avatar_url}
+        size={32}
+        className="opacity-60"
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-text-muted line-through truncate">
+          {emoji} {task.title}
+        </p>
+        <p className="text-[10px] text-text-muted mt-0.5">Hier ✓</p>
+      </div>
     </div>
   );
 }

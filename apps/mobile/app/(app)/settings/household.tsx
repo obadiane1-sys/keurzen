@@ -10,8 +10,18 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useMyHousehold, useHouseholdMembers, useCreateHousehold, useJoinHousehold } from '../../../src/lib/queries/household';
-import { useRecentCodes, useGenerateInviteCode, useDeleteInviteCode } from '../../../src/lib/queries/invitation-codes';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+import {
+  useMyHousehold,
+  useHouseholdMembers,
+  useCreateHousehold,
+  useJoinHousehold,
+} from '../../../src/lib/queries/household';
+import {
+  useRecentCodes,
+  useDeleteInviteCode,
+} from '../../../src/lib/queries/invitation-codes';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { useUiStore } from '../../../src/stores/ui.store';
 import type { InvitationCode } from '../../../src/types';
@@ -19,9 +29,10 @@ import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constant
 import { Text } from '../../../src/components/ui/Text';
 import { Input } from '../../../src/components/ui/Input';
 import { Button } from '../../../src/components/ui/Button';
-import { Card } from '../../../src/components/ui/Card';
 import { Avatar } from '../../../src/components/ui/Avatar';
 import { Loader } from '../../../src/components/ui/Loader';
+
+dayjs.locale('fr');
 
 export default function HouseholdScreen() {
   const router = useRouter();
@@ -32,44 +43,18 @@ export default function HouseholdScreen() {
   const { data: recentCodes } = useRecentCodes(currentHousehold?.id);
   const createHousehold = useCreateHousehold();
   const joinHousehold = useJoinHousehold();
-  const generateCode = useGenerateInviteCode();
   const deleteCode = useDeleteInviteCode();
 
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
-  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
 
-  // Filter pending invitations (not used, not expired)
   const pendingInvites = (recentCodes ?? []).filter(
     (c) => !c.used && new Date(c.expires_at) > new Date(),
   );
 
-  const getInviteStatus = (invite: InvitationCode): { label: string; color: string } => {
-    const now = Date.now();
-    const created = new Date(invite.created_at).getTime();
-    const expires = new Date(invite.expires_at).getTime();
-    if (expires < now) return { label: 'Expiré', color: Colors.rose };
-    if (now - created < 5 * 60 * 1000) return { label: 'Envoyé ✓', color: Colors.sauge };
-    return { label: 'En attente', color: Colors.miel };
-  };
-
-  const handleResend = async (invite: InvitationCode) => {
-    if (!invite.email) return;
-    setResendingId(invite.id);
-    try {
-      await generateCode.mutateAsync({
-        email: invite.email,
-        firstName: invite.invited_name ?? undefined,
-      });
-      showToast('Invitation renvoyée !', 'success');
-    } catch (e) {
-      showToast((e as Error).message, 'error');
-    } finally {
-      setResendingId(null);
-    }
-  };
-
   const handleDeleteInvite = (invite: InvitationCode) => {
-    const name = invite.invited_name ?? invite.email ?? 'cet invité';
+    const label = invite.invited_name ?? invite.email ?? 'cet invité';
     const doDelete = async () => {
       try {
         await deleteCode.mutateAsync(invite.id);
@@ -80,16 +65,14 @@ export default function HouseholdScreen() {
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm(`Supprimer l'invitation pour ${name} ?`)) doDelete();
+      if (window.confirm(`Supprimer l'invitation pour ${label} ?`)) doDelete();
     } else {
-      Alert.alert('Supprimer l\'invitation', `Supprimer l'invitation pour ${name} ?`, [
+      Alert.alert('Supprimer l\'invitation', `Supprimer l'invitation pour ${label} ?`, [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Supprimer', style: 'destructive', onPress: doDelete },
       ]);
     }
   };
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -116,166 +99,149 @@ export default function HouseholdScreen() {
   if (isLoading) return <Loader fullScreen />;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text variant="h2" style={styles.title}>Mon foyer</Text>
-        </View>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.headerBtn}
+        >
+          <Ionicons name="chevron-back" size={22} color={Colors.textSecondary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Mon Foyer</Text>
+        <View style={styles.headerBtn} />
+      </View>
 
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {household ? (
           <>
-            {/* Foyer info card */}
-            <Card style={styles.householdCard}>
-              <View style={styles.householdInfo}>
-                <View style={styles.householdIcon}>
-                  <Ionicons name="home" size={22} color={Colors.sauge} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text variant="h3">{household.name}</Text>
-                  <Text variant="caption" color="muted">
-                    Code : {household.invite_code}
-                  </Text>
-                </View>
+            {/* Foyer hero */}
+            <View style={styles.hero}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroTitle}>{household.name}</Text>
+                <Text style={styles.heroSubtitle}>
+                  {(members?.length ?? 0)} membre{(members?.length ?? 0) > 1 ? 's' : ''}
+                  {household.created_at
+                    ? ` · Créé en ${dayjs(household.created_at).format('MMMM YYYY')}`
+                    : ''}
+                </Text>
               </View>
-            </Card>
-
-            {/* Members section */}
-            <View style={styles.sectionHeader}>
-              <Text variant="label" color="secondary">
-                Membres ({members?.length ?? 0})
-              </Text>
             </View>
 
-            <Card style={styles.membersCard}>
-              {members?.map((m, index) => (
-                <View
-                  key={m.id}
-                  style={[
-                    styles.memberRow,
-                    index < (members.length - 1) && styles.memberRowBorder,
-                  ]}
-                >
-                  <Avatar
-                    name={m.profile?.full_name}
-                    avatarUrl={m.profile?.avatar_url}
-                    color={m.color}
-                    size="md"
-                  />
-                  <View style={styles.memberInfo}>
-                    <Text variant="body">{m.profile?.full_name ?? 'Membre'}</Text>
-                    <Text variant="caption" color="muted">
-                      {m.role === 'owner' ? 'Administrateur' : 'Membre'}
-                    </Text>
-                  </View>
-                  {m.role === 'owner' && (
-                    <View style={styles.ownerBadge}>
-                      <Text style={styles.ownerBadgeText}>Admin</Text>
+            {/* Members */}
+            <Text style={styles.sectionLabel}>
+              Membres ({members?.length ?? 0})
+            </Text>
+
+            <View style={styles.list}>
+              {members?.map((m) => {
+                const isOwner = m.role === 'owner';
+                return (
+                  <View key={m.id} style={styles.row}>
+                    <Avatar
+                      name={m.profile?.full_name}
+                      avatarUrl={m.profile?.avatar_url}
+                      color={m.color}
+                      size="md"
+                    />
+                    <View style={styles.rowBody}>
+                      <View style={styles.rowTitleLine}>
+                        <Text style={styles.rowName}>
+                          {m.profile?.full_name ?? 'Membre'}
+                        </Text>
+                        <View
+                          style={[
+                            styles.badge,
+                            isOwner ? styles.badgeOwner : styles.badgeMember,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              isOwner ? styles.badgeTextOwner : styles.badgeTextMember,
+                            ]}
+                          >
+                            {isOwner ? 'Admin' : 'Membre'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.rowCaption} numberOfLines={1}>
+                        {m.profile?.email ?? ' '}
+                      </Text>
                     </View>
-                  )}
-                </View>
-              ))}
-            </Card>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={Colors.gray300}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Invite CTA */}
+            <TouchableOpacity
+              style={styles.inviteLink}
+              onPress={() => router.push('/(app)/settings/invite')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Inviter un membre"
+            >
+              <Ionicons name="add" size={18} color={Colors.primary} />
+              <Text style={styles.inviteLinkText}>Inviter un membre</Text>
+            </TouchableOpacity>
 
             {/* Pending invitations */}
             {pendingInvites.length > 0 && (
               <>
-                <View style={styles.sectionHeader}>
-                  <Text variant="label" color="secondary">
-                    Invitations en attente ({pendingInvites.length})
-                  </Text>
-                </View>
+                <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>
+                  Invitations en cours
+                </Text>
 
-                <Card style={styles.membersCard}>
+                <View style={styles.list}>
                   {pendingInvites.map((invite, index) => {
-                    const daysLeft = Math.ceil(
-                      (new Date(invite.expires_at).getTime() - Date.now()) / 86_400_000,
-                    );
+                    const last = index === pendingInvites.length - 1;
+                    const label = invite.invited_name ?? invite.email ?? 'Invité';
                     return (
                       <View
                         key={invite.id}
                         style={[
-                          styles.memberRow,
-                          index < pendingInvites.length - 1 && styles.memberRowBorder,
+                          styles.inviteRow,
+                          !last && styles.inviteRowBorder,
                         ]}
                       >
-                        <View style={styles.pendingIconCircle}>
-                          <Ionicons name="mail-outline" size={18} color={Colors.rose} />
-                        </View>
-                        <View style={styles.memberInfo}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-                            <Text variant="body">
-                              {invite.invited_name ?? invite.email ?? 'Invité'}
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.inviteName}>{label}</Text>
+                          {invite.email && (
+                            <Text style={styles.inviteEmail} numberOfLines={1}>
+                              {invite.email}
                             </Text>
-                            {(() => {
-                              const status = getInviteStatus(invite);
-                              return (
-                                <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
-                                  <Text style={[styles.statusBadgeText, { color: status.color }]}>
-                                    {status.label}
-                                  </Text>
-                                </View>
-                              );
-                            })()}
-                          </View>
-                          <Text variant="caption" color="muted">
-                            {invite.email ? invite.email : ''}
-                            {invite.email && daysLeft > 0 ? '  ·  ' : ''}
-                            {daysLeft > 0
-                              ? `Expire dans ${daysLeft}j`
-                              : "Expire aujourd'hui"}
-                          </Text>
+                          )}
                         </View>
-                        {invite.email && (
-                          <TouchableOpacity
-                            style={styles.resendBtn}
-                            onPress={() => handleResend(invite)}
-                            disabled={resendingId === invite.id}
-                            activeOpacity={0.7}
-                          >
-                            {resendingId === invite.id ? (
-                              <Loader size="small" />
-                            ) : (
-                              <Ionicons name="refresh" size={16} color={Colors.sauge} />
-                            )}
-                          </TouchableOpacity>
-                        )}
+                        <View style={styles.statusWrap}>
+                          <View style={styles.statusDot} />
+                          <Text style={styles.statusText}>EN ATTENTE</Text>
+                        </View>
                         <TouchableOpacity
-                          style={styles.deleteInviteBtn}
+                          style={styles.closeBtn}
                           onPress={() => handleDeleteInvite(invite)}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Supprimer l'invitation pour ${label}`}
                         >
                           <Ionicons name="close" size={14} color={Colors.textMuted} />
                         </TouchableOpacity>
                       </View>
                     );
                   })}
-                </Card>
+                </View>
               </>
             )}
-
-            {/* Invite CTA */}
-            <TouchableOpacity
-              style={styles.inviteBtn}
-              onPress={() => router.push('/(app)/settings/invite')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.inviteBtnLeft}>
-                <View style={styles.inviteIconCircle}>
-                  <Ionicons name="person-add" size={18} color={Colors.terracotta} />
-                </View>
-                <Text variant="body" style={styles.inviteBtnText}>Inviter un membre</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </TouchableOpacity>
           </>
         ) : (
           <View style={styles.noHousehold}>
@@ -314,9 +280,7 @@ export default function HouseholdScreen() {
                   size="lg"
                 />
                 <TouchableOpacity onPress={() => setMode('none')}>
-                  <Text variant="bodySmall" color="terracotta" style={{ textAlign: 'center' }}>
-                    Annuler
-                  </Text>
+                  <Text style={styles.cancelLink}>Annuler</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -339,9 +303,7 @@ export default function HouseholdScreen() {
                   size="lg"
                 />
                 <TouchableOpacity onPress={() => setMode('none')}>
-                  <Text variant="bodySmall" color="terracotta" style={{ textAlign: 'center' }}>
-                    Annuler
-                  </Text>
+                  <Text style={styles.cancelLink}>Annuler</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -354,146 +316,182 @@ export default function HouseholdScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
+
+  // ─── Header ─────────────────────────
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    height: 56,
+  },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+  },
+
   scroll: {
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing['3xl'],
   },
-  header: {
+
+  // ─── Hero ─────────────────────────
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing['2xl'],
+  },
+  heroTitle: {
+    fontSize: Typography.fontSize['2xl'],
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textMuted,
+  },
+
+  // ─── Section label ─────────────────
+  sectionLabel: {
+    fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.textMuted,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: Spacing.lg,
+  },
+  sectionLabelSpaced: {
+    marginTop: Spacing.lg,
+  },
+
+  // ─── Member list ─────────────────
+  list: {
+    marginBottom: Spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+    paddingVertical: Spacing.md,
+  },
+  rowBody: { flex: 1, gap: 2 },
+  rowTitleLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.xl,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.backgroundCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  title: { flex: 1 },
-  householdCard: {
-    marginBottom: Spacing.xl,
-    padding: Spacing.base,
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  householdInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  householdIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.sauge + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeader: {
-    marginBottom: Spacing.sm,
-  },
-  membersCard: {
-    padding: 0,
-    overflow: 'hidden',
-    marginBottom: Spacing.base,
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
-  },
-  memberRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  memberInfo: { flex: 1, gap: 2 },
-  ownerBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.sauge + '20',
-  },
-  ownerBadgeText: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.greenStrong,
-    fontWeight: '600',
-  },
-  pendingIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.rose + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.sauge + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.base,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  inviteBtnLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  inviteIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.terracotta + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteBtnText: {
-    fontWeight: '600',
+  rowName: {
+    fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.semibold,
     color: Colors.textPrimary,
   },
-  statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
-  },
-  statusBadgeText: {
+  rowCaption: {
     fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textMuted,
   },
-  deleteInviteBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: BorderRadius.input,
-    backgroundColor: Colors.error + '12',
+  badge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  badgeOwner: {
+    borderColor: Colors.primary + '4D',
+    backgroundColor: 'transparent',
+  },
+  badgeMember: {
+    borderColor: Colors.border,
+    backgroundColor: 'transparent',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.semibold,
+  },
+  badgeTextOwner: { color: Colors.primary },
+  badgeTextMember: { color: Colors.textMuted },
+
+  // ─── Invite link ─────────────────
+  inviteLink: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 4,
+    gap: Spacing.xs,
+    paddingVertical: Spacing.base,
+    marginTop: Spacing.sm,
   },
-  noHousehold: { gap: Spacing.xl },
+  inviteLinkText: {
+    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.primary,
+  },
+
+  // ─── Pending invitations ─────────
+  inviteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.base,
+    gap: Spacing.md,
+  },
+  inviteRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderLight,
+  },
+  inviteName: {
+    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  inviteEmail: {
+    fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textMuted,
+  },
+  statusWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primary,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.primary,
+    letterSpacing: 1,
+  },
+  closeBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ─── No household ─────────────────
+  noHousehold: { gap: Spacing.xl, paddingTop: Spacing.lg },
   actions: { gap: Spacing.base },
   formSection: { gap: Spacing.base },
+  cancelLink: {
+    textAlign: 'center',
+    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.primary,
+  },
 });

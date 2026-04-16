@@ -20,7 +20,7 @@ jest.mock('../client', () => ({
   },
 }));
 
-const { supabase } = require('../client');
+import { supabase } from '../client';
 
 beforeEach(() => {
   jest.clearAllMocks();

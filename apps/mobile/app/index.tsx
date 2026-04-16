@@ -59,6 +59,7 @@ export default function SplashScreen() {
   const { session, isInitialized } = useAuthStore();
   const { pendingInviteToken, pendingInviteCode } = useUiStore();
   const hasNavigated = useRef(false);
+  // eslint-disable-next-line react-hooks/purity
   const loadedAt = useRef(Date.now());
 
   // Mascot entrance
@@ -200,21 +201,21 @@ const styles = StyleSheet.create({
   blobMint: {
     width: 300,
     height: 300,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     top: -80,
     right: -80,
   },
   blobCoral: {
     width: 220,
     height: 220,
-    backgroundColor: Colors.rose,
+    backgroundColor: Colors.accent,
     bottom: -60,
     left: -60,
   },
   blobLavender: {
     width: 140,
     height: 140,
-    backgroundColor: Colors.prune,
+    backgroundColor: Colors.primary,
     bottom: 120,
     right: -30,
   },
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize['4xl'],
     lineHeight: Typography.fontSize['4xl'] * 1.2,
     fontFamily: Typography.fontFamily.extrabold,
-    color: Colors.terracotta,
+    color: Colors.primary,
     letterSpacing: -0.5,
   },
 
@@ -259,6 +260,6 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
   },
 });

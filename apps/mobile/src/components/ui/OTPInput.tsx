@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   inputFilled: {
-    borderColor: Colors.terracotta,
-    backgroundColor: Colors.terracotta + '0F',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '0F',
   },
   inputError: {
     borderColor: Colors.error,

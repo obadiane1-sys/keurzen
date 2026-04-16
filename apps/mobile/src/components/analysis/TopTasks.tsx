@@ -19,9 +19,9 @@ interface TopTasksProps {
 
 const priorityColors: Record<string, string> = {
   urgent: Colors.error,
-  high: Colors.rose,
+  high: Colors.accent,
   medium: '#FFD166',
-  low: Colors.sauge,
+  low: Colors.success,
 };
 
 export function TopTasks({ tasks }: TopTasksProps) {
@@ -31,7 +31,7 @@ export function TopTasks({ tasks }: TopTasksProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconBox}>
-          <Ionicons name="time-outline" size={20} color={Colors.terracotta} />
+          <Ionicons name="time-outline" size={20} color={Colors.primary} />
         </View>
         <Text variant="h4" weight="semibold" style={styles.title}>
           Tâches les plus lourdes
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.terracotta + '18',
+    backgroundColor: Colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },

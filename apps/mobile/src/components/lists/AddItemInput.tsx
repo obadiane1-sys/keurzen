@@ -62,7 +62,7 @@ export function AddItemInput({ listType, onAdd, isLoading = false }: AddItemInpu
       <Ionicons
         name="add-circle-outline"
         size={22}
-        color={Colors.terracotta}
+        color={Colors.primary}
         style={styles.addIcon}
       />
 
@@ -98,7 +98,7 @@ export function AddItemInput({ listType, onAdd, isLoading = false }: AddItemInpu
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={Colors.terracotta}
+          color={Colors.primary}
           style={styles.submitArea}
         />
       ) : canSubmit ? (
@@ -109,7 +109,7 @@ export function AddItemInput({ listType, onAdd, isLoading = false }: AddItemInpu
           accessibilityLabel="Ajouter"
           accessibilityRole="button"
         >
-          <Ionicons name="arrow-forward-circle" size={28} color={Colors.terracotta} />
+          <Ionicons name="arrow-forward-circle" size={28} color={Colors.primary} />
         </TouchableOpacity>
       ) : (
         // Reserve the same space so layout stays stable

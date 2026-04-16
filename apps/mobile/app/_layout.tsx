@@ -1,3 +1,4 @@
+import '../global.css';
 import 'react-native-gesture-handler';
 import React, { useCallback } from 'react';
 import { Stack } from 'expo-router';
@@ -14,6 +15,13 @@ import {
   Nunito_700Bold,
   Nunito_800ExtraBold,
 } from '@expo-google-fonts/nunito';
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from '@expo-google-fonts/outfit';
+import { FredokaOne_400Regular } from '@expo-google-fonts/fredoka-one';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthInit } from '../src/hooks/useAuth';
 import { Toast } from '../src/components/ui/Toast';
@@ -46,6 +54,11 @@ export default function RootLayout() {
     Nunito_600SemiBold,
     Nunito_700Bold,
     Nunito_800ExtraBold,
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    FredokaOne_400Regular,
   });
 
   const onLayoutRootView = useCallback(async () => {

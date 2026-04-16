@@ -119,9 +119,9 @@ export default function InviteScreen() {
   };
 
   const getCodeStatus = (code: InvitationCode): { label: string; color: string } => {
-    if (code.used) return { label: 'Utilise', color: Colors.miel };
+    if (code.used) return { label: 'Utilise', color: Colors.joy };
     if (new Date(code.expires_at) < new Date()) return { label: 'Expire', color: Colors.textMuted };
-    return { label: 'Actif', color: Colors.sauge };
+    return { label: 'Actif', color: Colors.success };
   };
 
   if (!currentHousehold) {
@@ -134,7 +134,7 @@ export default function InviteScreen() {
 
   const avatarData = members.length > 0
     ? members.slice(0, 3).map((m) => ({ name: m.profile?.full_name ?? '?', color: m.color }))
-    : [{ name: 'Julie', color: Colors.rose }, { name: 'Marc', color: Colors.sauge }, { name: 'Eva', color: Colors.prune }];
+    : [{ name: 'Julie', color: Colors.accent }, { name: 'Marc', color: Colors.success }, { name: 'Eva', color: Colors.primary }];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -146,7 +146,7 @@ export default function InviteScreen() {
 
         {/* Hero */}
         <View style={styles.heroHeader}>
-          <Ionicons name="people" size={28} color={Colors.terracotta} />
+          <Ionicons name="people" size={28} color={Colors.primary} />
           <Text style={styles.heroTitle}>Inviter un proche</Text>
         </View>
         <Text style={styles.heroSubtitle}>Ajoutez un membre à votre foyer. Il recevra un code par email pour rejoindre l'espace.</Text>
@@ -170,7 +170,7 @@ export default function InviteScreen() {
               <Ionicons
                 name={sentResult.emailSent ? 'checkmark-circle' : 'alert-circle'}
                 size={48}
-                color={sentResult.emailSent ? Colors.sauge : Colors.rose}
+                color={sentResult.emailSent ? Colors.success : Colors.accent}
               />
             </View>
 
@@ -197,7 +197,7 @@ export default function InviteScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.sendAnotherBtn} onPress={() => { setSentResult(null); }}>
-              <Ionicons name="add-circle-outline" size={18} color={Colors.terracotta} />
+              <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
               <Text style={styles.sendAnotherText}>Inviter une autre personne</Text>
             </TouchableOpacity>
           </View>
@@ -297,11 +297,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingBottom: Spacing['4xl'] },
   backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.base },
-  backText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.terracotta },
+  backText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.primary },
   heroHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
   heroTitle: { fontSize: Typography.fontSize['3xl'], fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
   heroSubtitle: { fontSize: Typography.fontSize.base, color: Colors.textPrimary + '99', lineHeight: 22, marginBottom: Spacing.xl },
-  heroCard: { backgroundColor: Colors.prune + '26', borderRadius: BorderRadius.xl, height: 220, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing['2xl'], gap: Spacing.base },
+  heroCard: { backgroundColor: Colors.primary + '26', borderRadius: BorderRadius.xl, height: 220, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing['2xl'], gap: Spacing.base },
   avatarRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   avatarWrap: { borderWidth: 3, borderColor: Colors.background, borderRadius: BorderRadius.full },
   heroCardLabel: { fontSize: Typography.fontSize.lg, fontWeight: '700', color: Colors.textPrimary },
@@ -311,12 +311,12 @@ const styles = StyleSheet.create({
   successTitle: { fontSize: Typography.fontSize.xl, fontWeight: '700', color: Colors.textPrimary },
   successSubtitle: { fontSize: Typography.fontSize.base, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
   successEmail: { fontWeight: '700', color: Colors.textPrimary },
-  codeDisplay: { backgroundColor: Colors.backgroundSubtle, borderWidth: 2, borderColor: Colors.sauge, borderRadius: BorderRadius.lg, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['2xl'], marginTop: Spacing.sm },
+  codeDisplay: { backgroundColor: Colors.backgroundSubtle, borderWidth: 2, borderColor: Colors.success, borderRadius: BorderRadius.lg, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['2xl'], marginTop: Spacing.sm },
   codeText: { fontSize: Typography.fontSize['4xl'], fontWeight: Typography.fontWeight.extrabold, color: Colors.textPrimary, letterSpacing: 8, textAlign: 'center' },
   copyBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base, marginTop: Spacing.xs },
   copyBtnText: { fontSize: Typography.fontSize.sm, fontWeight: '600', color: Colors.textPrimary },
   sendAnotherBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.base, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base },
-  sendAnotherText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.terracotta },
+  sendAnotherText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.primary },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.lg },
   sectionTitle: { fontSize: Typography.fontSize.lg, fontWeight: '700', color: Colors.textPrimary },
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
   errorText: { fontSize: Typography.fontSize.sm, color: Colors.error },
   helperText: { fontSize: Typography.fontSize.sm, color: Colors.textPrimary + '80', marginBottom: Spacing.xl },
-  ctaButton: { backgroundColor: Colors.terracotta, borderRadius: BorderRadius.button, height: 56, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.xl },
+  ctaButton: { backgroundColor: Colors.primary, borderRadius: BorderRadius.button, height: 56, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.xl },
   ctaButtonDisabled: { opacity: 0.5 },
   ctaText: { fontSize: Typography.fontSize.md, fontWeight: '700', color: Colors.textInverse, letterSpacing: 0.3 },
   bottomNote: { fontSize: Typography.fontSize.sm, color: Colors.textPrimary + '66', textAlign: 'center', lineHeight: 20 },

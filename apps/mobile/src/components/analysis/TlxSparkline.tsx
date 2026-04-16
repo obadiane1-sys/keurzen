@@ -14,9 +14,9 @@ interface TlxSparklineProps {
 }
 
 function getBarColor(score: number): string {
-  if (score <= 33) return Colors.sauge;
+  if (score <= 33) return Colors.success;
   if (score <= 66) return '#FFD166';
-  return Colors.rose;
+  return Colors.accent;
 }
 
 const BAR_MAX_HEIGHT = 80;
@@ -55,7 +55,7 @@ export function TlxSparkline({ weeks }: TlxSparklineProps) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.iconBox}>
-            <Ionicons name="pulse" size={20} color={Colors.prune} />
+            <Ionicons name="pulse" size={20} color={Colors.primary} />
           </View>
           <View>
             <Text variant="h4" weight="semibold" style={styles.title}>
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.prune + '18',
+    backgroundColor: Colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },

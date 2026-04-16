@@ -1,157 +1,169 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Plus, Search, CheckCircle } from 'lucide-react';
-import { useTasks } from '@keurzen/queries';
-import { useAuthStore } from '@keurzen/stores';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { useState, useMemo, useCallback } from 'react';
+import { Plus } from 'lucide-react';
+import { useTasks, useDeleteTask } from '@keurzen/queries';
+import { useHouseholdStore } from '@keurzen/stores';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskDetail } from '@/components/tasks/TaskDetail';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
+import { AnimatedPage } from '@/components/ui/AnimatedPage';
+import { TasksSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
-import type { Task } from '@keurzen/shared';
+import type { Task, TaskType } from '@keurzen/shared';
 import dayjs from 'dayjs';
 
-type Tab = 'all' | 'today' | 'overdue' | 'done';
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'all', label: 'Toutes' },
-  { key: 'today', label: "Aujourd'hui" },
-  { key: 'overdue', label: 'En retard' },
-  { key: 'done', label: 'Faites' },
-];
-
 export default function TasksPage() {
-  const { profile } = useAuthStore();
+  const { members } = useHouseholdStore();
   const { data: tasks = [], isLoading } = useTasks();
-  const [activeTab, setActiveTab] = useState<Tab>('all');
-  const [search, setSearch] = useState('');
+  const { mutate: deleteTask } = useDeleteTask();
+  const [taskTypeTab, setTaskTypeTab] = useState<TaskType>('household');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  const now = dayjs();
-  const today = now.format('YYYY-MM-DD');
+  // ─── Member list ────────────────────────────────────────────────────────
 
-  const filteredTasks = useMemo(() => {
-    let result = tasks;
+  const memberList = useMemo(
+    () =>
+      members.map((m) => ({
+        userId: m.user_id,
+        name: m.profile?.full_name?.split(' ')[0] ?? '',
+        color: m.color ?? '#967BB6',
+      })),
+    [members],
+  );
 
-    // Filter by tab
-    switch (activeTab) {
-      case 'today':
-        result = result.filter(
-          (t) => t.due_date === today && t.status !== 'done',
-        );
-        break;
-      case 'overdue':
-        result = result.filter(
-          (t) =>
-            t.status !== 'done' &&
-            t.due_date &&
-            dayjs(t.due_date).isBefore(now, 'day'),
-        );
-        break;
-      case 'done':
-        result = result.filter((t) => t.status === 'done');
-        break;
-      default: // 'all'
-        result = result.filter((t) => t.status !== 'done');
-        break;
+  // ─── Filter & split ─────────────────────────────────────────────────────
+
+  const { todoTasks, doneTasks } = useMemo(() => {
+    const now = dayjs();
+    let filtered = tasks.filter((t) => (t.task_type ?? 'household') === taskTypeTab);
+
+    if (selectedMemberId) {
+      filtered = filtered.filter((t) => t.assigned_to === selectedMemberId);
     }
 
-    // Filter by search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.assigned_profile?.full_name?.toLowerCase().includes(q),
-      );
+    const todo: Task[] = [];
+    const done: Task[] = [];
+
+    for (const t of filtered) {
+      if (t.status === 'done') {
+        done.push(t);
+      } else {
+        todo.push(t);
+      }
     }
 
-    return result;
-  }, [tasks, activeTab, search, today, now]);
+    todo.sort((a, b) => {
+      const aOverdue = a.due_date && dayjs(a.due_date).isBefore(now, 'day');
+      const bOverdue = b.due_date && dayjs(b.due_date).isBefore(now, 'day');
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+      if (a.due_date) return -1;
+      if (b.due_date) return 1;
+      return b.created_at.localeCompare(a.created_at);
+    });
+
+    done.sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+    return { todoTasks: todo, doneTasks: done.slice(0, 5) };
+  }, [tasks, taskTypeTab, selectedMemberId]);
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+      if (!window.confirm(`Supprimer « ${task.title} » ?`)) return;
+      deleteTask(id);
+      if (selectedTaskId === id) setSelectedTaskId(null);
+    },
+    [tasks, deleteTask, selectedTaskId],
+  );
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
-      </div>
-    );
+    return <TasksSkeleton />;
   }
 
   return (
-    <>
-      <PageHeader
-        title="Taches"
-        userName={profile?.full_name || undefined}
-        avatarUrl={profile?.avatar_url}
-        actions={
-          <Button size="md" onClick={() => setShowCreate(true)}>
-            <Plus size={16} />
-            Creer
-          </Button>
-        }
-      />
+    <AnimatedPage>
+      {/* Header */}
+      <div className="flex items-center justify-between px-1 pt-2 pb-4">
+        <h1 className="text-xl font-bold text-text-primary">Tâches</h1>
+        <Button size="default" onClick={() => setShowCreate(true)}>
+          <Plus size={16} />
+          Créer
+        </Button>
+      </div>
 
-      {/* Tabs */}
-      <div className="mb-4 flex items-center gap-1 border-b border-border-light">
-        {TABS.map(({ key, label }) => (
+      {/* Tabs Maison / Perso */}
+      <div className="mb-4 flex rounded-xl bg-primary-surface p-1">
+        <button
+          onClick={() => { setTaskTypeTab('household'); setSelectedTaskId(null); }}
+          className={cn(
+            'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 text-center',
+            taskTypeTab === 'household'
+              ? 'bg-white text-text-primary font-bold shadow-sm'
+              : 'text-text-muted hover:text-text-primary',
+          )}
+        >
+          Maison
+        </button>
+        <button
+          onClick={() => { setTaskTypeTab('personal'); setSelectedTaskId(null); }}
+          className={cn(
+            'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 text-center',
+            taskTypeTab === 'personal'
+              ? 'bg-white text-text-primary font-bold shadow-sm'
+              : 'text-text-muted hover:text-text-primary',
+          )}
+        >
+          Perso
+        </button>
+      </div>
+
+      {/* Member filters */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <button
+          onClick={() => setSelectedMemberId(null)}
+          className={cn(
+            'px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors',
+            selectedMemberId === null
+              ? 'bg-primary text-white'
+              : 'bg-background-card text-text-primary hover:bg-border-light',
+          )}
+        >
+          Tous
+        </button>
+        {memberList.map((member) => (
           <button
-            key={key}
-            onClick={() => {
-              setActiveTab(key);
-              setSelectedTaskId(null);
-            }}
+            key={member.userId}
+            onClick={() => setSelectedMemberId(member.userId)}
             className={cn(
-              'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === key
-                ? 'border-terracotta text-terracotta'
-                : 'border-transparent text-text-muted hover:text-text-primary',
+              'px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors',
+              selectedMemberId === member.userId
+                ? 'bg-primary text-white'
+                : 'bg-background-card text-text-primary hover:bg-border-light',
             )}
           >
-            {label}
+            {member.name}
           </button>
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-        />
-        <input
-          type="text"
-          placeholder="Rechercher..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-10 w-full rounded-[var(--radius-md)] border border-border bg-background-card pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted focus:border-terracotta focus:outline-none"
-        />
-      </div>
-
-      {/* Split View */}
-      {filteredTasks.length === 0 ? (
+      {/* Task sections */}
+      {todoTasks.length === 0 && doneTasks.length === 0 ? (
         <EmptyState
-          icon={CheckCircle}
-          title="Aucune tache"
-          subtitle={
-            activeTab === 'done'
-              ? 'Rien de termine pour le moment'
-              : 'Creez votre premiere tache'
-          }
-          action={
-            activeTab !== 'done'
-              ? { label: 'Creer une tache', onClick: () => setShowCreate(true) }
-              : undefined
-          }
+          variant="tasks"
+          action={{ label: 'Créer une tâche', onClick: () => setShowCreate(true) }}
         />
       ) : (
         <div className="flex gap-4">
-          {/* Task List */}
           <div
             className={cn(
               'flex-1 min-w-0',
@@ -159,13 +171,14 @@ export default function TasksPage() {
             )}
           >
             <TaskList
-              tasks={filteredTasks}
+              todoTasks={todoTasks}
+              doneTasks={doneTasks}
               selectedId={selectedTaskId}
               onSelect={setSelectedTaskId}
+              onDelete={handleDelete}
             />
           </div>
 
-          {/* Detail Panel — desktop */}
           {selectedTask && (
             <div className="hidden lg:block lg:flex-1 lg:min-w-0">
               <TaskDetail
@@ -194,6 +207,6 @@ export default function TasksPage() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
       />
-    </>
+    </AnimatedPage>
   );
 }

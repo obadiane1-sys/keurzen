@@ -21,9 +21,9 @@ import type { RecipeDifficulty } from '../../../../src/types';
 // ─── Difficulty config ─────────────────────────────────────────────────────────
 
 const difficultyConfig: Record<RecipeDifficulty, { label: string; color: string }> = {
-  easy: { label: 'Facile', color: Colors.sauge },
-  medium: { label: 'Moyen', color: Colors.miel },
-  hard: { label: 'Difficile', color: Colors.rose },
+  easy: { label: 'Facile', color: Colors.success },
+  medium: { label: 'Moyen', color: Colors.joy },
+  hard: { label: 'Difficile', color: Colors.accent },
 };
 
 // ─── Screen ────────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ export default function RecipeDetailScreen() {
               <Ionicons
                 name={recipe.is_favorite ? 'heart' : 'heart-outline'}
                 size={20}
-                color={recipe.is_favorite ? Colors.rose : Colors.textInverse}
+                color={recipe.is_favorite ? Colors.accent : Colors.textInverse}
               />
             </TouchableOpacity>
           </View>
@@ -123,7 +123,7 @@ export default function RecipeDetailScreen() {
           <View style={styles.metaRow}>
             {/* Prep time */}
             <View style={styles.metaItem}>
-              <Ionicons name="time-outline" size={16} color={Colors.terracotta} />
+              <Ionicons name="time-outline" size={16} color={Colors.primary} />
               <View>
                 <Text style={styles.metaLabel}>Prép.</Text>
                 <Text style={styles.metaValue}>{recipe.prep_time} min</Text>
@@ -134,7 +134,7 @@ export default function RecipeDetailScreen() {
 
             {/* Cook time */}
             <View style={styles.metaItem}>
-              <Ionicons name="flame-outline" size={16} color={Colors.miel} />
+              <Ionicons name="flame-outline" size={16} color={Colors.joy} />
               <View>
                 <Text style={styles.metaLabel}>Cuisson</Text>
                 <Text style={styles.metaValue}>{recipe.cook_time} min</Text>
@@ -151,7 +151,7 @@ export default function RecipeDetailScreen() {
                   onPress={handleDecrease}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="remove" size={14} color={Colors.terracotta} />
+                  <Ionicons name="remove" size={14} color={Colors.primary} />
                 </TouchableOpacity>
                 <View>
                   <Text style={styles.metaLabel}>Portions</Text>
@@ -162,7 +162,7 @@ export default function RecipeDetailScreen() {
                   onPress={handleIncrease}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="add" size={14} color={Colors.terracotta} />
+                  <Ionicons name="add" size={14} color={Colors.primary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   // Hero
   hero: {
     height: HERO_HEIGHT,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     position: 'absolute',
     top: 0,
     left: 0,
@@ -358,11 +358,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: BorderRadius.full,
-    backgroundColor: `${Colors.terracotta}18`,
+    backgroundColor: `${Colors.primary}18`,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: `${Colors.terracotta}44`,
+    borderColor: `${Colors.primary}44`,
   },
   portionValue: {
     textAlign: 'center',
@@ -392,13 +392,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
-    backgroundColor: `${Colors.terracotta}18`,
+    backgroundColor: `${Colors.primary}18`,
     borderWidth: 1,
-    borderColor: `${Colors.terracotta}33`,
+    borderColor: `${Colors.primary}33`,
   },
   tagText: {
     fontSize: Typography.fontSize.xs,
-    color: Colors.terracotta,
+    color: Colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
 
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.button,
     paddingVertical: 14,
     gap: Spacing.sm,

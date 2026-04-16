@@ -156,11 +156,11 @@ export default function BudgetScreen() {
                   onLongPress={() => handleDelete(item)}
                   activeOpacity={0.85}
                 >
-                  <View style={[styles.catIcon, { backgroundColor: Colors.miel + '18' }]}>
+                  <View style={[styles.catIcon, { backgroundColor: Colors.joy + '18' }]}>
                     <Ionicons
                       name={cat.icon as keyof typeof Ionicons.glyphMap}
                       size={18}
-                      color={Colors.miel}
+                      color={Colors.joy}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -188,8 +188,8 @@ export default function BudgetScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.terracotta}
-              colors={[Colors.terracotta]}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
         />
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: BorderRadius.button,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

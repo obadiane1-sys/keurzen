@@ -20,6 +20,7 @@ import { signOut } from '../../../src/lib/supabase/auth';
 import { useAuthStore } from '../../../src/stores/auth.store';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { useUiStore } from '../../../src/stores/ui.store';
+import { useMessagesUnreadCount } from '../../../src/lib/queries/messaging';
 import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { QuickActionCard } from '../../../src/components/menu/QuickActionCard';
@@ -90,6 +91,7 @@ export default function MenuScreen() {
   const resetAuth = useAuthStore((s) => s.reset);
   const resetHousehold = useHouseholdStore((s) => s.reset);
   const { setPendingInviteToken, setPendingInviteCode } = useUiStore();
+  const { data: msgUnreadCount = 0 } = useMessagesUnreadCount();
 
   const fadeAnims = useStaggeredFadeIn(5);
 
@@ -171,13 +173,13 @@ export default function MenuScreen() {
               <QuickActionCard
                 icon="bar-chart-outline"
                 label="Analyse"
-                color={Colors.prune}
+                color={Colors.primary}
                 onPress={() => router.push('/(app)/menu/analysis')}
               />
               <QuickActionCard
                 icon="pulse-outline"
                 label="Charge mentale"
-                color={Colors.rose}
+                color={Colors.accent}
                 onPress={() => router.push('/(app)/dashboard/tlx')}
               />
             </View>
@@ -185,13 +187,13 @@ export default function MenuScreen() {
               <QuickActionCard
                 icon="person-add-outline"
                 label="Inviter"
-                color={Colors.miel}
+                color={Colors.joy}
                 onPress={() => router.push('/(app)/settings/invite')}
               />
               <QuickActionCard
                 icon="list-outline"
                 label="Listes"
-                color={Colors.sauge}
+                color={Colors.success}
                 onPress={() => router.push('/(app)/lists')}
               />
             </View>
@@ -204,31 +206,37 @@ export default function MenuScreen() {
             <MenuRow
               icon="home-outline"
               label="Mon foyer"
-              color={Colors.sauge}
+              color={Colors.success}
               onPress={() => router.push('/(app)/settings/household')}
+            />
+            <MenuRow
+              icon="chatbubbles-outline"
+              label={msgUnreadCount > 0 ? `Messages (${msgUnreadCount})` : 'Messages'}
+              color={Colors.primary}
+              onPress={() => router.push('/(app)/messages')}
             />
             <MenuRow
               icon="mail-outline"
               label="Invitations"
-              color={Colors.miel}
+              color={Colors.joy}
               onPress={() => router.push('/(app)/settings/invite')}
             />
             <MenuRow
               icon="list-outline"
               label="Listes"
-              color={Colors.miel}
+              color={Colors.joy}
               onPress={() => router.push('/(app)/lists')}
             />
             <MenuRow
               icon="restaurant-outline"
               label="Repas"
-              color={Colors.terracotta}
+              color={Colors.primary}
               onPress={() => router.push('/(app)/meals')}
             />
             <MenuRow
               icon="bar-chart-outline"
               label="Analyse"
-              color={Colors.prune}
+              color={Colors.primary}
               onPress={() => router.push('/(app)/menu/analysis')}
             />
           </MenuSection>
@@ -240,13 +248,13 @@ export default function MenuScreen() {
             <MenuRow
               icon="lock-closed-outline"
               label="Securite"
-              color={Colors.prune}
+              color={Colors.primary}
               onPress={() => router.push('/(app)/settings/security')}
             />
             <MenuRow
               icon="notifications-outline"
               label="Notifications"
-              color={Colors.rose}
+              color={Colors.accent}
               onPress={() => router.push('/(app)/settings/notifications')}
             />
             <MenuRow
@@ -327,7 +335,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

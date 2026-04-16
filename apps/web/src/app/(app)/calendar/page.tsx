@@ -73,7 +73,7 @@ export default function CalendarPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -133,14 +133,14 @@ export default function CalendarPage() {
                 className={cn(
                   'relative flex flex-col items-center gap-1 py-3 border-b border-r border-border-light/50 transition-colors min-h-[72px]',
                   !isCurrentMonth && 'opacity-30',
-                  isSelected && 'bg-terracotta/5',
+                  isSelected && 'bg-primary/5',
                   isCurrentMonth && !isSelected && 'hover:bg-border-light/30',
                 )}
               >
                 <span
                   className={cn(
                     'flex h-7 w-7 items-center justify-center rounded-full text-sm',
-                    isToday && 'bg-terracotta text-text-inverse font-semibold',
+                    isToday && 'bg-primary text-text-inverse font-semibold',
                   )}
                 >
                   {dayNum}
@@ -195,7 +195,7 @@ export default function CalendarPage() {
                       className={cn(
                         'rounded-full px-2 py-0.5 text-[11px] font-medium',
                         t.status === 'done'
-                          ? 'bg-sauge/15 text-sauge'
+                          ? 'bg-success/15 text-success'
                           : 'bg-border-light text-text-muted',
                       )}
                     >

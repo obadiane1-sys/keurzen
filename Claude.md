@@ -7,7 +7,7 @@ Il définit le contexte, les règles et les conventions du projet.
 
 ## Project
 
-**Keurzen** is a premium household management app focused on fairness, time visibility, and mental load reduction.
+**Keurzen** is a premium household management app and coach, focused on fairness, time visibility, and mental load reduction. It guides couples toward a balanced household by tracking tasks, measuring perceived workload (TLX), and providing weekly coaching insights.
 
 Core modules :
 `auth` · `onboarding` · `household` · `tasks` · `calendar` · `time tracking` · `TLX` · `dashboard` · `weekly stats` · `alerts` · `budget` · `notifications` · `settings` · `help` · `legal`
@@ -18,41 +18,65 @@ Core modules :
 
 | Couche | Technologie |
 |---|---|
+| Monorepo | Turborepo (`apps/mobile`, `apps/web`, `packages/*`) |
 | Mobile | Expo SDK 55 / React Native 0.83 / TypeScript strict |
-| Navigation | Expo Router 4 |
+| Web | Next.js / React / Tailwind CSS / TypeScript strict |
+| Navigation | Expo Router 4 (mobile), Next.js App Router (web) |
 | État global | Zustand |
 | Data fetching | TanStack Query v5 |
 | Backend | Supabase (Auth, Postgres, RLS, Edge Functions Deno) |
 | Client Supabase | supabase-js v2 |
 | Forms | react-hook-form + zod |
-| Charts | victory-native |
-| UI | Design system custom |
+| Charts | victory-native (mobile) |
+| Icons | @expo/vector-icons Ionicons (mobile), lucide-react (web) |
+| UI | Design system custom "Lavender" |
 
 ---
 
 ## Key paths
 
+### Mobile (`apps/mobile/`)
+
 | Rôle | Chemin |
 |---|---|
-| Écrans | `app/` (Expo Router file-based) |
-| Logique métier | `src/lib/queries/` (TanStack hooks) |
-| Stores | `src/stores/` |
-| Composants UI | `src/components/ui/` |
-| Types | `src/types/index.ts` |
-| Design tokens | `src/constants/tokens.ts` |
-| Migrations | `supabase/migrations/` |
-| Edge Functions | `supabase/functions/<name>/index.ts` |
+| Écrans | `apps/mobile/app/` (Expo Router file-based) |
+| Logique métier | `apps/mobile/src/lib/queries/` (TanStack hooks) |
+| Stores | `apps/mobile/src/stores/` |
+| Composants UI | `apps/mobile/src/components/ui/` |
+| Types | `apps/mobile/src/types/index.ts` |
+| Design tokens | `apps/mobile/src/constants/tokens.ts` |
+
+### Web (`apps/web/`)
+
+| Rôle | Chemin |
+|---|---|
+| Pages | `apps/web/src/app/(app)/` (Next.js App Router) |
+| Composants | `apps/web/src/components/` |
+| CSS / tokens | `apps/web/src/app/globals.css` (CSS variables) |
+
+### Shared packages (`packages/`)
+
+| Package | Contenu |
+|---|---|
+| `packages/shared` | Types, constantes, utilitaires partagés |
+| `packages/queries` | Hooks TanStack Query partagés |
+| `packages/stores` | Stores Zustand partagés |
+
+### Backend
+
+| Rôle | Chemin |
+|---|---|
+| Migrations | `apps/mobile/supabase/migrations/` |
+| Edge Functions | `apps/mobile/supabase/functions/<name>/index.ts` |
 
 ---
 
 ## Cockpit Claude Code
 
 - Settings : `.claude/settings.json`
-- Agents : `product-architect` · `expo-mobile-builder` · `supabase-backend` · `design-system-guardian` · `qa-regression` · `release-manager`
-- Skills : `/phase-plan` · `/build-feature` · `/fix-bug` · `/db-change-safe` · `/ui-premium-pass` · `/qa-pass` · `/ship-release` · `/verify` · `/qa-check`
+- Agents : `product-architect` · `expo-mobile-builder` · `supabase-backend` · `design-system-guardian` · `qa-regression` · `release-manager` · `code-reviewer` · `codebase-explorer` · `docs-researcher` · `web-searcher`
+- Skills : `/phase-plan` · `/build-feature` · `/fix-bug` · `/db-change-safe` · `/ui-premium-pass` · `/qa-pass` · `/ship-release` · `/verify` · `/qa-check` · `/new-feature` · `/mobile-design-premium`
 - Session prompts : `prompts/claude/`
-- MCP 21st.dev : génération de composants UI React premium
-- MCP Refero : références de design pour guider le style visuel
 
 ---
 
@@ -66,26 +90,40 @@ Post-launch V2 feature : active task rebalancing (suggestions, never automatic).
 ## Dual-platform rule
 
 Every feature must be implemented on both platforms simultaneously :
-- Mobile app : Expo / React Native (`app/`)
-- Web app : dossier web dans le repo Keurzen
+- Mobile app : `apps/mobile/` (Expo / React Native)
+- Web app : `apps/web/` (Next.js / React)
 
 Never implement a feature on one platform without the other.
 For each prompt, explicitly list the files to modify on both sides.
+Shared logic (types, queries, stores) goes in `packages/`.
 
 ---
 
 ## Commands
 
 ```bash
-npm run lint                                    # ESLint
-npm run test                                    # Jest
+# Monorepo (racine)
+npm run lint                                    # ESLint (turbo)
+npm run test                                    # Jest (turbo)
 npm run format                                  # Prettier
-npx expo start --tunnel                         # Dev server
+npm run dev                                     # Dev toutes les apps (turbo)
+npm run build                                   # Build toutes les apps (turbo)
+
+# Mobile
+cd apps/mobile && npx expo start --tunnel       # Dev server mobile
 npx expo install --fix                          # Fix SDK mismatches
+
+# Web
+cd apps/web && npm run dev                      # Dev server web (Next.js)
+cd apps/web && npm run build                    # Build web
+
+# Backend
 npx supabase db push                            # Apply migrations
 npx supabase functions deploy <name>            # Deploy Edge Function
 npx supabase functions logs <name> --tail       # Logs Edge Function
 npx supabase secrets list                       # Lister les secrets
+
+# Git
 git status / git diff / git add / git commit
 ```
 
@@ -258,7 +296,7 @@ Files :
 
 ## UX rules
 
-- Premium pastel UI — never hardcode values, always use `src/constants/tokens.ts`
+- Premium "Lavender" UI — soft purples, lavender accents, never hardcode values, always use tokens
 - Rounded cards, soft shadows, clear hierarchy
 - Mobile-first, touch targets >= 44px
 - Always include empty states
@@ -268,27 +306,48 @@ Files :
 
 ---
 
-## Design system
+## Design system — Palette "Lavender"
 
+### Brand
 ```
-Mint:       #88D4A9   ← CTA principale, succès
-Blue:       #AFCBFF   ← sélection, info
-Coral:      #FFA69E   ← alertes douces, déséquilibre
-Lavender:   #BCA7FF   ← TLX, charge mentale
-Navy:       #212E44   ← header, nav, titres forts
-Text:       #1E293B   ← texte principal
-Light Gray: #E2E8F0   ← bordures
-Background: #F7F9FC   ← fond global
+Primary:        #967BB6   ← CTA principale, FAB, liens actifs
+PrimaryLight:   #E5DBFF   ← Fonds sélectionnés, pills actives
+PrimarySurface: #F3F0FF   ← Fonds inputs, toggles inactifs
 ```
 
-All tokens in `src/constants/tokens.ts` — never hardcode values.
+### Feedback
+```
+Success: #81C784   ← Validation, succès
+Warning: #FFF9C4   ← Warnings, highlights
+Error:   #F4C2C2   ← Alertes, erreurs
+```
+
+### Texte & Fonds
+```
+Text:       #5F5475           ← texte principal (violet profond)
+Secondary:  rgba(95,84,117,0.8) ← texte secondaire
+Muted:      rgba(95,84,117,0.6) ← placeholders
+Background: #FFFFFF           ← fond global (blanc)
+Card:       #F9F8FD           ← fond cartes
+Border:     #DCD7E8           ← bordures (lavande)
+```
+
+### Principes
+- Flat UI strict — pas de gradients
+- Ombres subtiles lavande (jamais #000) — opacity 0.04-0.12
+- Typographie Nunito (regular, medium, semibold, bold, extrabold)
+- Coins arrondis 12-16px pour cartes et boutons
+- Touch targets >= 44px
+- Jamais de bleu froid ni de gris pur
+
+All tokens in `apps/mobile/src/constants/tokens.ts` (mobile) and `apps/web/src/app/globals.css` (web CSS variables) — never hardcode values.
 
 ---
 
 ## Mascot
 
 Soft kawaii house mascot, no arms, no legs, open eyes, calm premium expression.
-Component : `src/components/ui/Mascot.tsx`
+Component : `apps/mobile/src/components/ui/Mascot.tsx`
 
 ---
 

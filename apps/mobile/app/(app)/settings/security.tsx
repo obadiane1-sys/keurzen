@@ -25,7 +25,7 @@ export default function SecurityScreen() {
         <Text variant="h3" style={styles.title}>Sécurité</Text>
 
         <View style={styles.infoCard}>
-          <Ionicons name="shield-checkmark-outline" size={32} color={Colors.sauge} />
+          <Ionicons name="shield-checkmark-outline" size={32} color={Colors.success} />
           <Text variant="body" color="secondary" style={styles.infoText}>
             Votre compte est sécurisé par authentification par email (code à usage unique).
             Aucun mot de passe n'est nécessaire.

@@ -27,7 +27,7 @@ function ToggleRow({
   description,
   value,
   onValueChange,
-  color = Colors.terracotta,
+  color = Colors.primary,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -50,8 +50,8 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: Colors.gray200, true: Colors.terracotta + '60' }}
-        thumbColor={value ? Colors.terracotta : Colors.gray400}
+        trackColor={{ false: Colors.gray200, true: Colors.primary + '60' }}
+        thumbColor={value ? Colors.primary : Colors.gray400}
       />
     </View>
   );
@@ -140,7 +140,7 @@ export default function NotificationSettingsScreen() {
             description="Resume des taches du jour"
             value={prefs.morning_digest}
             onValueChange={(v) => handleToggle('morning_digest', v)}
-            color={Colors.rose}
+            color={Colors.accent}
           />
           <View style={styles.divider} />
           <ToggleRow
@@ -149,7 +149,7 @@ export default function NotificationSettingsScreen() {
             description="30 min avant l'echeance"
             value={prefs.task_reminder}
             onValueChange={(v) => handleToggle('task_reminder', v)}
-            color={Colors.miel}
+            color={Colors.joy}
           />
           <View style={styles.divider} />
           <ToggleRow
@@ -158,7 +158,7 @@ export default function NotificationSettingsScreen() {
             description="Quand une tache est en retard"
             value={prefs.overdue_alert}
             onValueChange={(v) => handleToggle('overdue_alert', v)}
-            color={Colors.rose}
+            color={Colors.accent}
           />
           <View style={styles.divider} />
           <ToggleRow
@@ -167,7 +167,7 @@ export default function NotificationSettingsScreen() {
             description="Quand la repartition est inegale"
             value={prefs.imbalance_alert}
             onValueChange={(v) => handleToggle('imbalance_alert', v)}
-            color={Colors.prune}
+            color={Colors.primary}
           />
         </Card>
 

@@ -19,7 +19,7 @@ export function MenuRow({ icon, label, onPress, color, danger, showDivider }: Me
     ? { onMouseEnter: () => setHovered(true), onMouseLeave: () => setHovered(false) }
     : {};
 
-  const accentColor = danger ? Colors.error : (color ?? Colors.terracotta);
+  const accentColor = danger ? Colors.error : (color ?? Colors.primary);
 
   return (
     <>

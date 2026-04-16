@@ -22,10 +22,10 @@ export function SidebarItem({ href, icon: Icon, label, collapsed, onNavigate }: 
       href={href}
       onClick={() => onNavigate?.()}
       className={cn(
-        'flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition-colors duration-150',
+        'flex items-center gap-3 rounded-[var(--radius-v2-md)] px-3 py-2.5 text-sm font-medium transition-colors duration-200',
         isActive
-          ? 'bg-terracotta/12 text-terracotta'
-          : 'text-text-secondary hover:bg-terracotta/8 hover:text-text-primary',
+          ? 'bg-v2-surface-lowest text-v2-primary border border-v2-outline-variant'
+          : 'text-v2-on-surface-variant hover:bg-v2-surface hover:text-v2-on-surface border border-transparent',
         collapsed && 'lg:justify-center lg:px-2 xl:justify-start xl:px-3',
       )}
       title={collapsed ? label : undefined}

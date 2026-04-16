@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text as RNText, TextStyle, StyleSheet } from 'react-native';
+import { Text as RNText, TextStyle, StyleSheet, TextProps as RNTextProps } from 'react-native';
 import { Colors, Typography } from '../../constants/tokens';
 
 type TextVariant =
@@ -16,7 +16,7 @@ type TextVariant =
 
 type TextColor = 'primary' | 'secondary' | 'muted' | 'inverse' | 'mint' | 'coral' | 'lavender' | 'navy' | 'error' | 'success' | 'terracotta' | 'sauge' | 'prune';
 
-interface TextProps {
+export interface TextProps {
   variant?: TextVariant;
   color?: TextColor;
   weight?: 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold';
@@ -24,6 +24,8 @@ interface TextProps {
   children: React.ReactNode;
   numberOfLines?: number;
   selectable?: boolean;
+  className?: string;
+  onPress?: () => void;
 }
 
 // Map numeric fontWeight to the correct Nunito fontFamily name.
@@ -62,15 +64,15 @@ const colorMap: Record<TextColor, string> = {
   secondary: Colors.textSecondary,
   muted: Colors.textMuted,
   inverse: Colors.textInverse,
-  mint: Colors.sauge,
-  coral: Colors.rose,
-  lavender: Colors.prune,
+  mint: Colors.success,
+  coral: Colors.accent,
+  lavender: Colors.primary,
   navy: Colors.textPrimary,
   error: Colors.error,
   success: Colors.success,
-  terracotta: Colors.terracotta,
-  sauge: Colors.sauge,
-  prune: Colors.prune,
+  terracotta: Colors.primary,
+  sauge: Colors.success,
+  prune: Colors.primary,
 };
 
 // Map named weight prop to fontFamily
@@ -90,6 +92,8 @@ export function Text({
   children,
   numberOfLines,
   selectable,
+  className,
+  onPress,
 }: TextProps) {
   const weightStyle: TextStyle | undefined = weight
     ? { fontFamily: namedWeightToFamily[weight] }
@@ -104,6 +108,7 @@ export function Text({
 
   return (
     <RNText
+      className={className}
       style={[
         variantStyles[variant],
         { color: colorMap[color] },
@@ -113,6 +118,7 @@ export function Text({
       ]}
       numberOfLines={numberOfLines}
       selectable={selectable}
+      onPress={onPress}
     >
       {children}
     </RNText>
