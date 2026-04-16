@@ -8,6 +8,7 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../consta
 
 const ICON_MAP: Record<HubTileIcon, keyof typeof Ionicons.glyphMap> = {
   grid: 'grid-outline',
+  tasks: 'checkbox-outline',
   basket: 'basket-outline',
   cash: 'cash-outline',
   settings: 'settings-outline',
@@ -28,11 +29,7 @@ export function HubTile({ config }: Props) {
       accessibilityRole="button"
       accessibilityLabel={config.label}
       onPress={() => router.push(config.route as never)}
-      style={({ pressed }) => [
-        styles.tile,
-        config.accent && styles.tileAccent,
-        pressed && styles.tilePressed,
-      ]}
+      style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
     >
       <View style={styles.iconWrap}>
         <Ionicons
@@ -62,9 +59,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.md,
     ...Shadows.card,
-  },
-  tileAccent: {
-    backgroundColor: Colors.primaryLight,
   },
   tilePressed: {
     transform: [{ scale: 0.98 }],

@@ -2,6 +2,7 @@
 
 export type HubTileIcon =
   | 'grid'
+  | 'tasks'
   | 'basket'
   | 'cash'
   | 'settings'
@@ -14,11 +15,11 @@ export interface HubTileConfig {
   label: string;
   route: string;
   icon: HubTileIcon;
-  accent?: boolean;
 }
 
 export const HUB_TILES: readonly HubTileConfig[] = [
-  { key: 'dashboard', label: 'Tableau de bord', route: '/(app)/dashboard',     icon: 'grid', accent: true },
+  { key: 'dashboard', label: 'Tableau de bord', route: '/(app)/dashboard',     icon: 'grid' },
+  { key: 'tasks',     label: 'Tâches',          route: '/(app)/tasks',         icon: 'tasks' },
   { key: 'lists',     label: 'Liste de course', route: '/(app)/lists',         icon: 'basket' },
   { key: 'budget',    label: 'Budget',          route: '/(app)/budget',        icon: 'cash' },
   { key: 'settings',  label: 'Réglages',        route: '/(app)/settings',      icon: 'settings' },
