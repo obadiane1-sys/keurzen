@@ -102,11 +102,14 @@ export function CompletionRatingSheet({
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
-      {/* Overlay — NOT touchable */}
-      <Animated.View
-        style={[styles.overlay, { opacity: overlayOpacity }]}
-        pointerEvents="none"
-      />
+      {/* Overlay — tap to dismiss */}
+      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onComplete}
+        />
+      </Animated.View>
 
       {/* Sheet */}
       <Animated.View
@@ -127,6 +130,11 @@ export function CompletionRatingSheet({
         <Text variant="bodySmall" color="secondary" style={styles.subtitle}>
           {taskTitle}
         </Text>
+
+        {/* Skip link */}
+        <TouchableOpacity onPress={onComplete} style={styles.skipButton}>
+          <Text variant="bodySmall" color="muted">Passer</Text>
+        </TouchableOpacity>
 
         {/* Rating buttons */}
         <View style={styles.buttonsContainer}>
@@ -198,6 +206,11 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     marginBottom: Spacing.xl,
+  },
+  skipButton: {
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
+    padding: Spacing.xs,
   },
   buttonsContainer: {
     gap: Spacing.md,

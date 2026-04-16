@@ -1,31 +1,16 @@
 import React, { useCallback, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextStyle, Alert, Animated } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Alert, Pressable } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../constants/tokens';
 import { Text } from '../ui/Text';
-import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { categoryEmoji, formatDueDate } from '@keurzen/shared';
 import type { Task } from '../../types';
 import dayjs from 'dayjs';
 
-// ─── Category Color Map (inline to avoid cross-package import issues) ────────
-
-const categoryColorMap: Record<string, string> = {
-  cleaning: '#C4846C',
-  cooking: '#8BA888',
-  shopping: '#D4A959',
-  admin: '#9B8AA8',
-  children: '#D4807A',
-  pets: '#8BA888',
-  garden: '#8BA888',
-  repairs: '#D4A959',
-  health: '#D4807A',
-  finances: '#9B8AA8',
-  other: '#C4846C',
-};
-
-// ─── Label Maps ──────────────────────────────────────────────────────────────
+// ─── Labels ─────────────────────────────────────────────────────────────────
 
 export const categoryLabels: Record<string, { label: string; icon: string }> = {
   cleaning: { label: 'Ménage', icon: 'sparkles-outline' },
@@ -48,18 +33,27 @@ export const priorityLabels: Record<string, string> = {
   urgent: 'Urgente',
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Component ──────────────────────────────────────────────────────────────
 
 interface TaskCardProps {
   task: Task;
   onPress: () => void;
   onToggleStatus?: () => void;
   onDelete?: () => void;
-  onEdit?: () => void;
+  memberColor?: string;
 }
 
-export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onPress, onToggleStatus, onDelete, memberColor }: TaskCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
+  const checkScale = useRef(new Animated.Value(1)).current;
+
+  const handleCheckPress = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(checkScale, { toValue: 0.6, duration: 80, useNativeDriver: true }),
+      Animated.spring(checkScale, { toValue: 1, friction: 3, tension: 200, useNativeDriver: true }),
+    ]).start();
+    onToggleStatus?.();
+  }, [checkScale, onToggleStatus]);
 
   const handleDelete = useCallback(() => {
     swipeableRef.current?.close();
@@ -67,15 +61,11 @@ export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: Ta
       'Supprimer la tâche',
       `Voulez-vous supprimer « ${task.title} » ?`,
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+        { text: 'Annuler', style: 'cancel' as const },
+        { text: 'Supprimer', style: 'destructive' as const, onPress: onDelete },
       ],
     );
   }, [task.title, onDelete]);
-
-  const handleLongPress = useCallback(() => {
-    onEdit?.();
-  }, [onEdit]);
 
   const renderRightActions = useCallback(
     (_progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
@@ -101,15 +91,10 @@ export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: Ta
   );
 
   const isDone = task.status === 'done';
-  const isOverdue =
-    !isDone && task.due_date && dayjs(task.due_date).isBefore(dayjs(), 'day');
-
-  const cat = categoryLabels[task.category] ?? categoryLabels.other;
-  const tintColor = categoryColorMap[task.category] ?? categoryColorMap.other;
-  const dueDateLabel = task.due_date
-    ? dayjs(task.due_date).format('DD MMM')
-    : null;
-  const showPriorityBadge = task.priority === 'high' || task.priority === 'urgent';
+  const isOverdue = !isDone && task.due_date && dayjs(task.due_date).isBefore(dayjs(), 'day');
+  const emoji = categoryEmoji[task.category] ?? categoryEmoji.other;
+  const dateLabel = formatDueDate(task.due_date);
+  const avatarColor = memberColor ?? Colors.primary;
 
   return (
     <Swipeable
@@ -118,61 +103,31 @@ export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: Ta
       overshootRight={false}
       friction={2}
     >
-      <TouchableOpacity
+      <AnimatedPressable
         onPress={onPress}
-        onLongPress={onEdit ? handleLongPress : undefined}
-        delayLongPress={400}
-        activeOpacity={0.85}
-        style={[
-          styles.card,
-          { backgroundColor: tintColor + '0F' },
-          isDone && styles.cardDone,
-        ]}
+        style={[styles.card, isDone && styles.cardDone]}
         accessibilityLabel={task.title}
         accessibilityRole="button"
       >
-        {/* Category header */}
-        <View style={styles.categoryHeader}>
-          <Ionicons
-            name={cat.icon as keyof typeof Ionicons.glyphMap}
-            size={16}
-            color={Colors.textSecondary}
-          />
-          <Text variant="caption" color="secondary">
-            {cat.label}
-          </Text>
-        </View>
+        {/* Avatar */}
+        <Avatar
+          name={task.assigned_profile?.full_name}
+          avatarUrl={task.assigned_profile?.avatar_url}
+          color={avatarColor}
+          size="md"
+        />
 
-        {/* Main row: checkbox + title */}
-        <View style={styles.mainRow}>
-          <TouchableOpacity
-            onPress={onToggleStatus}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.checkbox}
-            accessibilityLabel={isDone ? 'Marquer comme a faire' : 'Marquer comme termine'}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: isDone }}
-          >
-            <Ionicons
-              name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
-              size={24}
-              color={isDone ? Colors.success : Colors.gray300}
-            />
-          </TouchableOpacity>
-
+        {/* Content */}
+        <View style={styles.content}>
           <Text
             variant="label"
             numberOfLines={1}
-            style={[styles.title, isDone ? styles.titleDone as TextStyle : undefined]}
+            style={isDone ? styles.titleDone : styles.title}
           >
-            {task.title}
+            {emoji} {task.title}
           </Text>
-        </View>
-
-        {/* Meta row */}
-        <View style={styles.metaRow}>
-          {dueDateLabel && (
-            <View style={styles.metaChip}>
+          {dateLabel && (
+            <View style={styles.metaRow}>
               <Ionicons
                 name="calendar-outline"
                 size={12}
@@ -180,86 +135,145 @@ export function TaskCard({ task, onPress, onToggleStatus, onDelete, onEdit }: Ta
               />
               <Text
                 variant="caption"
-                color={isOverdue ? 'error' : 'muted'}
+                style={[
+                  styles.dateText,
+                  isOverdue ? { color: Colors.error } : undefined,
+                ]}
               >
-                {dueDateLabel}
+                {dateLabel}
               </Text>
             </View>
-          )}
-          {task.estimated_minutes != null && (
-            <View style={styles.metaChip}>
-              <Ionicons name="time-outline" size={12} color={Colors.textMuted} />
-              <Text variant="caption" color="muted">
-                {task.estimated_minutes} min
-              </Text>
-            </View>
-          )}
-          {showPriorityBadge && (
-            <Badge
-              label={priorityLabels[task.priority] ?? task.priority}
-              priority={task.priority}
-              size="sm"
-            />
-          )}
-          <View style={{ flex: 1 }} />
-          {task.assigned_profile && (
-            <Avatar
-              name={task.assigned_profile.full_name}
-              avatarUrl={task.assigned_profile.avatar_url}
-              size="xs"
-            />
           )}
         </View>
-      </TouchableOpacity>
+
+        {/* Checkbox */}
+        {!isDone && onToggleStatus && (
+          <Pressable
+            onPress={handleCheckPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Marquer comme terminée"
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: false }}
+          >
+            <Animated.View style={[styles.checkbox, { transform: [{ scale: checkScale }] }]}>
+              <Ionicons name="ellipse-outline" size={24} color={Colors.gray300} />
+            </Animated.View>
+          </Pressable>
+        )}
+      </AnimatedPressable>
     </Swipeable>
   );
 }
 
+// ─── Compact card for completed tasks ───────────────────────────────────────
+
+interface CompletedTaskCardProps {
+  task: Task;
+  memberColor?: string;
+}
+
+export function CompletedTaskCard({ task, memberColor }: CompletedTaskCardProps) {
+  const emoji = categoryEmoji[task.category] ?? categoryEmoji.other;
+
+  return (
+    <View style={styles.completedCard}>
+      <Avatar
+        name={task.assigned_profile?.full_name}
+        avatarUrl={task.assigned_profile?.avatar_url}
+        color={memberColor ?? Colors.gray300}
+        size="sm"
+      />
+      <View style={styles.completedContent}>
+        <Text variant="caption" style={styles.completedTitle}>
+          {emoji} {task.title}
+        </Text>
+        <Text variant="caption" style={styles.completedDate}>
+          Hier ✓
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  // ─── Active card ────────────────────
   card: {
-    borderRadius: BorderRadius.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
     padding: Spacing.base,
-    gap: Spacing.sm,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
     ...Shadows.card,
   },
   cardDone: {
     opacity: 0.5,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  mainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  checkbox: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  content: {
+    flex: 1,
+    gap: 2,
   },
   title: {
-    flex: 1,
+    fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.textPrimary,
   },
   titleDone: {
-    textDecorationLine: 'line-through',
+    fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.semibold,
     color: Colors.textMuted,
+    textDecorationLine: 'line-through',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingLeft: 32,
+    gap: 4,
   },
-  metaChip: {
+  dateText: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textMuted,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  checkbox: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ─── Completed card ────────────────
+  completedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: Spacing.base,
+    padding: Spacing.base,
+    backgroundColor: Colors.backgroundElevated,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
+  completedContent: {
+    flex: 1,
+    gap: 1,
+  },
+  completedTitle: {
+    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textMuted,
+    textDecorationLine: 'line-through',
+  },
+  completedDate: {
+    fontSize: 10,
+    color: Colors.gray400,
+    fontFamily: Typography.fontFamily.regular,
+  },
+
+  // ─── Swipe delete ──────────────────
   deleteAction: {
     backgroundColor: Colors.error,
-    borderRadius: BorderRadius.card,
+    borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     width: 88,

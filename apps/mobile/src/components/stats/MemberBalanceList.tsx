@@ -1,93 +1,41 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
+import { Avatar } from '../ui/Avatar';
+import { Colors, Spacing, Typography } from '../../constants/tokens';
+import { labelForBalanceLevel } from '@keurzen/shared';
 import type { MemberBalance } from '@keurzen/queries';
 
 interface Props {
   members: MemberBalance[];
 }
 
-function labelFor(level: MemberBalance['level']): { text: string; color: string } {
-  switch (level) {
-    case 'unbalanced':
-      return { text: 'Charge elevee', color: '#E07A5F' };
-    case 'watch':
-      return { text: 'A surveiller', color: '#F4A261' };
-    default:
-      return { text: 'Equilibre ideal', color: '#967BB6' };
-  }
-}
-
 export function MemberBalanceList({ members }: Props) {
   return (
-    <View className="px-6 pt-6">
-      <Text
-        className="uppercase pb-4 border-b border-[#DCD7E8]/50"
-        style={{
-          fontFamily: 'Nunito_700Bold',
-          fontSize: 12,
-          letterSpacing: 2,
-          color: '#5F5475',
-        }}
-      >
-        Repartition
-      </Text>
-      <View className="pt-6 gap-6">
+    <View style={styles.container}>
+      <Text style={styles.sectionTitle}>Repartition</Text>
+      <View style={styles.divider} />
+      <View style={styles.list}>
         {members.map((m) => {
           const pct = Math.round(m.tasksShare * 100);
-          const label = labelFor(m.level);
+          const label = labelForBalanceLevel(m.level);
           return (
-            <View key={m.userId} className="flex-row items-center gap-4">
-              {m.avatarUrl ? (
-                <Image source={{ uri: m.avatarUrl }} className="w-12 h-12 rounded-full" />
-              ) : (
-                <View className="w-12 h-12 rounded-full bg-[#F3F0FF] items-center justify-center">
-                  <Text style={{ fontFamily: 'Nunito_700Bold', color: '#967BB6' }}>
-                    {m.name.slice(0, 1)}
-                  </Text>
+            <View key={m.userId} style={styles.row}>
+              <Avatar name={m.name} avatarUrl={m.avatarUrl} size="lg" color={label.color} />
+              <View style={styles.info}>
+                <View style={styles.topRow}>
+                  <Text style={styles.name}>{m.name}</Text>
+                  <Text style={styles.pct}>{pct}%</Text>
                 </View>
-              )}
-              <View className="flex-1">
-                <View className="flex-row justify-between items-baseline">
-                  <Text
-                    style={{
-                      fontFamily: 'Nunito_600SemiBold',
-                      fontSize: 14,
-                      color: '#5F5475',
-                    }}
-                  >
-                    {m.name}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: 'Nunito_700Bold',
-                      fontSize: 18,
-                      color: '#5F5475',
-                    }}
-                  >
-                    {pct}%
-                  </Text>
-                </View>
-                <View className="h-[3px] bg-[#F3F0FF] rounded-full mt-2 overflow-hidden">
+                <View style={styles.barTrack}>
                   <View
-                    style={{
-                      width: `${pct}%`,
-                      backgroundColor: label.color,
-                      height: '100%',
-                    }}
+                    style={[
+                      styles.barFill,
+                      { width: `${Math.min(100, pct)}%`, backgroundColor: label.color },
+                    ]}
                   />
                 </View>
-                <Text
-                  className="uppercase mt-2"
-                  style={{
-                    fontFamily: 'Nunito_700Bold',
-                    fontSize: 9,
-                    letterSpacing: 1.2,
-                    color: label.color,
-                  }}
-                >
-                  {label.text}
-                </Text>
+                <Text style={[styles.stateLabel, { color: label.color }]}>{label.text}</Text>
               </View>
             </View>
           );
@@ -96,3 +44,67 @@ export function MemberBalanceList({ members }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+  },
+  sectionTitle: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 12,
+    letterSpacing: 2,
+    color: Colors.textPrimary,
+    textTransform: 'uppercase',
+    paddingBottom: Spacing.base,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    opacity: 0.5,
+  },
+  list: {
+    paddingTop: Spacing.xl,
+    gap: Spacing.xl,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+  },
+  info: {
+    flex: 1,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  name: {
+    fontFamily: Typography.fontFamily.semibold,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+  },
+  pct: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.lg,
+    color: Colors.textPrimary,
+  },
+  barTrack: {
+    height: 3,
+    backgroundColor: Colors.primarySurface,
+    borderRadius: 2,
+    marginTop: Spacing.sm,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+  },
+  stateLabel: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: Spacing.sm,
+  },
+});

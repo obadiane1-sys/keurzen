@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
+import { Colors, Spacing, Typography, BorderRadius } from '../../constants/tokens';
 import type { StatsScope, StatsPeriod } from '@keurzen/queries';
 
 interface Props {
@@ -10,70 +11,69 @@ interface Props {
   onPeriodChange: (p: StatsPeriod) => void;
 }
 
+const SCOPE_OPTIONS: Array<{ value: StatsScope; label: string }> = [
+  { value: 'me', label: 'Moi' },
+  { value: 'household', label: 'Foyer' },
+];
+
+const PERIOD_OPTIONS: Array<{ value: StatsPeriod; label: string }> = [
+  { value: 'day', label: 'Jour' },
+  { value: 'week', label: 'Semaine' },
+];
+
 export function StatsHeader({ scope, period, onScopeChange, onPeriodChange }: Props) {
   return (
-    <View className="px-6 pt-4">
-      <View className="flex-row bg-[#F3F0FF] rounded-xl p-1 mb-6">
-        {(['me', 'household'] as const).map((s) => {
-          const active = scope === s;
+    <View style={styles.container}>
+      <View style={styles.scopeRow}>
+        {SCOPE_OPTIONS.map((opt) => {
+          const active = scope === opt.value;
           return (
             <Pressable
-              key={s}
-              onPress={() => onScopeChange(s)}
-              className={`flex-1 py-3 rounded-lg ${active ? 'bg-white' : ''}`}
-              style={
-                active
-                  ? {
-                      shadowColor: '#967BB6',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 2 },
-                      elevation: 2,
-                    }
-                  : undefined
-              }
+              key={opt.value}
+              onPress={() => onScopeChange(opt.value)}
+              style={[styles.scopePill, active && styles.scopePillActive]}
               accessibilityRole="button"
-              accessibilityLabel={s === 'me' ? 'Stats personnelles' : 'Stats du foyer'}
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={opt.label}
             >
               <Text
-                className="text-center uppercase"
-                style={{
-                  fontFamily: 'Nunito_700Bold',
-                  fontSize: 11,
-                  color: active ? '#5F5475' : 'rgba(95,84,117,0.6)',
-                  letterSpacing: 1.2,
-                }}
+                style={[
+                  styles.scopeLabel,
+                  { color: active ? Colors.textPrimary : Colors.textMuted },
+                ]}
               >
-                {s === 'me' ? 'Moi' : 'Foyer'}
+                {opt.label}
               </Text>
             </Pressable>
           );
         })}
       </View>
 
-      <View className="flex-row border-b border-[#DCD7E8]">
-        {(['day', 'week'] as const).map((p) => {
-          const active = period === p;
+      <View style={styles.periodRow}>
+        {PERIOD_OPTIONS.map((opt) => {
+          const active = period === opt.value;
           return (
             <Pressable
-              key={p}
-              onPress={() => onPeriodChange(p)}
-              className="flex-1 py-3"
+              key={opt.value}
+              onPress={() => onPeriodChange(opt.value)}
+              style={[styles.periodTab, active && styles.periodTabActive]}
               accessibilityRole="button"
-              accessibilityLabel={p === 'day' ? 'Jour' : 'Semaine'}
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={opt.label}
             >
               <Text
-                className="text-center uppercase"
-                style={{
-                  fontFamily: active ? 'Nunito_700Bold' : 'Nunito_600SemiBold',
-                  fontSize: 10,
-                  color: active ? '#5F5475' : 'rgba(95,84,117,0.5)',
-                  letterSpacing: 1.5,
-                }}
+                style={[
+                  styles.periodLabel,
+                  {
+                    color: active ? Colors.textPrimary : Colors.textMuted,
+                    fontFamily: active
+                      ? Typography.fontFamily.bold
+                      : Typography.fontFamily.semibold,
+                  },
+                ]}
               >
-                {p === 'day' ? 'Jour' : 'Semaine'}
+                {opt.label}
               </Text>
-              {active && <View className="h-[2px] bg-[#967BB6] mt-2 mx-6 rounded-full" />}
             </Pressable>
           );
         })}
@@ -81,3 +81,65 @@ export function StatsHeader({ scope, period, onScopeChange, onPeriodChange }: Pr
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.base,
+  },
+  scopeRow: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primarySurface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xs,
+    marginBottom: Spacing.xl,
+  },
+  scopePill: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scopePillActive: {
+    backgroundColor: Colors.background,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  scopeLabel: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  periodRow: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primarySurface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xs,
+  },
+  periodTab: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    borderRadius: BorderRadius.sm + 2,
+  },
+  periodTabActive: {
+    backgroundColor: Colors.background,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  periodLabel: {
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+});

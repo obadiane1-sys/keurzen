@@ -1,7 +1,13 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import isToday from 'dayjs/plugin/isToday';
+import isTomorrow from 'dayjs/plugin/isTomorrow';
+import 'dayjs/locale/fr';
 
 dayjs.extend(isoWeek);
+dayjs.extend(isToday);
+dayjs.extend(isTomorrow);
+dayjs.locale('fr');
 
 export function getGreeting(): string {
   const h = new Date().getHours();
@@ -12,6 +18,14 @@ export function getGreeting(): string {
 
 export function formatDate(date: string, format = 'DD/MM/YYYY'): string {
   return dayjs(date).format(format);
+}
+
+export function formatDueDate(dueDate: string | null): string | null {
+  if (!dueDate) return null;
+  const date = dayjs(dueDate);
+  if (date.isToday()) return "Aujourd'hui";
+  if (date.isTomorrow()) return 'Demain';
+  return date.format('dddd');
 }
 
 export function getCurrentWeekStart(): string {
@@ -47,7 +61,7 @@ export function computeTlxScore(values: {
   return Math.round(sum / 6);
 }
 
-export { categoryColorMap } from './taskCategoryColors';
+export { categoryColorMap, categoryEmoji } from './taskCategoryColors';
 export { computeHouseholdScore } from './householdScore';
 export type { HouseholdScoreInput, HouseholdScoreResult, ScoreDimension } from './householdScore';
 export { computeWeeklyAggregation, computeImbalanceLevel, computeAverageTlx, IMBALANCE_THRESHOLD, MIN_TASKS_SAMPLE, MIN_MINUTES_SAMPLE } from './weeklyStats';
@@ -58,5 +72,7 @@ export {
   computeEfficiency,
   pickCoachMessage,
   computeScoreDelta,
+  labelForBalanceLevel,
+  getDeltaColor,
 } from './statsHelpers';
-export type { CoachLevel } from './statsHelpers';
+export type { CoachLevel, BalanceLevel, BalanceLevelLabel } from './statsHelpers';

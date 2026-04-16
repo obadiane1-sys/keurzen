@@ -18,7 +18,9 @@ import { TaskEquityBar } from '../../../src/components/dashboard/TaskEquityBar';
 import { AlertCard } from '../../../src/components/dashboard/AlertCard';
 import { UpcomingTasksList } from '../../../src/components/dashboard/UpcomingTasksList';
 import { MOCK_ALERTS } from '../../../src/components/dashboard/constants';
-import { Colors } from '../../../src/constants/tokens';
+import { AnimatedScreen, StaggerItem } from '../../../src/components/ui/AnimatedScreen';
+import { DashboardSkeleton } from '../../../src/components/ui/Skeleton';
+import { Colors, Typography, Spacing } from '../../../src/constants/tokens';
 import type { Task } from '../../../src/types';
 
 /** Fallback: compute equity from all assigned tasks when weekly stats are empty */
@@ -68,7 +70,13 @@ export default function DashboardScreen() {
     return <Redirect href="/(app)/onboarding/setup" />;
   }
 
-  if (isLoading) return <Loader fullScreen />;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <DashboardSkeleton />
+      </SafeAreaView>
+    );
+  }
 
   if (!household) {
     return (
@@ -111,29 +119,39 @@ export default function DashboardScreen() {
           />
         }
       >
-        <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
+        <StaggerItem index={0}>
+          <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
+        </StaggerItem>
 
         <View style={styles.gap} />
-        <HouseholdScoreCard score={scoreResult.total} trend={trend} />
+        <StaggerItem index={1}>
+          <HouseholdScoreCard score={scoreResult.total} trend={trend} />
+        </StaggerItem>
 
         <View style={styles.gap} />
-        <TaskEquityBar members={members} />
+        <StaggerItem index={2}>
+          <TaskEquityBar members={members} />
+        </StaggerItem>
 
         {/* Alert cards grid */}
-        <View style={styles.alertGrid}>
-          <View style={styles.alertRow}>
-            <View style={styles.alertHalf}>
-              <AlertCard alert={MOCK_ALERTS[0]} />
+        <StaggerItem index={3}>
+          <View style={styles.alertGrid}>
+            <View style={styles.alertRow}>
+              <View style={styles.alertHalf}>
+                <AlertCard alert={MOCK_ALERTS[0]} />
+              </View>
+              <View style={styles.alertHalf}>
+                <AlertCard alert={MOCK_ALERTS[1]} />
+              </View>
             </View>
-            <View style={styles.alertHalf}>
-              <AlertCard alert={MOCK_ALERTS[1]} />
-            </View>
+            <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
           </View>
-          <AlertCard alert={MOCK_ALERTS[2]} fullWidth />
-        </View>
+        </StaggerItem>
 
         <View style={styles.gap} />
-        <UpcomingTasksList tasks={tasks} onToggleStatus={handleToggleStatus} />
+        <StaggerItem index={4}>
+          <UpcomingTasksList tasks={tasks} onToggleStatus={handleToggleStatus} />
+        </StaggerItem>
       </ScrollView>
 
       <CompletionRatingSheet
@@ -162,12 +180,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   welcomeText: {
-    fontSize: 20,
-    fontFamily: 'Nunito_700Bold',
+    fontSize: Typography.fontSize.xl,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   gap: {
-    height: 24,
+    height: Spacing.xl,
   },
   alertGrid: {
     marginHorizontal: 20,

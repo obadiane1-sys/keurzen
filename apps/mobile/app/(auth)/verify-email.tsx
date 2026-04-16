@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { verifyOtp, sendOtp, sendOtpForLogin } from '../../src/lib/supabase/auth';
 import { useUiStore } from '../../src/stores/ui.store';
+import type { RelativePathString } from 'expo-router';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Button } from '../../src/components/ui/Button';
@@ -24,7 +25,7 @@ const RESEND_COOLDOWN = 30;
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { email, mode } = useLocalSearchParams<{ email?: string; mode?: string }>();
-  const { showToast } = useUiStore();
+  const { showToast, pendingInviteToken, pendingInviteCode } = useUiStore();
 
   const resolvedEmail: string =
     email ??
@@ -81,8 +82,15 @@ export default function VerifyEmailScreen() {
     }
 
     showToast('Connexion réussie !', 'success');
-    router.replace('/(app)/dashboard');
-  }, [code, resolvedEmail, showToast, router]);
+
+    if (pendingInviteToken) {
+      router.replace(`/join/${pendingInviteToken}` as RelativePathString);
+    } else if (pendingInviteCode) {
+      router.replace(`/(auth)/join-code?code=${pendingInviteCode}` as RelativePathString);
+    } else {
+      router.replace('/(app)/dashboard');
+    }
+  }, [code, resolvedEmail, showToast, router, pendingInviteToken, pendingInviteCode]);
 
   const handleResend = useCallback(async () => {
     if (!resolvedEmail || cooldown > 0) return;

@@ -18,3 +18,21 @@ export const categoryColorMap: Record<TaskCategory, string> = {
   finances: '#9B8AA8',   // prune
   other: '#C4846C',      // terracotta
 };
+
+/**
+ * Maps each task category to a display emoji.
+ * Used in task cards on both mobile and web.
+ */
+export const categoryEmoji: Record<TaskCategory, string> = {
+  cleaning: '🧹',
+  cooking: '🍳',
+  shopping: '🛒',
+  admin: '📋',
+  children: '👶',
+  pets: '🐱',
+  garden: '🌿',
+  repairs: '🔧',
+  health: '💊',
+  finances: '💰',
+  other: '📌',
+};

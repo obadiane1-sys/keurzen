@@ -81,3 +81,25 @@ export function computeScoreDelta(
   if (previousScore === 0) return 0;
   return Math.round(((currentScore - previousScore) / previousScore) * 100);
 }
+
+export type BalanceLevel = 'balanced' | 'watch' | 'unbalanced';
+
+export interface BalanceLevelLabel {
+  text: string;
+  color: string;
+}
+
+export function labelForBalanceLevel(level: BalanceLevel): BalanceLevelLabel {
+  switch (level) {
+    case 'unbalanced':
+      return { text: 'Charge elevee', color: '#E07A5F' };
+    case 'watch':
+      return { text: 'A surveiller', color: '#F4A261' };
+    default:
+      return { text: 'Equilibre ideal', color: '#967BB6' };
+  }
+}
+
+export function getDeltaColor(delta: number): string {
+  return delta >= 0 ? '#81C784' : '#E07A5F';
+}
