@@ -46,7 +46,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Tâches à venir</Text>
-        <TouchableOpacity onPress={() => router.push('/(app)/tasks')}>
+        <TouchableOpacity onPress={() => router.push('/(app)/tasks')} activeOpacity={0.7}>
           <Text style={styles.seeAll}>Voir tout</Text>
         </TouchableOpacity>
       </View>
@@ -84,6 +84,7 @@ export function UpcomingTasksList({ tasks, onToggleStatus }: UpcomingTasksListPr
               <TouchableOpacity
                 style={styles.checkbox}
                 onPress={() => onToggleStatus(task.id)}
+                activeOpacity={0.7}
                 accessibilityLabel={`Marquer ${task.title} comme terminée`}
               >
                 <View style={styles.checkboxInner} />
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     textTransform: 'uppercase',
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(144, 202, 249, 0.2)',
+    borderBottomColor: 'rgba(150, 123, 182, 0.2)',
   },
   list: {
     borderRadius: 32,
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(144, 202, 249, 0.2)',
+    borderColor: 'rgba(150, 123, 182, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -179,6 +180,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(144, 202, 249, 0.2)',
+    backgroundColor: 'rgba(150, 123, 182, 0.2)',
   },
 });

@@ -26,6 +26,7 @@ export function DreamHeader({ firstName, avatarUrl }: DreamHeaderProps) {
 
       <TouchableOpacity
         style={styles.notifButton}
+        activeOpacity={0.7}
         accessibilityLabel="Notifications"
         onPress={() => router.push('/(app)/notifications')}
       >
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 18,
     fontFamily: 'Nunito_700Bold',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   notifButton: {
     width: 40,
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.textInverse,
     borderWidth: 1,
     borderColor: Colors.border,
     ...Shadows.sm,
@@ -86,6 +87,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.accent,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.textInverse,
   },
 });

@@ -6,6 +6,7 @@ import { useAuthStore } from '../../src/stores/auth.store';
 import { Loader } from '../../src/components/ui/Loader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../src/components/ui/Text';
+import { Colors } from '../../src/constants/tokens';
 
 const VISIBLE_TABS = [
   { route: 'dashboard', label: 'Accueil', icon: 'home' as keyof typeof MaterialCommunityIcons.glyphMap },
@@ -35,7 +36,7 @@ function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
               activeOpacity={0.85}
               style={styles.fab}
             >
-              <MaterialCommunityIcons name="plus" size={32} color="#FFFFFF" />
+              <MaterialCommunityIcons name="plus" size={32} color={Colors.textInverse} />
             </TouchableOpacity>
           );
         }
@@ -49,9 +50,9 @@ function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
             <MaterialCommunityIcons
               name={tab.icon}
               size={24}
-              color={isFocused ? '#90CAF9' : '#A0AEC0'}
+              color={isFocused ? Colors.primary : Colors.gray400}
             />
-            <Text style={[styles.label, { color: isFocused ? '#90CAF9' : '#A0AEC0' }]}>
+            <Text style={[styles.label, { color: isFocused ? Colors.primary : Colors.gray400 }]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E9EC',
+    borderTopColor: Colors.border,
     paddingTop: 6,
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -118,11 +119,11 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 24,
-    backgroundColor: '#90CAF9',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -32,
-    shadowColor: '#90CAF9',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

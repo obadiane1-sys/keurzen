@@ -94,6 +94,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
               style={styles.rightIcon}
+              activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               accessibilityRole="button"
@@ -110,6 +111,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             <TouchableOpacity
               onPress={onRightIconPress}
               style={styles.rightIcon}
+              activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name={rightIcon} size={18} color={Colors.textMuted} />

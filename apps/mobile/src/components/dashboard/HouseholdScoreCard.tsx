@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   trendPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(144, 202, 249, 0.8)',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 9999,

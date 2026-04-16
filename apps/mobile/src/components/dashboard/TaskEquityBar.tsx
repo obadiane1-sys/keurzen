@@ -44,7 +44,7 @@ export function TaskEquityBar({ members }: TaskEquityBarProps) {
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: 'rgba(144, 202, 249, 0.5)' }]} />
+          <View style={[styles.legendDot, { backgroundColor: 'rgba(150, 123, 182, 0.5)' }]} />
           <Text style={styles.memberName}>{member1.name.split(' ')[0]}</Text>
         </View>
         <View style={[styles.legendItem, { justifyContent: 'flex-end' }]}>
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(144, 202, 249, 0.3)',
+    backgroundColor: 'rgba(150, 123, 182, 0.3)',
   },
   targetText: {
     fontSize: 9,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   barLeft: {
-    backgroundColor: 'rgba(144, 202, 249, 0.4)',
+    backgroundColor: 'rgba(150, 123, 182, 0.4)',
     paddingLeft: 12,
   },
   barRight: {

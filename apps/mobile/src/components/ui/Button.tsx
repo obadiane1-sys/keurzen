@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
+  Animated,
   ActivityIndicator,
   StyleSheet,
   ViewStyle,
@@ -55,47 +56,61 @@ export function Button({
   const vc = variantConfig[variant];
   const sc = sizeConfig[size];
   const isDisabled = disabled || isLoading;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }).start();
+  }, [scaleAnim]);
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
-      activeOpacity={0.8}
       accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: isLoading }}
-      style={[
-        styles.base,
-        {
-          backgroundColor: vc.bg,
-          height: sc.height,
-          paddingHorizontal: sc.px,
-          borderRadius: sc.radius,
-          borderWidth: vc.border ? 1.5 : 0,
-          borderColor: vc.border,
-          opacity: isDisabled ? 0.5 : 1,
-          alignSelf: fullWidth ? undefined : 'flex-start',
-          width: fullWidth ? '100%' : undefined,
-        },
-        variant !== 'ghost' && Shadows.sm,
-        style,
-      ]}
     >
-      {isLoading ? (
-        <ActivityIndicator size="small" color={vc.text} />
-      ) : (
-        <View style={styles.content}>
-          {leftIcon && <View style={styles.icon}>{leftIcon}</View>}
-          <Text
-            style={{ fontSize: sc.fontSize, color: vc.text }}
-            weight="semibold"
-          >
-            {label}
-          </Text>
-          {rightIcon && <View style={styles.icon}>{rightIcon}</View>}
-        </View>
-      )}
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.base,
+          {
+            backgroundColor: vc.bg,
+            height: sc.height,
+            paddingHorizontal: sc.px,
+            borderRadius: sc.radius,
+            borderWidth: vc.border ? 1.5 : 0,
+            borderColor: vc.border,
+            opacity: isDisabled ? 0.5 : 1,
+            alignSelf: fullWidth ? undefined : 'flex-start',
+            width: fullWidth ? '100%' : undefined,
+            transform: [{ scale: scaleAnim }],
+          },
+          variant !== 'ghost' && Shadows.sm,
+          style,
+        ]}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color={vc.text} />
+        ) : (
+          <View style={styles.content}>
+            {leftIcon && <View style={styles.icon}>{leftIcon}</View>}
+            <Text
+              style={{ fontSize: sc.fontSize, color: vc.text }}
+              weight="semibold"
+            >
+              {label}
+            </Text>
+            {rightIcon && <View style={styles.icon}>{rightIcon}</View>}
+          </View>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
