@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import { useStats } from '@keurzen/queries';
-import { Colors, Typography, Spacing, BorderRadius } from '../../constants/tokens';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../constants/tokens';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 
 export function HubScoreCard() {
@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     minHeight: 240,
     justifyContent: 'space-between',
+    ...Shadows.card,
   },
   header: {
     flexDirection: 'row',

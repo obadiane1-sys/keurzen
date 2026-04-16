@@ -11,7 +11,7 @@ import { useRecentActivity } from '@keurzen/queries';
 import type { ActivityItem } from '@keurzen/queries';
 import { useHouseholdStore } from '../../stores/household.store';
 import type { HouseholdMember } from '../../types';
-import { Colors, Typography, Spacing, BorderRadius } from '../../constants/tokens';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../constants/tokens';
 
 dayjs.extend(relativeTime);
 dayjs.locale('fr');
@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     minHeight: 240,
     justifyContent: 'space-between',
+    ...Shadows.card,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },

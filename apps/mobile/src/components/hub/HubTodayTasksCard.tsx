@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import { useTasks, useTodayTasks } from '@keurzen/queries';
-import { Colors, Typography, Spacing, BorderRadius } from '../../constants/tokens';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../constants/tokens';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 
 export function HubTodayTasksCard() {
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     minHeight: 240,
     justifyContent: 'space-between',
+    ...Shadows.card,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },

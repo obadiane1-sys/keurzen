@@ -45,6 +45,7 @@ export function HubCarousel() {
         decelerationRate="fast"
         contentContainerStyle={{
           paddingHorizontal: H_PADDING,
+          paddingVertical: 6,
           gap: GAP,
         }}
         onScroll={onScroll}
