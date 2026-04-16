@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 import type { StatsTrendPoint } from '@keurzen/queries';
+import { Colors, Typography, Spacing } from '../../constants/tokens';
 
 interface Props {
   points: StatsTrendPoint[];
@@ -12,15 +13,13 @@ interface Props {
 const CHART_HEIGHT = 120;
 const LABEL_HEIGHT = 24;
 const BAR_RADIUS = 4;
-const BAR_COLOR = '#967BB6';
-const TICK_COLOR = 'rgba(95,84,117,0.5)';
 const FONT_SIZE = 10;
-const HORIZONTAL_PADDING = 48; // px consumed by left axis area + right margin
+const HORIZONTAL_PADDING = 48;
 
 export function TrendChart({ points, title = 'Tendance' }: Props) {
   if (points.length === 0) return null;
 
-  const containerWidth = Dimensions.get('window').width - 48; // px-6 on both sides
+  const containerWidth = Dimensions.get('window').width - Spacing.xl * 2;
   const svgWidth = containerWidth;
   const svgHeight = CHART_HEIGHT + LABEL_HEIGHT;
 
@@ -33,18 +32,8 @@ export function TrendChart({ points, title = 'Tendance' }: Props) {
   const chartLeft = HORIZONTAL_PADDING / 2;
 
   return (
-    <View className="px-6 pt-8">
-      <Text
-        className="uppercase mb-4"
-        style={{
-          fontFamily: 'Nunito_700Bold',
-          fontSize: 12,
-          letterSpacing: 2,
-          color: '#5F5475',
-        }}
-      >
-        {title}
-      </Text>
+    <View style={styles.wrap}>
+      <Text style={styles.title}>{title}</Text>
       <Svg width={svgWidth} height={svgHeight}>
         {points.map((point, i) => {
           const barH = Math.max(4, (point.value / maxValue) * CHART_HEIGHT);
@@ -62,15 +51,15 @@ export function TrendChart({ points, title = 'Tendance' }: Props) {
                 height={barH}
                 rx={BAR_RADIUS}
                 ry={BAR_RADIUS}
-                fill={BAR_COLOR}
+                fill={Colors.primary}
               />
               <SvgText
                 x={labelX}
                 y={labelY}
                 textAnchor="middle"
                 fontSize={FONT_SIZE}
-                fill={TICK_COLOR}
-                fontFamily="Nunito_500Medium"
+                fill={Colors.textMuted}
+                fontFamily={Typography.fontFamily.medium}
               >
                 {point.label}
               </SvgText>
@@ -81,3 +70,18 @@ export function TrendChart({ points, title = 'Tendance' }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing['2xl'],
+  },
+  title: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 12,
+    letterSpacing: 2,
+    color: Colors.textPrimary,
+    textTransform: 'uppercase',
+    marginBottom: Spacing.base,
+  },
+});

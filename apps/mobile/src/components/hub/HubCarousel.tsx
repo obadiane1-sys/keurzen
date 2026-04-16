@@ -10,6 +10,7 @@ import {
 import { HubScoreCard } from './HubScoreCard';
 import { HubTodayTasksCard } from './HubTodayTasksCard';
 import { HubActivityCard } from './HubActivityCard';
+import { Colors } from '../../constants/tokens';
 
 type CardKey = 'score' | 'today' | 'activity';
 
@@ -75,10 +76,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#DCD7E8',
+    backgroundColor: Colors.border,
   },
   dotActive: {
-    backgroundColor: '#967BB6',
+    backgroundColor: Colors.primary,
     width: 18,
   },
 });

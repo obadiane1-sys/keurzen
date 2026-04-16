@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import { useStats } from '@keurzen/queries';
+import { Colors, Typography, Spacing, BorderRadius } from '../../constants/tokens';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
 
 export function HubScoreCard() {
   const router = useRouter();
@@ -27,13 +29,13 @@ export function HubScoreCard() {
           <Text style={styles.emptyBody}>
             Ton score d'équilibre apparaît dès que le foyer a des tâches suivies.
           </Text>
-          <Pressable
+          <AnimatedPressable
             accessibilityRole="button"
             onPress={() => router.push('/(app)/tasks/create' as never)}
             style={styles.cta}
           >
             <Text style={styles.ctaText}>NOUVELLE TÂCHE</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       ) : (
         <View style={styles.valueWrap}>
@@ -42,25 +44,25 @@ export function HubScoreCard() {
         </View>
       )}
 
-      <Pressable
+      <AnimatedPressable
         accessibilityRole="button"
         onPress={() => router.push('/(app)/dashboard' as never)}
         style={styles.footer}
       >
         <Text style={styles.footerText}>VOIR LE TABLEAU DE BORD</Text>
-        <Ionicons name="arrow-forward" size={14} color="#967BB6" />
-      </Pressable>
+        <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+      </AnimatedPressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F9F8FD',
-    borderRadius: 16,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: '#DCD7E8',
-    padding: 24,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
     minHeight: 240,
     justifyContent: 'space-between',
   },
@@ -73,81 +75,81 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#967BB6',
+    backgroundColor: Colors.primary,
   },
   title: {
-    fontFamily: 'Nunito_700Bold',
-    fontSize: 16,
-    color: '#967BB6',
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.md,
+    color: Colors.primary,
   },
   skeleton: {
     flex: 1,
-    marginVertical: 20,
-    borderRadius: 12,
-    backgroundColor: '#F3F0FF',
+    marginVertical: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primarySurface,
   },
   valueWrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    marginVertical: 12,
+    marginVertical: Spacing.md,
   },
   value: {
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 72,
-    color: '#5F5475',
+    color: Colors.textPrimary,
     lineHeight: 80,
   },
   valueUnit: {
-    fontFamily: 'Nunito_600SemiBold',
-    fontSize: 20,
-    color: 'rgba(95,84,117,0.6)',
-    marginBottom: 12,
-    marginLeft: 4,
+    fontFamily: Typography.fontFamily.semibold,
+    fontSize: Typography.fontSize.xl,
+    color: Colors.textMuted,
+    marginBottom: Spacing.md,
+    marginLeft: Spacing.xs,
   },
   emptyWrap: {
-    marginVertical: 12,
+    marginVertical: Spacing.md,
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   emptyTitle: {
-    fontFamily: 'Nunito_700Bold',
-    fontSize: 16,
-    color: '#5F5475',
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textPrimary,
   },
   emptyBody: {
-    fontFamily: 'Nunito_400Regular',
+    fontFamily: Typography.fontFamily.regular,
     fontSize: 12,
-    color: 'rgba(95,84,117,0.7)',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   cta: {
-    marginTop: 8,
-    paddingHorizontal: 16,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.base,
     paddingVertical: 10,
     borderRadius: 22,
-    backgroundColor: '#967BB6',
+    backgroundColor: Colors.primary,
     minHeight: 44,
     justifyContent: 'center',
   },
   ctaText: {
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 10,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     letterSpacing: 2,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 12,
+    marginTop: Spacing.md,
     minHeight: 44,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
   },
   footerText: {
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 10,
     letterSpacing: 2,
-    color: '#967BB6',
+    color: Colors.primary,
   },
 });

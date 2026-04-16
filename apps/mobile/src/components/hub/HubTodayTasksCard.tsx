@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import { useTasks, useTodayTasks } from '@keurzen/queries';
+import { Colors, Typography, Spacing, BorderRadius } from '../../constants/tokens';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
 
 export function HubTodayTasksCard() {
   const router = useRouter();
@@ -43,71 +45,75 @@ export function HubTodayTasksCard() {
         </View>
       )}
 
-      <Pressable
+      <AnimatedPressable
         accessibilityRole="button"
         accessibilityLabel="Voir toutes les tâches"
         onPress={() => router.push('/(app)/tasks' as never)}
         style={styles.footer}
       >
         <Text style={styles.footerText}>VOIR TOUTES LES TÂCHES</Text>
-        <Ionicons name="arrow-forward" size={14} color="#967BB6" />
-      </Pressable>
+        <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+      </AnimatedPressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F9F8FD',
-    borderRadius: 16,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: '#DCD7E8',
-    padding: 24,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
     minHeight: 240,
     justifyContent: 'space-between',
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#967BB6' },
-  title: { fontFamily: 'Nunito_700Bold', fontSize: 16, color: '#967BB6' },
-  list: { gap: 14, marginTop: 16 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
+  title: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.md,
+    color: Colors.primary,
+  },
+  list: { gap: 14, marginTop: Spacing.base },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   index: {
-    fontFamily: 'Nunito_400Regular',
+    fontFamily: Typography.fontFamily.regular,
     fontSize: 12,
-    color: '#967BB6',
+    color: Colors.primary,
     width: 22,
   },
   rowTitle: {
     flex: 1,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: Typography.fontFamily.semibold,
     fontSize: 14,
-    color: '#5F5475',
+    color: Colors.textPrimary,
   },
   empty: {
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: Typography.fontFamily.semibold,
     fontSize: 14,
-    color: 'rgba(95,84,117,0.6)',
+    color: Colors.textMuted,
     textAlign: 'center',
-    marginVertical: 24,
+    marginVertical: Spacing.xl,
   },
-  skeletonGroup: { gap: 12, marginTop: 16 },
+  skeletonGroup: { gap: Spacing.md, marginTop: Spacing.base },
   skeletonRow: {
     height: 16,
-    borderRadius: 8,
-    backgroundColor: '#F3F0FF',
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.primarySurface,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 12,
+    marginTop: Spacing.md,
     minHeight: 44,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
   },
   footerText: {
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 10,
     letterSpacing: 2,
-    color: '#967BB6',
+    color: Colors.primary,
   },
 });

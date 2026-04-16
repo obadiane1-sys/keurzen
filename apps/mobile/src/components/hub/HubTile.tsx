@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text } from '../ui/Text';
 import type { HubTileConfig, HubTileIcon } from '@keurzen/shared';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../constants/tokens';
 
 const ICON_MAP: Record<HubTileIcon, keyof typeof Ionicons.glyphMap> = {
   grid: 'grid-outline',
@@ -37,7 +38,7 @@ export function HubTile({ config }: Props) {
         <Ionicons
           name={ICON_MAP[config.icon]}
           size={28}
-          color="#967BB6"
+          color={Colors.primary}
         />
       </View>
       <Text style={styles.label} numberOfLines={2}>
@@ -51,18 +52,19 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     minHeight: 120,
-    backgroundColor: '#F9F8FD',
-    borderRadius: 16,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: '#DCD7E8',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.base,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: Spacing.md,
+    ...Shadows.card,
   },
   tileAccent: {
-    backgroundColor: '#E5DBFF',
+    backgroundColor: Colors.primaryLight,
   },
   tilePressed: {
     transform: [{ scale: 0.98 }],
@@ -72,9 +74,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 10,
-    color: '#5F5475',
+    color: Colors.textPrimary,
     letterSpacing: 2,
     textAlign: 'center',
   },
