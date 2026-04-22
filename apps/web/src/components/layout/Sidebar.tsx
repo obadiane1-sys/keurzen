@@ -9,6 +9,7 @@ import { SidebarItem } from './SidebarItem';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@keurzen/stores';
+import { createSupabaseBrowser } from '@/lib/supabase/client';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
@@ -108,6 +109,18 @@ function SidebarContent({
   // SidebarItem accepts `collapsed` — for the desktop case we pass a special
   // prop and handle it with CSS instead.
 
+  const handleSignOut = async () => {
+    if (!window.confirm('Tu vas etre deconnecte. Continuer ?')) return;
+    onNavigate?.();
+    useAuthStore.getState().reset();
+    router.replace('/auth/login');
+    try {
+      await createSupabaseBrowser().auth.signOut();
+    } catch {
+      // Local state already cleared; middleware will enforce redirect.
+    }
+  };
+
   return (
     <>
       <nav className="flex-1 space-y-1 px-2 pt-2">
@@ -151,7 +164,7 @@ function SidebarContent({
         </button>
         <SidebarItem href="/settings" icon={Settings} label="Reglages" collapsed={collapsed} onNavigate={onNavigate} />
         <button
-          onClick={() => onNavigate?.()}
+          onClick={handleSignOut}
           className={cn(
             'flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-rose transition-colors hover:bg-rose/8',
             collapsed && 'lg:justify-center lg:px-2 xl:justify-start xl:px-3',
