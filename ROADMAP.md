@@ -92,15 +92,10 @@ Aucun elargissement de scope sans decision explicite.
 ## Palier 4 — Modules complementaires 🟡
 *Enrichissent l'experience au quotidien*
 
-### Budget (mobile uniquement)
+### Budget
 - ✅ Ajout d'une depense
 - ✅ Categories de base
-- ❌ Parite web manquante
-
-### Repas & recettes (mobile uniquement)
-- ✅ Planning de repas
-- ✅ Recettes (creation, favoris, historique)
-- ❌ Parite web manquante
+- ✅ Parite web
 
 ### Messages
 - ✅ Conversations entre membres du foyer (mobile + web)
@@ -110,9 +105,10 @@ Aucun elargissement de scope sans decision explicite.
 - ✅ Listes partagees (mobile + web)
 
 ### A faire
-- ❌ Budget → implementer la parite web
-- ❌ Meals/Recipes → implementer la parite web
 - ❌ TLX → implementer la parite web (ecran TLX hebdo)
+
+### Reporte en V2
+- Repas & recettes (planning, creation, favoris, historique) — mobile livre, pas de parite web prevue avant V2
 
 **Sortie :** le foyer a tous les outils du quotidien sur les deux plateformes.
 
@@ -129,7 +125,7 @@ Aucun elargissement de scope sans decision explicite.
 - ✅ Onboarding guide apres inscription
 
 ### A faire
-- ❌ Parite web complete (budget, meals, TLX)
+- ❌ Parite web TLX (ecran TLX hebdo)
 - ❌ Revue design globale (coherence Cafe Cosy sur tous les ecrans)
 - ❌ Ecran de time tracking dedie (type defini, pas d'UI)
 - ❌ Ecran d'alertes dedie (donnees existent, affichage inline uniquement)
@@ -142,6 +138,7 @@ Aucun elargissement de scope sans decision explicite.
 
 ## Apres le lancement — V2
 
+- Repas & recettes sur web (parite complete du module mobile)
 - Suggestions de reassignation actives basees sur l'historique TLX (coach proactif)
 - Detection automatique du desequilibre chronique
 - Mode sombre
