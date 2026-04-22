@@ -113,12 +113,19 @@ function SidebarContent({
     if (!window.confirm('Tu vas etre deconnecte. Continuer ?')) return;
     onNavigate?.();
     useAuthStore.getState().reset();
-    router.replace('/auth/login');
+
+    // IMPORTANT: await signOut BEFORE navigating. If we navigate first,
+    // the SSR middleware still sees the Supabase cookie as valid and
+    // applies its "user + isAuthPage -> redirect /dashboard" rule,
+    // bouncing the user straight back into the app.
     try {
       await createSupabaseBrowser().auth.signOut();
     } catch {
-      // Local state already cleared; middleware will enforce redirect.
+      // Proceed anyway; cookie may be stale but we still want to leave the app.
     }
+
+    // Hard navigation so the middleware re-runs with the cleared cookie jar.
+    window.location.assign('/auth/login');
   };
 
   return (
