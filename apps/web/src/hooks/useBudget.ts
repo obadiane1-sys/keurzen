@@ -6,7 +6,13 @@ import type { BudgetExpense, BudgetExpenseFormValues } from '@keurzen/shared';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
 import dayjs from 'dayjs';
 
-const supabase = createSupabaseBrowser();
+// Lazy client — created on first use, never at module scope, so the
+// build-time prerender does not try to read Supabase env vars.
+let _supabase: ReturnType<typeof createSupabaseBrowser> | null = null;
+function getSupabase() {
+  if (!_supabase) _supabase = createSupabaseBrowser();
+  return _supabase;
+}
 
 export const budgetKeys = {
   all: (householdId: string) => ['budget', householdId] as const,
@@ -25,7 +31,7 @@ export function useBudgetExpenses(month?: string) {
       const startDate = dayjs(targetMonth).startOf('month').format('YYYY-MM-DD');
       const endDate = dayjs(targetMonth).endOf('month').format('YYYY-MM-DD');
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('budget_expenses')
         .select('*, paid_by_profile:profiles!budget_expenses_paid_by_fkey(id, full_name, avatar_url)')
         .eq('household_id', currentHousehold!.id)
@@ -51,7 +57,7 @@ export function useCreateExpense() {
     mutationFn: async (values: BudgetExpenseFormValues) => {
       const amountCents = Math.round(parseFloat(values.amount) * 100);
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('budget_expenses')
         .insert({
           household_id: currentHousehold!.id,
@@ -80,7 +86,7 @@ export function useDeleteExpense() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('budget_expenses').delete().eq('id', id);
+      const { error } = await getSupabase().from('budget_expenses').delete().eq('id', id);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
