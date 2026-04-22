@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -173,6 +173,20 @@ function HistoryItem({
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function WeeklyReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        </div>
+      }
+    >
+      <WeeklyReviewContent />
+    </Suspense>
+  );
+}
+
+function WeeklyReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const weekParam = searchParams.get('week') ?? undefined;
