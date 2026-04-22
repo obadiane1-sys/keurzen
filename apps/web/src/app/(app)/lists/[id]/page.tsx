@@ -60,7 +60,7 @@ export default function ListDetailPage() {
         </button>
         <div className="flex items-center justify-between">
           <h1 className="font-heading text-[32px] font-bold">{list.title}</h1>
-          <Button variant="danger" size="sm" onClick={handleDeleteList}>
+          <Button variant="destructive" size="sm" onClick={handleDeleteList}>
             <Trash2 size={14} />
             Supprimer
           </Button>

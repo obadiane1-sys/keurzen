@@ -17,7 +17,7 @@ import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { MealPlanDay } from '../../../src/components/meals/MealPlanDay';
 import { RecipeCard } from '../../../src/components/meals/RecipeCard';
 import { useMealPlan, useDeleteMealPlanItem, useMealHistory } from '../../../src/lib/queries/meals';
-import { useToggleFavorite } from '../../../src/lib/queries/recipes';
+import { useToggleFavorite, useFavoriteRecipes } from '../../../src/lib/queries/recipes';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import type { MealPlanItem, Recipe } from '../../../src/types';
 
@@ -57,6 +57,11 @@ export default function MealsScreen() {
   const { data: history = [] } = useMealHistory();
   const deleteMeal = useDeleteMealPlanItem();
   const toggleFav = useToggleFavorite();
+  const { data: favoriteRecipes = [] } = useFavoriteRecipes();
+  const favoriteIds = useMemo(
+    () => new Set(favoriteRecipes.map((r) => r.id)),
+    [favoriteRecipes]
+  );
 
   const days = useMemo(() => {
     const result: { date: Date; items: MealPlanItem[] }[] = [];
@@ -86,8 +91,8 @@ export default function MealsScreen() {
     return [...freq.values()]
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
-      .map((f) => f.recipe);
-  }, [history]);
+      .map((f) => ({ ...f.recipe, is_favorite: favoriteIds.has(f.recipe.id) }));
+  }, [history, favoriteIds]);
 
   const handleMealPress = useCallback(
     (item: MealPlanItem) => {

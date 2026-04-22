@@ -20,7 +20,7 @@ export function EmptyState({ icon: Icon, title, subtitle, action }: EmptyStatePr
       <h3 className="font-heading text-lg font-semibold text-text-primary">{title}</h3>
       {subtitle && <p className="mt-1 max-w-sm text-sm text-text-secondary">{subtitle}</p>}
       {action && (
-        <Button size="md" className="mt-5" onClick={action.onClick}>
+        <Button size="default" className="mt-5" onClick={action.onClick}>
           {action.label}
         </Button>
       )}

@@ -39,6 +39,17 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+**/ios/
+**/android/
+
+# Turborepo
+.turbo/
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Superpowers brainstorm cache
+.superpowers/brainstorm/
+
+# Supabase temp
+**/.temp/

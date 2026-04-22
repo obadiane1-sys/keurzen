@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npx turbo build --filter=keurzen-web",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
+}

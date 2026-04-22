@@ -4,151 +4,171 @@
 **Lancer petit, lancer propre.**
 Mieux vaut une app avec 4 fonctions qui marchent parfaitement qu'une app avec 8 fonctions bancales.
 
-Un palier doit être **entièrement finalisé** avant de passer au suivant.
-Aucun élargissement de scope sans décision explicite.
+Keurzen est une app de gestion de foyer **et coach**, qui guide les couples vers un foyer equilibre via le suivi des taches, la mesure de la charge mentale (TLX) et des conseils hebdomadaires.
+
+Un palier doit etre **entierement finalise** avant de passer au suivant.
+Aucun elargissement de scope sans decision explicite.
 
 ---
 
-## Règle de travail avec Claude Code
+## Regle de travail avec Claude Code
 
 1. Explorer
-2. Planifier → attendre validation avant d'implémenter
-3. Implémenter
+2. Planifier → attendre validation avant d'implementer
+3. Implementer (mobile ET web simultanement)
 4. Self-check
-5. Vérification technique (lint, build)
+5. Verification technique (lint, build)
 6. Test manuel
 7. Verdict
 
 ---
 
-## Palier 1 — Fondations 🔴
+## Palier 1 — Fondations ✅
 *Bloquant absolu avant tout le reste*
 
-- Auth / création de compte
-- Création de foyer
-- Flux d'invitation bout en bout
-- Onboarding post-invitation de l'invité
+- ✅ Auth / creation de compte (login, signup, verify-email)
+- ✅ Creation de foyer
+- ✅ Flux d'invitation bout en bout (magic link, join code)
+- ✅ Onboarding post-invitation de l'invite
+- ✅ Profil utilisateur (prenom, photo, securite)
 
-**Sortie :** deux personnes peuvent créer et rejoindre un foyer depuis zéro.
-
----
-
-## Palier 2 — Tâches 🟠
-*Cœur du produit — doit être irréprochable*
-
-### Gestion des tâches
-- Créer / modifier / supprimer une tâche
-- Assigner à un membre du foyer
-- Marquer comme faite
-- Récurrence simple (quotidien, hebdo)
-- Vue liste + vue par membre
-
-### Types de tâches
-Les tâches ont un champ `type` :
-- `household` → tâche du foyer, partagée, soumise au TLX
-- `personal` → activité personnelle, aucun TLX, complétion directe sans friction
-
-### Charge mentale à la complétion (tâches household uniquement)
-À chaque fois qu'un membre marque une tâche `household` comme faite :
-- Un modal/bottom sheet s'affiche immédiatement
-- Question unique : **"Comment tu t'es senti·e sur cette tâche ?"**
-- 3 niveaux : 🟢 Légère (1) — 🟡 Moyenne (2) — 🔴 Lourde (3)
-- L'utilisateur répond en 2 secondes maximum
-- Le score est stocké lié à : tâche + membre + timestamp
-
-Pour les tâches `personal` : complétion directe, aucun écran supplémentaire.
-
-**Sortie :** un foyer peut se répartir ses tâches, suivre qui fait quoi, et collecter des données de charge mentale sans friction.
+**Sortie :** deux personnes peuvent creer et rejoindre un foyer depuis zero.
 
 ---
 
-## Palier 3 — Équilibre & charge mentale 🟠
-*Le différenciant de Keurzen par rapport à une simple todo*
+## Palier 2 — Taches ✅
+*Coeur du produit — doit etre irreprochable*
 
-### Score d'équilibre
-- Calcul du ratio tâches / score TLX par membre sur la semaine
-- Seuil d'alerte configurable (ex. écart > 30%)
-- Indicateur visuel sur le dashboard (pas d'alerte agressive)
+### Gestion des taches
+- ✅ Creer / modifier / supprimer une tache
+- ✅ Assigner a un membre du foyer
+- ✅ Marquer comme faite
+- ✅ Recurrence simple (quotidien, hebdo, bimensuel, mensuel)
+- ✅ Vue liste avec filtres par statut
+- ✅ Categories (menage, cuisine, courses, admin, etc.)
+- ✅ Zones (cuisine, salle de bain, etc.)
+
+### Types de taches
+- ✅ `household` → tache du foyer, partagee, soumise au TLX
+- ✅ `personal` → activite personnelle, aucun TLX, completion directe
+
+### Charge mentale a la completion (taches household uniquement)
+- ✅ Bottom sheet CompletionRatingSheet a la completion
+- ✅ Question unique : "Comment tu t'es senti·e sur cette tache ?"
+- ✅ 3 niveaux : Legere (1) — Moyenne (2) — Lourde (3)
+- ✅ Score stocke lie a : tache + membre + timestamp
+
+**Sortie :** un foyer peut se repartir ses taches, suivre qui fait quoi, et collecter des donnees de charge mentale sans friction.
+
+---
+
+## Palier 3 — Equilibre & charge mentale ✅
+*Le differenciant de Keurzen par rapport a une simple todo*
+
+### Score d'equilibre
+- ✅ Calcul du ratio taches / score TLX par membre sur la semaine
+- ✅ Seuil d'alerte configurable (IMBALANCE_THRESHOLD)
+- ✅ Indicateur visuel sur le dashboard
 
 ### Vue comparative
-- Affichage du score d'équilibre entre membres
-- Basé sur les données de rating quotidien collectées au Palier 2
-- Historique semaine par semaine
+- ✅ Affichage du score d'equilibre entre membres
+- ✅ Historique semaine par semaine (weekly stats)
 
-### Bilan TLX hebdomadaire (V1)
-- Proposé **une fois par semaine**, pas à chaque tâche
-- Format : 6 dimensions NASA-TLX complètes
-- Déclenchement : notification douce le dimanche soir ou lundi matin
-- Facultatif, l'utilisateur peut ignorer
+### Bilan TLX hebdomadaire
+- ✅ Propose une fois par semaine (ecran TLX dedie)
+- ✅ Format : 6 dimensions NASA-TLX completes
+- ✅ Facultatif
 
-### Notification hebdo
-- Message doux type : *"Cette semaine, Ouss a pris 70% des tâches"*
-- Jamais intrusif, jamais culpabilisant
+### Alertes & notifications
+- ✅ Alertes de desequilibre (inline sur le dashboard, pas d'ecran dedie)
+- ✅ Notifications push (rappels taches, bilan hebdo)
+- ✅ Edge Functions : `compute-weekly-stats`, `send-weekly-review-push`
+- ✅ Ton doux, jamais intrusif
 
-**Sortie :** le foyer voit en un coup d'œil si la charge est équilibrée.
-
----
-
-## Palier 4 — Budget 🟡
-*Utile mais pas différenciant au lancement*
-
-- Ajout d'une dépense
-- Catégories de base
-- Solde mensuel du foyer
-
-**Sortie :** suivi basique des dépenses communes.
+**Sortie :** le foyer voit en un coup d'oeil si la charge est equilibree.
 
 ---
 
-## Palier 5 — Prêt au lancement 🟢
-*La dernière ligne droite avant publication*
+## Palier 4 — Modules complementaires 🟡
+*Enrichissent l'experience au quotidien*
 
-- Notifications push (rappels tâches)
-- États vides soignés (foyer vide, aucune tâche, aucune dépense)
-- Profil utilisateur (prénom, photo)
-- Gestion du compte (modification MDP, suppression)
-- Revue design globale (cohérence palette Keurzen)
-- Tests bout en bout iOS et Android
+### Budget
+- ✅ Ajout d'une depense
+- ✅ Categories de base
+- ✅ Parite web
 
-**Sortie :** app publiable sur l'App Store et le Play Store.
+### Messages
+- ✅ Conversations entre membres du foyer (mobile + web)
+- ✅ Notifications push chat
+
+### Listes
+- ✅ Listes partagees (mobile + web)
+
+### A faire
+- ❌ TLX → implementer la parite web (ecran TLX hebdo)
+
+### Reporte en V2
+- Repas & recettes (planning, creation, favoris, historique) — mobile livre, pas de parite web prevue avant V2
+
+**Sortie :** le foyer a tous les outils du quotidien sur les deux plateformes.
 
 ---
 
-## Après le lancement — V2
+## Palier 5 — Pret au lancement 🟠
+*La derniere ligne droite avant publication*
 
-- Suggestions de réassignation actives basées sur l'historique TLX
-- Détection automatique du déséquilibre chronique
+### Fait
+- ✅ Notifications push (rappels taches, bilan hebdo, chat)
+- ✅ Etats vides soignes (foyer vide, aucune tache, etc.)
+- ✅ Profil utilisateur (prenom, photo)
+- ✅ Gestion du compte (modification MDP, securite)
+- ✅ Onboarding guide apres inscription
+
+### A faire
+- ❌ Parite web TLX (ecran TLX hebdo)
+- ❌ Revue design globale (coherence Cafe Cosy sur tous les ecrans)
+- ❌ Ecran de time tracking dedie (type defini, pas d'UI)
+- ❌ Ecran d'alertes dedie (donnees existent, affichage inline uniquement)
+- ❌ Tests bout en bout iOS et Android
+- ❌ Build de production + deploiement web (Vercel)
+
+**Sortie :** app publiable sur l'App Store, le Play Store et le web.
+
+---
+
+## Apres le lancement — V2
+
+- Repas & recettes sur web (parite complete du module mobile)
+- Suggestions de reassignation actives basees sur l'historique TLX (coach proactif)
+- Detection automatique du desequilibre chronique
 - Mode sombre
 - Widget iOS / Android
-- Rapport hebdomadaire automatique par email / notif
+- Rapport hebdomadaire automatique par email
 - Paywall / abonnement premium
 
 ---
 
-## Design System
+## Design System — Palette "Cafe Cosy"
 
-| Token | Valeur |
-|---|---|
-| Mint | `#88D4A9` |
-| Blue | `#AFCBFF` |
-| Coral | `#FFA69E` |
-| Lavender | `#BCA7FF` |
-| Navy | `#212E44` |
-| Text | `#1E293B` |
-| Background | `#F7F9FC` |
+### Brand (accents)
+| Token | Valeur | Usage |
+|---|---|---|
+| Terracotta | `#C4846C` | CTA principale, FAB, liens actifs |
+| Sauge | `#8BA888` | Succes, validation |
+| Miel | `#D4A959` | Warnings, highlights |
+| Rose | `#D4807A` | Alertes douces, retard |
+| Prune | `#9B8AA8` | Charge mentale, TLX |
 
-Style : premium pastel, doux, clair, rassurant, aéré.
-Coins arrondis, ombres très subtiles, CTA principale claire. Pas de surcharge visuelle.
+### Texte & Fonds
+| Token | Valeur | Usage |
+|---|---|---|
+| Text | `#3D2C22` | Texte principal (brun profond) |
+| Secondary | `#7A6B5D` | Texte secondaire |
+| Background | `#FAF6F1` | Fond global (creme) |
+| Card | `#FFFDF9` | Fond cartes (blanc casse) |
+| Border | `#E8DFD5` | Bordures (sable) |
 
----
+Style : premium "Cafe Cosy" — chaleureux, calme, flat UI, ombres subtiles brunes.
+Typographie Nunito. Coins arrondis 12-16px. Touch targets >= 44px. Pas de gradients, pas de bleu froid.
 
-## Estimation de timing
-
-| Palier | Durée estimée |
-|---|---|
-| 1 — Fondations | 1 semaine |
-| 2 — Tâches | 1 semaine |
-| 3 — Équilibre / TLX | 1 semaine |
-| 4 — Budget | 3–4 jours |
-| 5 — Lancement | 3–4 jours |
-| **Total** | **~5 semaines** |
+Source de verite : `apps/mobile/src/constants/tokens.ts` + `apps/web/src/app/globals.css`

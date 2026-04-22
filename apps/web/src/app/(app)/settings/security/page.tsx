@@ -45,7 +45,7 @@ export default function SecurityPage() {
       </Card>
 
       <Card>
-        <Button variant="danger" onClick={handleSignOut}>
+        <Button variant="destructive" onClick={handleSignOut}>
           <LogOut size={16} />
           Se deconnecter
         </Button>

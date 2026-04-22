@@ -20,6 +20,7 @@ import { signOut } from '../../../src/lib/supabase/auth';
 import { useAuthStore } from '../../../src/stores/auth.store';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { useUiStore } from '../../../src/stores/ui.store';
+import { useMessagesUnreadCount } from '../../../src/lib/queries/messaging';
 import { Colors, Spacing, BorderRadius } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { QuickActionCard } from '../../../src/components/menu/QuickActionCard';
@@ -90,6 +91,7 @@ export default function MenuScreen() {
   const resetAuth = useAuthStore((s) => s.reset);
   const resetHousehold = useHouseholdStore((s) => s.reset);
   const { setPendingInviteToken, setPendingInviteCode } = useUiStore();
+  const { data: msgUnreadCount = 0 } = useMessagesUnreadCount();
 
   const fadeAnims = useStaggeredFadeIn(5);
 
@@ -206,6 +208,12 @@ export default function MenuScreen() {
               label="Mon foyer"
               color={Colors.sauge}
               onPress={() => router.push('/(app)/settings/household')}
+            />
+            <MenuRow
+              icon="chatbubbles-outline"
+              label={msgUnreadCount > 0 ? `Messages (${msgUnreadCount})` : 'Messages'}
+              color={Colors.terracotta}
+              onPress={() => router.push('/(app)/messages')}
             />
             <MenuRow
               icon="mail-outline"

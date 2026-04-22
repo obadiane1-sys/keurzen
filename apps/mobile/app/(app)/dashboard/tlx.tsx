@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,16 +6,17 @@ import {
   Platform,
   Alert,
   Animated,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Slider from '@react-native-community/slider';
+import { SliderControl } from '../../../src/components/ui/SliderControl';
 
 import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Card } from '../../../src/components/ui/Card';
 import { Button } from '../../../src/components/ui/Button';
-import { Badge } from '../../../src/components/ui/Badge';
 import KeurzenMascot, { type MascotExpression } from '../../../src/components/ui/KeurzenMascot';
 import { Loader } from '../../../src/components/ui/Loader';
 import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
@@ -29,7 +30,7 @@ import type { TlxFormValues } from '../../../src/types';
 
 // ─── FadeInView helper ──────────────────────────────────────────────────────
 
-function FadeInView({ children, style }: { children: React.ReactNode; style?: any }) {
+function FadeInView({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const opacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(opacity, {
@@ -66,6 +67,36 @@ function scoreToLevel(score: number): 1 | 2 | 3 {
   return 3;
 }
 
+// ─── Score Preview ──────────────────────────────────────────────────────────
+
+function ScorePreview({ score }: { score: number }) {
+  const level = scoreToLevel(score);
+  const config = LEVEL_CONFIG[level];
+
+  return (
+    <Card padding="md" style={styles.scoreCard}>
+      <FadeInView key={level} style={styles.mascotSection}>
+        <KeurzenMascot
+          expression={config.expression}
+          size={100}
+          animated
+        />
+        <View style={[styles.levelBadge, { backgroundColor: config.labelBg }]}>
+          <Text style={[styles.levelBadgeText, { color: config.labelColor }]}>
+            {config.label}
+          </Text>
+        </View>
+      </FadeInView>
+
+      <Text variant="caption" color="muted">Score prevu</Text>
+      <Text variant="h1" style={{ color: tlxColor(score) }}>
+        {score}
+      </Text>
+      <Text variant="caption" color="muted">/100</Text>
+    </Card>
+  );
+}
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function TlxScreen() {
@@ -83,7 +114,21 @@ export default function TlxScreen() {
     frustration: currentTlx?.frustration ?? 50,
   });
 
-  const previewScore = computeTlxScore(values);
+  // Sync state when async data arrives
+  useEffect(() => {
+    if (currentTlx) {
+      setValues({
+        mental_demand: currentTlx.mental_demand,
+        physical_demand: currentTlx.physical_demand,
+        temporal_demand: currentTlx.temporal_demand,
+        performance: currentTlx.performance,
+        effort: currentTlx.effort,
+        frustration: currentTlx.frustration,
+      });
+    }
+  }, [currentTlx]);
+
+  const previewScore = useMemo(() => computeTlxScore(values), [values]);
 
   const handleSubmit = async () => {
     try {
@@ -130,32 +175,7 @@ export default function TlxScreen() {
         </View>
 
         {/* Reactive mascot + score preview */}
-        {(() => {
-          const level = scoreToLevel(previewScore);
-          const config = LEVEL_CONFIG[level];
-          return (
-            <Card padding="md" style={styles.scoreCard}>
-              <FadeInView key={level} style={styles.mascotSection}>
-                <KeurzenMascot
-                  expression={config.expression}
-                  size={100}
-                  animated
-                />
-                <View style={[styles.levelBadge, { backgroundColor: config.labelBg }]}>
-                  <Text style={[styles.levelBadgeText, { color: config.labelColor }]}>
-                    {config.label}
-                  </Text>
-                </View>
-              </FadeInView>
-
-              <Text variant="caption" color="muted">Score prevu</Text>
-              <Text variant="h1" style={{ color: tlxColor(previewScore) }}>
-                {previewScore}
-              </Text>
-              <Text variant="caption" color="muted">/100</Text>
-            </Card>
-          );
-        })()}
+        <ScorePreview score={previewScore} />
 
         {/* Sliders */}
         {dimensions.map((dim) => (
@@ -169,16 +189,16 @@ export default function TlxScreen() {
             <Text variant="caption" color="muted" style={styles.dimDesc}>
               {dim.description}
             </Text>
-            <Slider
+            <SliderControl
               style={styles.slider}
               minimumValue={0}
               maximumValue={100}
               step={1}
               value={values[dim.key]}
-              onValueChange={(v) => setValues((prev) => ({ ...prev, [dim.key]: Math.round(v) }))}
+              onValueChange={(v) => setValues((prev) => ({ ...prev, [dim.key]: v }))}
               accessibilityLabel={`${dim.label}, ${values[dim.key]} sur 100`}
               minimumTrackTintColor={dim.color}
-              maximumTrackTintColor={Colors.gray200}
+              maximumTrackTintColor={Colors.border}
               thumbTintColor={dim.color}
             />
             <View style={styles.sliderLabels}>

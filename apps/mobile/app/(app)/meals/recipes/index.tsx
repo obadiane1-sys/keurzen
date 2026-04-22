@@ -63,9 +63,6 @@ export default function RecipeCatalogScreen() {
     [activeFilter, debouncedSearch]
   );
 
-  // All recipes with current filter/search (system + household)
-  const { data: allRecipes = [], isLoading, isError } = useRecipes(filterParams);
-
   // Household recipes (source='user') shown in the top horizontal section
   const { data: householdRecipes = [], isLoading: isLoadingHousehold } = useRecipes({
     ...filterParams,
@@ -127,7 +124,7 @@ export default function RecipeCatalogScreen() {
     [handleRecipePress, handleToggleFav]
   );
 
-  const isAnyLoading = isLoading || isLoadingHousehold || isLoadingSystem;
+  const isAnyLoading = isLoadingHousehold || isLoadingSystem;
 
   // ─── Sections rendered inside a single FlatList (catalog as base) ────────────
 

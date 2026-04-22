@@ -46,3 +46,7 @@ export function computeTlxScore(values: {
     values.frustration;
   return Math.round(sum / 6);
 }
+
+export { categoryColorMap } from './taskCategoryColors';
+export { computeHouseholdScore } from './householdScore';
+export type { HouseholdScoreInput, HouseholdScoreResult, ScoreDimension } from './householdScore';

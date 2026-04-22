@@ -7,6 +7,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import { Card } from '../ui/Card';
 import { Text } from '../ui/Text';
@@ -53,6 +54,7 @@ function SectionHeader({
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function WeeklyReportCard() {
+  const router = useRouter();
   const { data: report, isLoading, error } = useWeeklyReport();
   const regenerate = useRegenerateReport();
 
@@ -135,7 +137,11 @@ export function WeeklyReportCard() {
   return (
     <Card padding="none" radius="xl">
       {/* Header */}
-      <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.header}
+        onPress={() => router.push('/(app)/dashboard/weekly-review')}
+        activeOpacity={0.7}
+      >
         <View style={styles.headerLeft}>
           <Ionicons name="bar-chart-outline" size={20} color={Colors.prune} />
           <View>
@@ -143,7 +149,8 @@ export function WeeklyReportCard() {
             <Text style={styles.headerWeek}>Semaine du {weekLabel}</Text>
           </View>
         </View>
-      </View>
+        <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+      </TouchableOpacity>
 
       {/* Summary */}
       <View style={styles.summaryContainer}>

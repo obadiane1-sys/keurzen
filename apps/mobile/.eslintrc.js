@@ -19,6 +19,9 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
+    'react-hooks/refs': 'warn',
+    'react-hooks/set-state-in-effect': 'warn',
+    'react/no-unescaped-entities': 'off',
   },
   settings: {
     react: {

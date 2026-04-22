@@ -1,11 +1,15 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { useCreateTask } from '@keurzen/queries';
+import { useCreateTask, useTasks } from '@keurzen/queries';
 import { useHouseholdStore } from '@keurzen/stores';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { TaskSuggestions } from './TaskSuggestions';
+import { buildTaskVariants, filterVariants } from '@/lib/utils/taskVariants';
+import type { TaskVariant } from '@/lib/utils/taskVariants';
 import type { TaskFormValues } from '@keurzen/shared';
 
 interface CreateTaskModalProps {
@@ -16,6 +20,20 @@ interface CreateTaskModalProps {
 export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
   const { mutateAsync: createTask, isPending } = useCreateTask();
   const { members } = useHouseholdStore();
+
+  const { data: existingTasks = [] } = useTasks();
+  const [titleQuery, setTitleQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const allVariants = useMemo(
+    () => buildTaskVariants(existingTasks),
+    [existingTasks],
+  );
+
+  const filteredVariants = useMemo(
+    () => filterVariants(allVariants, titleQuery),
+    [allVariants, titleQuery],
+  );
 
   const {
     register,
@@ -34,6 +52,21 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
     },
   });
 
+  const handleVariantSelect = (variant: TaskVariant) => {
+    reset({
+      title: variant.title,
+      description: variant.description ?? '',
+      priority: variant.priority as TaskFormValues['priority'],
+      category: variant.category as TaskFormValues['category'],
+      zone: variant.zone as TaskFormValues['zone'],
+      recurrence: variant.recurrence as TaskFormValues['recurrence'],
+      estimated_minutes: variant.estimatedMinutes ?? undefined,
+      task_type: 'household',
+    });
+    setTitleQuery(variant.title);
+    setShowSuggestions(false);
+  };
+
   const onSubmit = async (values: TaskFormValues) => {
     await createTask(values);
     reset();
@@ -43,13 +76,30 @@ export function CreateTaskModal({ open, onClose }: CreateTaskModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Nouvelle tache">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Titre"
-          placeholder="Ex: Faire les courses"
-          {...register('title', { required: 'Le titre est requis' })}
-          error={errors.title?.message}
-          autoFocus
-        />
+        <div className="relative">
+          <Input
+            label="Titre"
+            placeholder="Ex: Faire les courses"
+            {...register('title', { required: 'Le titre est requis' })}
+            error={errors.title?.message}
+            autoFocus
+            onChange={(e) => {
+              register('title').onChange(e);
+              setTitleQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => {
+              setTimeout(() => setShowSuggestions(false), 200);
+            }}
+          />
+          <TaskSuggestions
+            query={titleQuery}
+            variants={filteredVariants}
+            visible={showSuggestions}
+            onSelect={handleVariantSelect}
+          />
+        </div>
 
         <div>
           <label className="text-[13px] font-medium text-text-secondary">

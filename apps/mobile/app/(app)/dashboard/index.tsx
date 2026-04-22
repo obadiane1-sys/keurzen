@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,50 +10,48 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter, Redirect } from 'expo-router';
 import dayjs from 'dayjs';
 
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
-import { useTasks, useOverdueTasks, useTodayTasks } from '../../../src/lib/queries/tasks';
-import { useWeeklyBalance } from '../../../src/lib/queries/weekly-stats';
-import { useCurrentTlx, useTlxDelta } from '../../../src/lib/queries/tlx';
-import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../../src/constants/tokens';
+import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
-import { CircularGauge } from '../../../src/components/dashboard/CircularGauge';
-import { StatusPill } from '../../../src/components/dashboard/StatusPill';
-import { NarrativeCard } from '../../../src/components/dashboard/NarrativeCard';
-import { TlxDetailCard } from '../../../src/components/dashboard/TlxDetailCard';
-import { WeeklyReportCard } from '../../../src/components/dashboard/WeeklyReportCard';
+import { ScoreHeroCard } from '../../../src/components/dashboard/ScoreHeroCard';
+import { TlxSummaryCard } from '../../../src/components/dashboard/TlxSummaryCard';
+import { TodayTasksCard } from '../../../src/components/dashboard/TodayTasksCard';
+import { RepartitionCard } from '../../../src/components/dashboard/RepartitionCard';
+import { WeeklyTipCard } from '../../../src/components/dashboard/WeeklyTipCard';
 
 // ─── Staggered fade-in ──────────────────────────────────────────────────────
 
 function useStaggeredFadeIn(count: number) {
-  const anims = useRef(
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const animsRef = useRef(
     Array.from({ length: count }, () => ({
       opacity: new Animated.Value(0),
       translateY: new Animated.Value(14),
     })),
-  ).current;
+  );
 
   useEffect(() => {
+    const anims = animsRef.current;
     const animations = anims.map((a, i) =>
       Animated.parallel([
         Animated.timing(a.opacity, {
           toValue: 1,
           duration: 450,
-          delay: i * 50,
+          delay: i * 80,
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(a.translateY, {
           toValue: 0,
           duration: 450,
-          delay: i * 50,
+          delay: i * 80,
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
@@ -62,7 +60,7 @@ function useStaggeredFadeIn(count: number) {
     Animated.parallel(animations).start();
   }, []);
 
-  return anims;
+  return animsRef.current;
 }
 
 function FadeSection({
@@ -86,59 +84,20 @@ function FadeSection({
   );
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-const priorityColors: Record<string, string> = {
-  high: Colors.rose,
-  urgent: Colors.rose,
-  medium: Colors.miel,
-  low: Colors.sauge,
-};
-
-function formatDateHeader(): string {
-  const months = [
-    'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
-    'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
-  ];
-  const now = new Date();
-  return `Aujourd'hui, ${now.getDate()} ${months[now.getMonth()]}`;
-}
-
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
-  const { data: allTasks = [] } = useTasks();
-  const overdueTasks = useOverdueTasks();
-  const todayTasks = useTodayTasks();
-  const { members: balanceMembers } = useWeeklyBalance();
-  const { data: currentTlx } = useCurrentTlx();
-  const { data: tlxDelta } = useTlxDelta();
 
-  const fadeAnims = useStaggeredFadeIn(9);
+  const fadeAnims = useStaggeredFadeIn(6); // header + 5 cards
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
-  const { activeTasks, doneTasks } = useMemo(() => {
-    const active: typeof allTasks = [];
-    const done: typeof allTasks = [];
-    for (const t of allTasks) {
-      if (t.status === 'done') done.push(t);
-      else active.push(t);
-    }
-    return { activeTasks: active, doneTasks: done };
-  }, [allTasks]);
-
-  // Current user's balance share
-  const myBalance = balanceMembers.find((m) => m.userId === profile?.id);
-  const balancePercent = myBalance ? Math.round(myBalance.tasksShare * 100) : 0;
-
-  // Weekly progress: done / total
-  const weeklyProgress = allTasks.length > 0
-    ? Math.round((doneTasks.length / allTasks.length) * 100)
-    : 0;
+  if (profile && !profile.has_seen_onboarding) {
+    return <Redirect href="/(app)/onboarding/setup" />;
+  }
 
   if (isLoading) return <Loader fullScreen />;
 
@@ -174,18 +133,20 @@ export default function DashboardScreen() {
           />
         }
       >
-        {/* ── 1. HEADER ── */}
+        {/* ── HEADER ── */}
         <FadeSection anim={fadeAnims[0]} style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text variant="h4" weight="bold" style={styles.dateText}>
-              {formatDateHeader()}
+            <Text variant="overline" color="muted" style={styles.weekLabel}>
+              {`SEMAINE DU ${dayjs().startOf('week').format('D MMMM').toUpperCase()}`}
+            </Text>
+            <Text variant="h2" weight="extrabold" style={styles.title}>
+              Tableau de bord
             </Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(app)/settings/profile')}
             accessibilityLabel="Mon profil"
             accessibilityRole="button"
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
             {profile?.avatar_url ? (
               <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
@@ -199,182 +160,29 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </FadeSection>
 
-        {/* ── 2. STATUS PILLS ── */}
-        <FadeSection anim={fadeAnims[1]} style={styles.pillsRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.pillsContent}
-          >
-            <StatusPill dot={Colors.sauge} label={household.name} />
-            <StatusPill
-              icon={<Ionicons name="clipboard-outline" size={14} color={Colors.textSecondary} />}
-              label={`${todayTasks.length} tache${todayTasks.length !== 1 ? 's' : ''} aujourd'hui`}
-            />
-            {overdueTasks.length > 0 && (
-              <StatusPill
-                dot={Colors.rose}
-                label={`${overdueTasks.length} en retard`}
-                variant="alert"
-              />
-            )}
-          </ScrollView>
+        {/* ── 1. SCORE ── */}
+        <FadeSection anim={fadeAnims[1]} style={styles.section}>
+          <ScoreHeroCard />
         </FadeSection>
 
-        {/* ── 3. THREE GAUGES ── */}
-        <FadeSection anim={fadeAnims[2]} style={styles.sectionPadded}>
-          <View style={styles.gaugesCard}>
-            <CircularGauge
-              value={currentTlx?.score ?? 0}
-              max={100}
-              color={Colors.prune}
-              label="Charge mentale"
-              subtitle="/ 100"
-            />
-            <CircularGauge
-              value={balancePercent}
-              max={100}
-              color={Colors.sauge}
-              label="Mon equilibre"
-            />
-            <CircularGauge
-              value={weeklyProgress}
-              max={100}
-              color={Colors.miel}
-              label="Progression"
-            />
-          </View>
+        {/* ── 2. TLX ── */}
+        <FadeSection anim={fadeAnims[2]} style={styles.section}>
+          <TlxSummaryCard />
         </FadeSection>
 
-        {/* ── 4. NARRATIVE CARD ── */}
-        <FadeSection anim={fadeAnims[3]} style={styles.sectionPadded}>
-          <NarrativeCard
-            doneTasks={doneTasks.length}
-            overdueTasks={overdueTasks.length}
-            tlxDelta={tlxDelta?.delta ?? null}
-            hasTlx={!!currentTlx}
-          />
+        {/* ── 3. TODAY TASKS ── */}
+        <FadeSection anim={fadeAnims[3]} style={styles.section}>
+          <TodayTasksCard />
         </FadeSection>
 
-        {/* ── 5. CHARGE MENTALE ── */}
-        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
-          <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Charge mentale
-          </Text>
-          <TlxDetailCard currentTlx={currentTlx} tlxDelta={tlxDelta} />
+        {/* ── 4. REPARTITION ── */}
+        <FadeSection anim={fadeAnims[4]} style={styles.section}>
+          <RepartitionCard />
         </FadeSection>
 
-        {/* ── 6. TACHES DU JOUR ── */}
-        <FadeSection anim={fadeAnims[5]} style={styles.sectionPadded}>
-          <View style={styles.sectionHeaderRow}>
-            <Text variant="overline" color="muted">Taches du jour</Text>
-            {todayTasks.length > 0 && (
-              <TouchableOpacity onPress={() => router.push('/(app)/tasks')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text variant="caption" style={{ color: Colors.terracotta }}>Tout voir</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={styles.flatCard}>
-            {todayTasks.length > 0 ? (
-              todayTasks.slice(0, 4).map((t, i) => (
-                <View key={t.id}>
-                  <View style={styles.taskRow}>
-                    <View style={[styles.prioDot, { backgroundColor: priorityColors[t.priority] || priorityColors.medium }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text variant="bodySmall" weight="semibold" numberOfLines={1}>{t.title}</Text>
-                      <Text variant="caption" color="muted">
-                        {t.assigned_profile?.full_name?.split(' ')[0] ?? 'Non assigne'}
-                      </Text>
-                    </View>
-                  </View>
-                  {i < Math.min(todayTasks.length, 4) - 1 && <View style={styles.divider} />}
-                </View>
-              ))
-            ) : (
-              <Text variant="body" color="muted" style={styles.emptyText}>
-                Aucune tache prevue aujourd'hui
-              </Text>
-            )}
-          </View>
-        </FadeSection>
-
-        {/* ── 7. REPARTITION SEMAINE ── */}
-        <FadeSection anim={fadeAnims[6]} style={styles.sectionPadded}>
-          <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Repartition cette semaine
-          </Text>
-          <View style={styles.flatCard}>
-            {balanceMembers.length > 0 ? (
-              balanceMembers.map((m, i) => (
-                <View key={m.userId}>
-                  <View style={styles.memberRow}>
-                    <View style={[styles.memberDot, { backgroundColor: m.color }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text variant="bodySmall" weight="semibold">{m.name.split(' ')[0]}</Text>
-                      <View style={styles.barContainer}>
-                        <View
-                          style={[
-                            styles.bar,
-                            {
-                              width: `${Math.round(m.tasksShare * 100)}%`,
-                              backgroundColor: m.color,
-                            },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                    <Text variant="label" weight="bold" style={styles.percentLabel}>
-                      {Math.round(m.tasksShare * 100)}%
-                    </Text>
-                  </View>
-                  {i < balanceMembers.length - 1 && <View style={styles.divider} />}
-                </View>
-              ))
-            ) : (
-              <Text variant="body" color="muted" style={styles.emptyText}>
-                Pas encore de donnees cette semaine
-              </Text>
-            )}
-          </View>
-        </FadeSection>
-
-        {/* ── 8. TERMINE RECEMMENT ── */}
-        <FadeSection anim={fadeAnims[7]} style={styles.sectionPadded}>
-          <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Termine recemment
-          </Text>
-          <View style={styles.flatCard}>
-            {doneTasks.length > 0 ? (
-              doneTasks.slice(0, 5).map((t, i) => (
-                <View key={t.id}>
-                  <View style={styles.doneItem}>
-                    <Ionicons name="checkmark-circle" size={16} color={Colors.sauge} />
-                    <Text variant="bodySmall" color="secondary" numberOfLines={1} style={{ flex: 1 }}>
-                      {t.title}
-                    </Text>
-                    {t.completed_at && (
-                      <Text variant="caption" color="muted">
-                        {dayjs(t.completed_at).format('DD/MM')}
-                      </Text>
-                    )}
-                  </View>
-                  {i < Math.min(doneTasks.length, 5) - 1 && <View style={styles.divider} />}
-                </View>
-              ))
-            ) : (
-              <Text variant="body" color="muted" style={styles.emptyText}>
-                Aucune tache terminee cette semaine
-              </Text>
-            )}
-          </View>
-        </FadeSection>
-
-        {/* ── 9. RAPPORT HEBDO ── */}
-        <FadeSection anim={fadeAnims[8]} style={styles.sectionPadded}>
-          <Text variant="overline" color="muted" style={styles.sectionLabel}>
-            Rapport de la semaine
-          </Text>
-          <WeeklyReportCard />
+        {/* ── 5. CONSEIL ── */}
+        <FadeSection anim={fadeAnims[5]} style={styles.section}>
+          <WeeklyTipCard />
         </FadeSection>
       </ScrollView>
     </SafeAreaView>
@@ -398,137 +206,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.base,
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.lg,
   },
-  dateText: {
+  weekLabel: {
+    fontSize: Typography.fontSize.xs,
+    letterSpacing: 1.5,
+    marginBottom: 2,
+  },
+  title: {
+    fontSize: 28,
     color: Colors.textPrimary,
   },
   avatar: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.full,
   },
   avatarFallback: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.terracotta,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: Typography.fontSize.base,
     color: Colors.textInverse,
+    fontSize: Typography.fontSize.base,
   },
-
-  // Pills
-  pillsRow: {
-    marginBottom: Spacing.lg,
-  },
-  pillsContent: {
+  section: {
     paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-
-  // Sections
-  sectionPadded: {
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  sectionLabel: {
-    marginBottom: Spacing.sm,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-
-  // Gauges
-  gaugesCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.base,
-    ...Shadows.card,
-  },
-
-  // Flat card
-  flatCard: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.base,
-    ...Shadows.card,
-  },
-
-  // Tasks
-  taskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  prioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.full,
-  },
-
-  // Balance
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  memberDot: {
-    width: 10,
-    height: 10,
-    borderRadius: BorderRadius.full,
-  },
-  barContainer: {
-    height: 6,
-    backgroundColor: Colors.gray100,
-    borderRadius: 3,
-    marginTop: 4,
-    overflow: 'hidden',
-  },
-  bar: {
-    height: 6,
-    borderRadius: 3,
-  },
-  percentLabel: {
-    minWidth: 36,
-    textAlign: 'right',
-  },
-
-  // Done
-  doneItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-  },
-
-  // Shared
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.borderLight,
-  },
-  emptyText: {
-    textAlign: 'center',
-    paddingVertical: Spacing.md,
+    marginBottom: Spacing.base,
   },
 });
