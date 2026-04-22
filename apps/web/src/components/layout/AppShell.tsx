@@ -2,11 +2,17 @@
 
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
+import { useMyHousehold } from '@keurzen/queries';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Hydrate the household store as soon as an authenticated layout mounts.
+  // Without this, useHouseholdStore stays empty forever on web and every
+  // screen that relies on currentHousehold / members shows an empty state.
+  useMyHousehold();
 
   return (
     <div className="flex h-screen overflow-hidden">
