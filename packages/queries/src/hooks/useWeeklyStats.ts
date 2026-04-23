@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useHouseholdStore } from '@keurzen/stores';
-import type { WeeklyStat, Alert, AlertLevel } from '@keurzen/shared';
+import type { WeeklyStat, AlertLevel } from '@keurzen/shared';
 import { colors } from '@keurzen/shared';
 import { getSupabaseClient } from '../client';
 import dayjs from 'dayjs';
@@ -19,7 +19,6 @@ export const MIN_MINUTES_SAMPLE = 60;
 export const weeklyStatsKeys = {
   current: (householdId: string) => ['weekly-stats', householdId, 'current'] as const,
   history: (householdId: string) => ['weekly-stats', householdId, 'history'] as const,
-  alerts: (householdId: string) => ['alerts', householdId] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -45,30 +44,6 @@ export function useCurrentWeekStats() {
     },
     enabled: !!currentHousehold?.id,
     staleTime: 1000 * 60 * 5,
-  });
-}
-
-export function useAlerts() {
-  const { currentHousehold } = useHouseholdStore();
-
-  return useQuery({
-    queryKey: weeklyStatsKeys.alerts(currentHousehold?.id ?? ''),
-    queryFn: async () => {
-      const supabase = getSupabaseClient();
-
-      const { data, error } = await supabase
-        .from('alerts')
-        .select('*')
-        .eq('household_id', currentHousehold!.id)
-        .eq('read', false)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw new Error(error.message);
-      return (data as Alert[]) ?? [];
-    },
-    enabled: !!currentHousehold?.id,
-    staleTime: 0,
   });
 }
 
