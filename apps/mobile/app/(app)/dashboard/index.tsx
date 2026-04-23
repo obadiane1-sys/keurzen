@@ -5,31 +5,30 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Image,
   Animated,
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import dayjs from 'dayjs';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { useMyHousehold } from '../../../src/lib/queries/household';
-import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
+import { useCoachingInsights } from '@keurzen/queries';
+import { Colors, Spacing, Shadows, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Mascot } from '../../../src/components/ui/Mascot';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { Loader } from '../../../src/components/ui/Loader';
+import { InsightsCarousel } from '../../../src/components/dashboard/InsightsCarousel';
 import { ScoreHeroCard } from '../../../src/components/dashboard/ScoreHeroCard';
-import { TlxSummaryCard } from '../../../src/components/dashboard/TlxSummaryCard';
-import { TodayTasksCard } from '../../../src/components/dashboard/TodayTasksCard';
-import { RepartitionCard } from '../../../src/components/dashboard/RepartitionCard';
-import { WeeklyTipCard } from '../../../src/components/dashboard/WeeklyTipCard';
+import { TaskEquityCard } from '../../../src/components/dashboard/TaskEquityCard';
+import { MentalLoadCardV2 } from '../../../src/components/dashboard/MentalLoadCardV2';
+import { UpcomingTasksCard } from '../../../src/components/dashboard/UpcomingTasksCard';
 
 // ─── Staggered fade-in ──────────────────────────────────────────────────────
 
 function useStaggeredFadeIn(count: number) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const animsRef = useRef(
     Array.from({ length: count }, () => ({
       opacity: new Animated.Value(0),
@@ -90,8 +89,9 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { data: household, isLoading, refetch, isRefetching } = useMyHousehold();
+  const { data: insights = [] } = useCoachingInsights(household?.id);
 
-  const fadeAnims = useStaggeredFadeIn(6); // header + 5 cards
+  const fadeAnims = useStaggeredFadeIn(5); // header + 4 sections
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
 
@@ -113,7 +113,10 @@ export default function DashboardScreen() {
           expression="normal"
           title="Votre foyer vous attend"
           subtitle="Creez un foyer ou rejoignez-en un avec un code d'invitation."
-          action={{ label: 'Creer un foyer', onPress: () => router.navigate('/(app)/settings/household') }}
+          action={{
+            label: 'Creer un foyer',
+            onPress: () => router.navigate('/(app)/settings/household'),
+          }}
         />
       </SafeAreaView>
     );
@@ -135,54 +138,50 @@ export default function DashboardScreen() {
       >
         {/* ── HEADER ── */}
         <FadeSection anim={fadeAnims[0]} style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text variant="overline" color="muted" style={styles.weekLabel}>
-              {`SEMAINE DU ${dayjs().startOf('week').format('D MMMM').toUpperCase()}`}
-            </Text>
-            <Text variant="h2" weight="extrabold" style={styles.title}>
-              Tableau de bord
-            </Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.mascotCircle}>
+              <Mascot size={36} expression="calm" />
+            </View>
+            <View>
+              <Text variant="h2" weight="bold" style={styles.greeting}>
+                Bonjour, <Text style={styles.firstNameAccent}>{firstName}</Text>
+              </Text>
+              <Text variant="bodySmall" color="muted">
+                Prete a equilibrer votre quotidien ?
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
-            onPress={() => router.push('/(app)/settings/profile')}
-            accessibilityLabel="Mon profil"
-            accessibilityRole="button"
+            onPress={() => router.push('/(app)/notifications')}
+            style={styles.bellButton}
+            accessibilityLabel="Notifications"
           >
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Text variant="body" weight="bold" style={styles.avatarText}>
-                  {firstName ? firstName.charAt(0).toUpperCase() : 'U'}
-                </Text>
-              </View>
-            )}
+            <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
           </TouchableOpacity>
         </FadeSection>
 
-        {/* ── 1. SCORE ── */}
+        {/* ── 1. INSIGHTS CAROUSEL ── */}
         <FadeSection anim={fadeAnims[1]} style={styles.section}>
+          <InsightsCarousel insights={insights} />
+        </FadeSection>
+
+        {/* ── 2. SCORE DU FOYER ── */}
+        <FadeSection anim={fadeAnims[2]} style={styles.sectionPadded}>
           <ScoreHeroCard />
         </FadeSection>
 
-        {/* ── 2. TLX ── */}
-        <FadeSection anim={fadeAnims[2]} style={styles.section}>
-          <TlxSummaryCard />
+        {/* ── 3. GRID: Equity + Mental Load ── */}
+        <FadeSection anim={fadeAnims[3]} style={styles.sectionPadded}>
+          <View style={styles.gridRow}>
+            <TaskEquityCard />
+            <View style={{ width: Spacing.base }} />
+            <MentalLoadCardV2 />
+          </View>
         </FadeSection>
 
-        {/* ── 3. TODAY TASKS ── */}
-        <FadeSection anim={fadeAnims[3]} style={styles.section}>
-          <TodayTasksCard />
-        </FadeSection>
-
-        {/* ── 4. REPARTITION ── */}
-        <FadeSection anim={fadeAnims[4]} style={styles.section}>
-          <RepartitionCard />
-        </FadeSection>
-
-        {/* ── 5. CONSEIL ── */}
-        <FadeSection anim={fadeAnims[5]} style={styles.section}>
-          <WeeklyTipCard />
+        {/* ── 4. UPCOMING TASKS ── */}
+        <FadeSection anim={fadeAnims[4]} style={styles.sectionPadded}>
+          <UpcomingTasksCard />
         </FadeSection>
       </ScrollView>
     </SafeAreaView>
@@ -211,37 +210,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
-  weekLabel: {
-    fontSize: Typography.fontSize.xs,
-    letterSpacing: 1.5,
-    marginBottom: 2,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
   },
-  title: {
-    fontSize: 28,
-    color: Colors.textPrimary,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-  },
-  avatarFallback: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.terracotta,
+  mascotCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.backgroundCard,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.card,
   },
-  avatarText: {
-    color: Colors.textInverse,
-    fontSize: Typography.fontSize.base,
+  greeting: {
+    fontSize: Typography.fontSize['2xl'],
+    color: Colors.textPrimary,
+  },
+  firstNameAccent: {
+    color: Colors.terracotta,
+  },
+  bellButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.backgroundCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.card,
   },
   section: {
+    marginBottom: Spacing.xl,
+  },
+  sectionPadded: {
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.base,
+    marginBottom: Spacing.xl,
+  },
+  gridRow: {
+    flexDirection: 'row',
   },
 });
