@@ -5,6 +5,7 @@ import { X, Trash2 } from 'lucide-react';
 import { useUpdateTask, useDeleteTask } from '@keurzen/queries';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { TimeLogSection } from '@/components/tasks/TimeLogSection';
 import type { Task } from '@keurzen/shared';
 
 interface TaskDetailProps {
@@ -110,6 +111,9 @@ export function TaskDetail({ task, onClose }: TaskDetailProps) {
           </Badge>
         </div>
       </div>
+
+      {/* Time tracking */}
+      <TimeLogSection taskId={task.id} />
 
       {/* Delete */}
       <div className="mt-6 pt-4 border-t border-border-light">

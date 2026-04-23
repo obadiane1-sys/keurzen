@@ -20,3 +20,4 @@ export * from './hooks/useObjectives';
 export * from './hooks/useMessaging';
 export * from './hooks/useOnboarding';
 export * from './hooks/useCoachingInsights';
+export * from './hooks/useTimeLogs';
