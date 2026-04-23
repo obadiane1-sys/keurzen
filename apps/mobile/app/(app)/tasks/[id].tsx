@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 
 import { CompletionRatingSheet } from '../../../src/components/tasks/CompletionRatingSheet';
+import { TimeLogSection } from '../../../src/components/tasks/TimeLogSection';
 import { Colors, Spacing, BorderRadius, Typography } from '../../../src/constants/tokens';
 import { Text } from '../../../src/components/ui/Text';
 import { Input } from '../../../src/components/ui/Input';
@@ -423,20 +424,9 @@ export default function TaskDetailScreen() {
           </View>
         </Card>
 
-        {/* Time logs summary */}
-        {task.time_logs && task.time_logs.length > 0 && (
-          <Card padding="md">
-            <Text variant="label" style={styles.sectionTitle}>
-              Temps enregistré
-            </Text>
-            <Text variant="h4" color="sauge">
-              {task.time_logs.reduce((sum, tl) => sum + tl.minutes, 0)} min
-            </Text>
-            <Text variant="caption" color="muted">
-              {task.time_logs.length} entrée{task.time_logs.length > 1 ? 's' : ''}
-            </Text>
-          </Card>
-        )}
+        {/* Time tracking */}
+        <TimeLogSection taskId={task.id} />
+
 
         {/* Actions */}
         <View style={styles.actions}>
