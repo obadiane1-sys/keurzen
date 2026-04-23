@@ -21,3 +21,4 @@ export * from './hooks/useMessaging';
 export * from './hooks/useOnboarding';
 export * from './hooks/useCoachingInsights';
 export * from './hooks/useTimeLogs';
+export * from './hooks/useAlerts';

@@ -80,16 +80,21 @@ Aucun elargissement de scope sans decision explicite.
 - ✅ Facultatif
 
 ### Alertes & notifications
-- ✅ Alertes de desequilibre (inline sur le dashboard, pas d'ecran dedie)
+- ✅ Alertes de desequilibre (inline sur le dashboard + ecran dedie `/alerts`)
 - ✅ Notifications push (rappels taches, bilan hebdo)
 - ✅ Edge Functions : `compute-weekly-stats`, `send-weekly-review-push`
 - ✅ Ton doux, jamais intrusif
+
+### Coaching insights (dashboard v7)
+- ✅ Carrousel de conseils sur le dashboard (mobile + web)
+- ✅ Edge Function `get-coaching-insights` — moteur de regles deterministe, zero LLM
+- ✅ 5 regles : delta TLX, desequilibre taches, encouragement, rappel planning, fallback
 
 **Sortie :** le foyer voit en un coup d'oeil si la charge est equilibree.
 
 ---
 
-## Palier 4 — Modules complementaires 🟡
+## Palier 4 — Modules complementaires ✅
 *Enrichissent l'experience au quotidien*
 
 ### Budget
@@ -104,8 +109,13 @@ Aucun elargissement de scope sans decision explicite.
 ### Listes
 - ✅ Listes partagees (mobile + web)
 
-### A faire
-- ❌ TLX → implementer la parite web (ecran TLX hebdo)
+### TLX
+- ✅ Ecran TLX hebdo (mobile + web)
+- ✅ Historique semaine par semaine
+
+### Time tracking
+- ✅ Section dediee sur le detail tache (mobile + web)
+- ✅ Ajout / suppression d'entree de temps avec note facultative
 
 ### Reporte en V2
 - Repas & recettes (planning, creation, favoris, historique) — mobile livre, pas de parite web prevue avant V2
@@ -123,14 +133,18 @@ Aucun elargissement de scope sans decision explicite.
 - ✅ Profil utilisateur (prenom, photo)
 - ✅ Gestion du compte (modification MDP, securite)
 - ✅ Onboarding guide apres inscription
+- ✅ Dashboard Stitch v7 (greeting, insights, score, grid equite + charge, upcoming) — mobile + web
+- ✅ Ecran time tracking dedie (section sur le detail tache, mobile + web)
+- ✅ Ecran alertes dedie (/alerts, mobile + web)
+- ✅ Parite web TLX (ecran TLX hebdo)
+- ✅ Deploiement web continu sur Vercel (app.keurzen.app)
 
 ### A faire
-- ❌ Parite web TLX (ecran TLX hebdo)
-- ❌ Revue design globale (coherence Cafe Cosy sur tous les ecrans)
-- ❌ Ecran de time tracking dedie (type defini, pas d'UI)
-- ❌ Ecran d'alertes dedie (donnees existent, affichage inline uniquement)
-- ❌ Tests bout en bout iOS et Android
-- ❌ Build de production + deploiement web (Vercel)
+- ❌ Revue design globale (coherence Cafe Cosy sur tous les ecrans hors dashboard)
+- ❌ Entry point nav vers `/alerts` (sidebar ou bell dashboard)
+- ❌ Tests bout en bout iOS et Android (Detox ou Maestro)
+- ❌ Build de production mobile (EAS + certs App Store / Play Store)
+- ❌ Nettoyage dead code post-v7 (TlxSummaryCard, RepartitionCard, TodayTasksCard, WeeklyTipCard, DashboardSidebar)
 
 **Sortie :** app publiable sur l'App Store, le Play Store et le web.
 
