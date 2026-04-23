@@ -628,4 +628,18 @@ export interface SignInFormValues {
   email: string;
 }
 
+// ─── Coaching Insights ───────────────────────────────────────────────────────
+
+export type InsightType = 'alert' | 'conseil' | 'wellbeing';
+
+export interface CoachingInsight {
+  id: string;
+  type: InsightType;
+  icon: string;
+  label: string;
+  message: string;
+  cta_label: string;
+  priority: number;
+}
+
 export * from './onboarding';
