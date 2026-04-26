@@ -5,20 +5,26 @@ Core modules: auth · onboarding · household · tasks · calendar · time track
 
 ## Stack
 - **Mobile**: Expo SDK 55, React Native 0.83, Expo Router 4, TypeScript strict
-- **Web**: Next.js + Tailwind (separate app, same monorepo)
+- **Web**: Next.js (App Router) + **Tailwind CSS v4** + **shadcn/ui** components
 - **State**: Zustand · TanStack Query v5 · react-hook-form + zod · victory-native
 - **Backend**: Supabase (Auth OTP, Postgres + RLS, Edge Functions)
 
 ## Monorepo layout
 ```
-apps/mobile/     → Expo app (app/ = Expo Router screens)
-apps/web/        → Next.js app (src/app/(app)/ = pages)
-packages/shared  → types, constants, utilities
-packages/queries → TanStack Query hooks
-packages/stores  → Zustand stores
-apps/mobile/supabase/ → migrations & Edge Functions
+apps/mobile/            → Expo app (app/ = Expo Router screens)
+apps/web/               → Next.js app + shadcn/ui
+packages/shared         → types, constants, utilities
+packages/queries        → TanStack Query hooks
+packages/stores         → Zustand stores
+apps/mobile/supabase/   → migrations & Edge Functions
 ```
-Design tokens: `apps/mobile/src/constants/tokens.ts` · `apps/web/src/app/globals.css`.
+
+## Design tokens — single source of truth
+- **Mobile**: `apps/mobile/src/constants/tokens.ts` (exports `Colors`, `Spacing`, `BorderRadius`, `Typography`, `Shadows`, `Animation`, `TouchTarget`)
+- **Web**: `apps/web/src/app/globals.css` (Tailwind v4 `@theme { }` block + shadcn semantic tokens)
+- **Palette**: Lavender — see @DESIGN_SYSTEM.md for complete reference
+
+**Never hardcode colors, spacing, or radii.** Always reference tokens.
 
 ## Commands
 ```bash
@@ -26,7 +32,7 @@ npm run dev | lint | test | format | build   # monorepo (turbo)
 cd apps/mobile && npx expo start --tunnel
 cd apps/web && npm run dev
 npx supabase db push
-npx supabase functions deploy <name>
+npx supabase functions deploy <n>
 ```
 
 ## Non-negotiable rules
@@ -35,7 +41,7 @@ npx supabase functions deploy <name>
 - **Never write to `.env*`, `secrets/`**. Never hardcode keys or tokens.
 - **Never use `any`** without an inline justification comment.
 - **Always handle loading, empty, error states** on every screen.
-- **Design tokens only** — never hardcode colors, spacing, or radii.
+- **shadcn components first**: when building new UI on web, prefer existing shadcn components (`Button`, `Card`, `Dialog`, `Input`, etc.) before writing custom ones.
 - **Business naming**: `household`, `member`, `task`, `timeLog`, `tlxEntry`, `weeklyStat`, `alert`, `expense`, `invitation`.
 
 ## Working style
@@ -56,10 +62,18 @@ Scope discipline: break broad requests into phases · one main module per pass �
 - **Session prompts**: `prompts/claude/`
 - **Roadmap**: see `ROADMAP.md` (current milestone + exit conditions).
 
+## Launch priority
+Phase 9 (push notifications) and phase 10 (polish/QA) only. **No visual direction changes before launch.** Post-launch V2 may revisit palette based on user feedback — not before.
+
+Known blockers:
+- Invitation flow: missing post-signup redirect
+- Login failure after re-signup with same credentials
+- Account deletion (RGPD / App Store hard requirement)
+
 ## Domain-specific guidance (lazy-loaded — read only when relevant)
 - **Auth / invitation / signup / deep-link work** → read @docs/claude/AUTH.md
 - **Supabase / migrations / RLS / Edge Functions** → read @apps/mobile/supabase/CLAUDE.md
-- **UI / styling / design system / mascot** → read @DESIGN_SYSTEM.skill.md
+- **UI / styling / design system / mascot / shadcn** → read @DESIGN_SYSTEM.md
 - **Naming · code quality · UX details · verification loop** → read @docs/claude/CONVENTIONS.md
 - **Phase planning** → read @POWER_STACK_WORKFLOW.md
 - **Marketing site** → separate repo, read @marketing-site/CLAUDE.md there

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -11,6 +11,7 @@ import {
   TextStyle,
   Modal,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -124,6 +125,85 @@ function OptionSheet<T extends string>({
   );
 }
 
+// ─── Date/Time Picker Sheet ──────────────────────────────────────────────────
+// iOS spinner needs to live in a Modal — rendered inline inside the ScrollView
+// it gets hidden by the open keyboard (title field auto-focuses). Android uses
+// the native platform dialog.
+
+function PickerSheet({
+  visible,
+  mode,
+  value,
+  onConfirm,
+  onClose,
+}: {
+  visible: boolean;
+  mode: 'date' | 'time';
+  value: Date;
+  onConfirm: (date: Date) => void;
+  onClose: () => void;
+}) {
+  const [temp, setTemp] = useState(value);
+
+  useEffect(() => {
+    if (visible) setTemp(value);
+  }, [visible, value]);
+
+  if (Platform.OS !== 'ios') {
+    if (!visible) return null;
+    return (
+      <DateTimePicker
+        value={value}
+        mode={mode}
+        display="default"
+        onChange={(event: DateTimePickerEvent, date?: Date) => {
+          onClose();
+          if (event.type === 'set' && date) onConfirm(date);
+        }}
+        locale="fr-FR"
+        {...(mode === 'time' ? { minuteInterval: 5 as const } : {})}
+      />
+    );
+  }
+
+  return (
+    <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
+      <TouchableOpacity style={s.sheetOverlay} activeOpacity={1} onPress={onClose}>
+        <View style={s.pickerSheet}>
+          <View style={s.pickerHeader}>
+            <TouchableOpacity onPress={onClose} hitSlop={8} activeOpacity={0.6}>
+              <Text style={s.pickerHeaderCancel}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                onConfirm(temp);
+                onClose();
+              }}
+              hitSlop={8}
+              activeOpacity={0.6}
+            >
+              <Text style={s.pickerHeaderDone}>OK</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            value={temp}
+            mode={mode}
+            display="spinner"
+            onChange={(_event: DateTimePickerEvent, date?: Date) => {
+              if (date) setTemp(date);
+            }}
+            locale="fr-FR"
+            textColor={Colors.textPrimary}
+            themeVariant="light"
+            style={s.pickerWheel}
+            {...(mode === 'time' ? { minuteInterval: 5 as const } : {})}
+          />
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 // ─── Label component ─────────────────────────────────────────────────────────
 
 function FieldLabel({ children }: { children: string }) {
@@ -165,23 +245,31 @@ export default function CreateTaskScreen() {
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
-    setShowDatePicker(false);
-    if (date) {
-      const updated = new Date(dueDate);
-      updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-      setDueDate(updated);
-    }
-  }, [dueDate]);
+  const openDatePicker = useCallback(() => {
+    Keyboard.dismiss();
+    setShowDatePicker(true);
+  }, []);
 
-  const handleTimeChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
-    setShowTimePicker(false);
-    if (date) {
-      const updated = new Date(dueDate);
+  const openTimePicker = useCallback(() => {
+    Keyboard.dismiss();
+    setShowTimePicker(true);
+  }, []);
+
+  const handleDateConfirm = useCallback((date: Date) => {
+    setDueDate(prev => {
+      const updated = new Date(prev);
+      updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      return updated;
+    });
+  }, []);
+
+  const handleTimeConfirm = useCallback((date: Date) => {
+    setDueDate(prev => {
+      const updated = new Date(prev);
       updated.setHours(date.getHours(), date.getMinutes(), 0, 0);
-      setDueDate(updated);
-    }
-  }, [dueDate]);
+      return updated;
+    });
+  }, []);
 
   const handleSubmit = async () => {
     if (!taskName.trim()) return;
@@ -323,7 +411,7 @@ export default function CreateTaskScreen() {
           <View style={s.dateTimeRow}>
             <TouchableOpacity
               style={s.dateSection}
-              onPress={() => setShowDatePicker(true)}
+              onPress={openDatePicker}
               activeOpacity={0.7}
             >
               <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
@@ -332,7 +420,7 @@ export default function CreateTaskScreen() {
             <View style={s.dateTimeSeparator} />
             <TouchableOpacity
               style={s.timeSection}
-              onPress={() => setShowTimePicker(true)}
+              onPress={openTimePicker}
               activeOpacity={0.7}
             >
               <Ionicons name="time-outline" size={20} color={Colors.primary} />
@@ -340,26 +428,6 @@ export default function CreateTaskScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={dueDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            locale="fr-FR"
-          />
-        )}
-        {showTimePicker && (
-          <DateTimePicker
-            value={dueDate}
-            mode="time"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleTimeChange}
-            locale="fr-FR"
-            minuteInterval={5}
-          />
-        )}
 
         {/* ─── Priorité ─────────────────────────────────────────────────── */}
         <View style={s.fieldGroup}>
@@ -423,6 +491,20 @@ export default function CreateTaskScreen() {
         selected={recurrence}
         onSelect={setRecurrence}
         onClose={() => setShowRecurrenceDropdown(false)}
+      />
+      <PickerSheet
+        visible={showDatePicker}
+        mode="date"
+        value={dueDate}
+        onConfirm={handleDateConfirm}
+        onClose={() => setShowDatePicker(false)}
+      />
+      <PickerSheet
+        visible={showTimePicker}
+        mode="time"
+        value={dueDate}
+        onConfirm={handleTimeConfirm}
+        onClose={() => setShowTimePicker(false)}
       />
 
       {/* ─── CTA Button ─────────────────────────────────────────────────── */}
@@ -617,6 +699,38 @@ const s = StyleSheet.create({
   sheetItemTextActive: {
     color: Colors.primary,
     fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+  },
+
+  // Picker Sheet (date/time)
+  pickerSheet: {
+    width: '100%',
+    backgroundColor: Colors.backgroundCard,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingBottom: Spacing['2xl'],
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  pickerHeaderCancel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium as TextStyle['fontWeight'],
+    color: Colors.textSecondary,
+  },
+  pickerHeaderDone: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold as TextStyle['fontWeight'],
+    color: Colors.primary,
+  },
+  pickerWheel: {
+    height: 216,
+    backgroundColor: Colors.backgroundCard,
   },
 
   // Pills

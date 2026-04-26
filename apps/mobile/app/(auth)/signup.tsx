@@ -125,7 +125,12 @@ export default function SignupScreen() {
 
     router.replace({
       pathname: '/(auth)/verify-email',
-      params: { email: values.email, mode: 'signup' },
+      params: {
+        email: values.email,
+        mode: 'signup',
+        full_name: values.full_name,
+        ...(effectiveToken ? { invite: effectiveToken } : {}),
+      },
     });
   };
 
