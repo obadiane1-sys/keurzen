@@ -1,0 +1,14 @@
+appId: app.keurzen.mobile
+---
+- launchApp
+
+- assertVisible: "Bon retour !"
+
+- tapOn: "vous@exemple.fr"
+- inputText: "inexistant@keurzen.test"
+
+- tapOn: "Continuer"
+
+- extendedWaitUntil:
+    visible: "Aucun compte trouvé avec cette adresse."
+    timeout: 10000

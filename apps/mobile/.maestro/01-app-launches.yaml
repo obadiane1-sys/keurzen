@@ -1,0 +1,5 @@
+appId: app.keurzen.mobile
+---
+- launchApp
+- assertVisible: "Bon retour !"
+- assertVisible: "Continuer"
