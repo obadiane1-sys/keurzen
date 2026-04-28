@@ -54,3 +54,6 @@ yarn-error.*
 # Supabase temp
 **/.temp/
 .vercel
+
+# Claude Code internal files
+.claude/scheduled_tasks.lock
