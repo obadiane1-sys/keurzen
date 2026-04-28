@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,7 +6,9 @@ import {
   StyleSheet,
   TextStyle,
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import {
   Colors,
   Spacing,
@@ -16,6 +18,9 @@ import {
 } from '../../constants/tokens';
 import { Text } from '../ui/Text';
 import type { SharedListItem } from '../../types';
+
+const DELETE_BG = '#DC2626';
+const DELETE_ACTION_WIDTH = 88;
 
 // ─── Category Labels ─────────────────────────────────────────────────────────
 
@@ -73,6 +78,7 @@ function getInitials(fullName: string | null): string {
 interface ListItemRowProps {
   item: SharedListItem;
   onToggle: () => void;
+  onDelete?: () => void;
   onLongPress?: () => void;
 }
 
@@ -81,9 +87,38 @@ interface ListItemRowProps {
 export const ListItemRow = React.memo(function ListItemRow({
   item,
   onToggle,
+  onDelete,
   onLongPress,
 }: ListItemRowProps) {
   const checkScale = useRef(new Animated.Value(1)).current;
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const handleSwipeableWillOpen = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const handleDeletePress = useCallback(() => {
+    swipeableRef.current?.close();
+    onDelete?.();
+  }, [onDelete]);
+
+  const renderRightActions = useCallback(
+    () => (
+      <TouchableOpacity
+        onPress={handleDeletePress}
+        activeOpacity={0.85}
+        style={styles.deleteAction}
+        accessibilityRole="button"
+        accessibilityLabel={`Supprimer ${item.title}`}
+      >
+        <Ionicons name="trash-outline" size={20} color={Colors.textInverse} />
+        <Text style={styles.deleteActionText} color="inverse">
+          Supprimer
+        </Text>
+      </TouchableOpacity>
+    ),
+    [handleDeletePress, item.title]
+  );
 
   const handleToggle = () => {
     Animated.sequence([
@@ -108,12 +143,20 @@ export const ListItemRow = React.memo(function ListItemRow({
   const titleStyle = item.checked ? [styles.titleText, styles.titleChecked] : styles.titleText;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onLongPress={onLongPress}
-      style={styles.row}
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={onDelete ? renderRightActions : undefined}
+      onSwipeableWillOpen={handleSwipeableWillOpen}
+      overshootRight={false}
+      friction={2}
+      rightThreshold={32}
     >
-      {/* Checkbox */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onLongPress={onLongPress}
+        style={styles.row}
+      >
+        {/* Checkbox */}
       <TouchableOpacity
         onPress={handleToggle}
         activeOpacity={0.8}
@@ -177,7 +220,8 @@ export const ListItemRow = React.memo(function ListItemRow({
           </View>
         )}
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Swipeable>
   );
 });
 
@@ -274,5 +318,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xs,
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+
+  // Swipe-to-delete action
+  deleteAction: {
+    width: DELETE_ACTION_WIDTH,
+    backgroundColor: DELETE_BG,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  deleteActionText: {
+    fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.semibold,
   },
 });
