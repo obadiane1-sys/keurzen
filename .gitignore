@@ -57,3 +57,6 @@ yarn-error.*
 
 # Claude Code internal files
 .claude/scheduled_tasks.lock
+
+# Claude Code internal files
+.claude/scheduled_tasks.lock
