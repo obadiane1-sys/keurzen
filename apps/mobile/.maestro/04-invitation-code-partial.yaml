@@ -1,0 +1,27 @@
+appId: app.keurzen.mobile
+---
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Bon retour !"
+    timeout: 30000
+
+# Aller sur l'écran code invitation
+- tapOn: ".*invitation.*"
+- assertVisible: "Rejoindre un foyer"
+
+# Saisir seulement 3 chiffres
+- tapOn:
+    below: ".*6 chiffres.*"
+- inputText: "123"
+
+# Le bouton existe (visible) mais on n'attend pas qu'il soit cliquable
+# Si on tente de cliquer dessus, rien ne doit se passer
+- tapOn: "Rejoindre le foyer"
+
+# Vérifier qu'on est TOUJOURS sur l'écran "Rejoindre un foyer"
+# (preuve que le bouton désactivé a bien empêché la validation)
+- assertVisible: "Rejoindre un foyer"
+
+# Vérifier qu'AUCUN message d'erreur n'apparaît
+- assertNotVisible: "Impossible de rejoindre le foyer"

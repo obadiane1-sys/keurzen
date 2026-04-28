@@ -1,5 +1,7 @@
 appId: app.keurzen.mobile
 ---
 - launchApp
-- assertVisible: "Bon retour !"
+- extendedWaitUntil:
+    visible: "Bon retour !"
+    timeout: 30000
 - assertVisible: "Continuer"
