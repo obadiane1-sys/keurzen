@@ -26,8 +26,8 @@ import type { RecipeFormValues, RecipeDifficulty, Ingredient } from '../../../..
 const recipeSchema = z.object({
   title: z.string().min(2, 'Titre requis (2 caractères minimum)'),
   description: z.string().optional(),
-  prep_time: z.number({ invalid_type_error: 'Durée requise' }).min(0, 'Doit être >= 0'),
-  cook_time: z.number({ invalid_type_error: 'Durée requise' }).min(0, 'Doit être >= 0'),
+  prep_time: z.number({ error: 'Durée requise' }).min(0, 'Doit être >= 0'),
+  cook_time: z.number({ error: 'Durée requise' }).min(0, 'Doit être >= 0'),
   servings: z.number().min(1).max(20),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   tags: z.array(z.string()),
@@ -38,7 +38,7 @@ const recipeSchema = z.object({
     .array(
       z.object({
         ingredient_id: z.string().min(1, 'Sélectionnez un ingrédient'),
-        quantity: z.number({ invalid_type_error: 'Quantité requise' }).min(0),
+        quantity: z.number({ error: 'Quantité requise' }).min(0),
         unit: z.string().min(1, 'Unité requise'),
         optional: z.boolean(),
         note: z.string().optional(),

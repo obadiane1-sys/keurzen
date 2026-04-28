@@ -262,7 +262,12 @@ export function useUpdateListItem() {
     }: {
       itemId: string;
       listId: string;
-      data: Partial<SharedListItemFormValues & { position: number }>;
+      data: Partial<
+        Omit<SharedListItemFormValues, 'assigned_to'> & {
+          position: number;
+          assigned_to: string | null;
+        }
+      >;
     }) => {
       const { data, error } = await supabase
         .from('shared_list_items')

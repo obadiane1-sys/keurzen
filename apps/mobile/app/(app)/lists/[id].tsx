@@ -233,7 +233,7 @@ export default function ListDetailScreen() {
       'entretien',
       'autre',
     ];
-    const sortedKeys = Object.keys(groups).sort((a, b) => {
+    const sortedKeys = (Object.keys(groups) as ShoppingItemCategory[]).sort((a, b) => {
       const ia = knownOrder.indexOf(a);
       const ib = knownOrder.indexOf(b);
       return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);

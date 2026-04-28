@@ -480,7 +480,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
-    whiteSpace: 'nowrap',
   },
   datePillTextSelected: {
     color: Colors.textInverse,

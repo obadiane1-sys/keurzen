@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text as RNText, TextStyle, StyleSheet, TextProps as RNTextProps } from 'react-native';
+import { Text as RNText, TextStyle, StyleSheet, StyleProp, TextProps as RNTextProps } from 'react-native';
 import { Colors, Typography } from '../../constants/tokens';
 
 type TextVariant =
@@ -20,7 +20,7 @@ export interface TextProps {
   variant?: TextVariant;
   color?: TextColor;
   weight?: 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold';
-  style?: TextStyle | (TextStyle | undefined)[];
+  style?: StyleProp<TextStyle>;
   children: React.ReactNode;
   numberOfLines?: number;
   selectable?: boolean;
