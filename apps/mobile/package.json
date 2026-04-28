@@ -10,7 +10,8 @@
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx",
     "test": "jest",
     "format": "prettier --write .",
-    "build:web": "npx expo export -p web && node scripts/inject-fonts.js"
+    "build:web": "npx expo export -p web && node scripts/inject-fonts.js",
+    "prebuild:android": "expo prebuild -p android --clean && bash scripts/post-prebuild.sh"
   },
   "dependencies": {
     "@expo-google-fonts/fredoka-one": "^0.2.3",
