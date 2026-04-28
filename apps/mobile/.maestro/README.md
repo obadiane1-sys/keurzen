@@ -286,10 +286,13 @@ open ~/.maestro/tests/$(ls -t ~/.maestro/tests/ | head -1)/
 
 ## Roadmap
 
+### Done
+
+- [x] Script `pre-launch-check.sh` qui chaîne ESLint + TS strict + Maestro (cf. `scripts/pre-launch-check.sh` à la racine du repo)
+
 ### Avant launch (P0)
 
 - [ ] Helpers réutilisables (`helpers/goto-login.yaml`, `helpers/goto-invitation.yaml`)
-- [ ] Script `pre-launch-check.sh` qui chaîne ESLint + TS strict + Maestro
 
 ### Post-launch (P1)
 
