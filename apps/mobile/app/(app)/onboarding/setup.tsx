@@ -130,7 +130,6 @@ export default function OnboardingSetupScreen() {
       if (savePreferences) {
         const [householdType, currentSplit, painPoint, mainGoal] = selections;
         if (householdType && currentSplit && painPoint && mainGoal) {
-          // @ts-expect-error — onboarding_preferences migration (20260407) not yet pushed to linked Supabase; remove once migrations sync (see docs/known-issues.md)
           await supabase.from('onboarding_preferences').upsert(
             {
               user_id: user.id,
