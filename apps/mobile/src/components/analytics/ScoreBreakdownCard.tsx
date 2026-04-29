@@ -32,7 +32,7 @@ function getScoreLevel(score: number): string {
 const DIMENSION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   completion: 'checkmark-circle-outline',
   balance: 'scale-outline',
-  tlx: 'brain-outline',
+  tlx: 'pulse-outline',
   streak: 'flame-outline',
 };
 

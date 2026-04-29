@@ -440,7 +440,7 @@ function useLoadingDotsStyle() {
   return { transform: [{ scale }] };
 }
 
-type AnimatedStyleResult = { transform: { [key: string]: Animated.Value | Animated.AnimatedInterpolation<string> }[] };
+type AnimatedStyleResult = Animated.WithAnimatedObject<ViewStyle>;
 
 const ANIMATION_MAP: Record<MascotExpression, () => AnimatedStyleResult> = {
   normal: useBreathingStyle,

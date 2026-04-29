@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     height: 200,
   },
   confirmBtn: {
-    backgroundColor: Colors.mint,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.xl,
     height: 54,
     alignItems: 'center',
