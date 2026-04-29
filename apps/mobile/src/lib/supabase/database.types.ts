@@ -213,21 +213,21 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           household_id: string
           id: string
           type: string
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           household_id: string
           id?: string
           type: string
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           household_id?: string
           id?: string
           type?: string
@@ -529,7 +529,7 @@ export type Database = {
         Row: {
           assigned_to: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           date: string
           household_id: string
           id: string
@@ -541,7 +541,7 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           date: string
           household_id: string
           id?: string
@@ -553,7 +553,7 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date?: string
           household_id?: string
           id?: string
@@ -606,21 +606,21 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
-          sender_id: string
+          sender_id: string | null
         }
         Insert: {
           content: string
           conversation_id: string
           created_at?: string
           id?: string
-          sender_id: string
+          sender_id?: string | null
         }
         Update: {
           content?: string
           conversation_id?: string
           created_at?: string
           id?: string
-          sender_id?: string
+          sender_id?: string | null
         }
         Relationships: [
           {
