@@ -57,3 +57,59 @@ installée (cf. release notes de chaque version mineure de Reanimated 4.x).
 ls ~/Keurzen/node_modules/react-native-worklets/package.json
 # doit exister — sinon le hoisting est cassé, relancer npm install
 ```
+
+## ⚠️ Android : JDK 25 incompatible avec Gradle 8.13
+
+Le JDK par défaut installé par Homebrew sur Apple Silicon en 2026 est OpenJDK 25.
+Gradle 8.13 (notre pin pour contourner le bug foojay/IBM_SEMERU de Gradle 9.x)
+embarque une version de Kotlin qui ne sait pas parser les versions Java 25.x.
+
+### Symptôme
+
+```
+* What went wrong:
+Error resolving plugin [id: 'com.facebook.react.settings']
+> 25.0.1
+
+BUILD FAILED in 2s
+```
+
+Avec `--stacktrace`, la vraie cause apparaît :
+
+```
+Caused by: java.lang.IllegalArgumentException: 25.0.1
+  at org.jetbrains.kotlin.com.intellij.util.lang.JavaVersion.parse(JavaVersion.java:307)
+  at org.jetbrains.kotlin.com.intellij.util.lang.JavaVersion.current(JavaVersion.java:176)
+```
+
+### Setup une fois
+
+```bash
+brew install openjdk@21
+```
+
+`openjdk@21` est **keg-only** : Homebrew ne le symlinke pas dans `/opt/homebrew`,
+donc le JDK système (25) reste le défaut. C'est volontaire — on ne pollue ni
+le PATH ni le `~/.zshrc`. Le JDK 21 n'est utilisé que quand on l'invoque
+explicitement par son chemin complet.
+
+### Comment l'utiliser
+
+Ne JAMAIS lancer `npx expo run:android` directement. À la place :
+
+```bash
+cd apps/mobile
+npm run android
+```
+
+Le script `apps/mobile/scripts/run-android.sh` détecte automatiquement le
+JDK 21 à `/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`,
+exporte `JAVA_HOME` pour la durée du build, et délègue à `expo run:android`.
+Si le JDK 21 n'est pas trouvé, le script affiche un warning explicite avec
+la commande d'install à lancer.
+
+### Fin du contournement
+
+Disparaîtra avec **Expo SDK 56 + Gradle 9** (estimé fin mai 2026) — l'agent
+scheduled qui vérifie le retour à un Gradle moderne testera aussi la
+compatibilité Java 25+ à ce moment-là.

@@ -64,8 +64,10 @@ adb devices  # doit afficher emulator-5554 device
 
 # 3. Builder Keurzen
 cd apps/mobile
-npx expo run:android  # 5-15 min première fois
+npm run android  # 5-15 min première fois
 ```
+
+⚠️ **NE JAMAIS utiliser `npx expo run:android` directement** sur Android. À la place, toujours `npm run android` — le wrapper `scripts/run-android.sh` overrides `JAVA_HOME` vers OpenJDK 21 pour contourner l'incompatibilité Gradle 8.13 / JDK 25. Voir [`docs/known-issues.md`](../docs/known-issues.md) section "JDK 25 incompatible avec Gradle 8.13".
 
 ⚠️ **NE JAMAIS utiliser `expo prebuild` directement** sur Android. À la place :
 
