@@ -20,7 +20,20 @@ jest.mock('../client', () => ({
   },
 }));
 
-import { supabase } from '../client';
+import { supabase as _supabase } from '../client';
+
+// jest.mock above replaces every member with jest.fn(), but TypeScript still
+// sees the original Supabase types. Cast once so .mockResolvedValue /
+// .mockReturnValue are recognized at every call site below.
+const supabase = _supabase as unknown as {
+  rpc: jest.Mock;
+  from: jest.Mock;
+  auth: {
+    signInWithOtp: jest.Mock;
+    verifyOtp: jest.Mock;
+    signOut: jest.Mock;
+  };
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
