@@ -8,16 +8,17 @@ import { useAuthStore } from '../stores/auth.store';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
 export function usePushNotifications() {
   const { user } = useAuthStore();
-  const notifListener = useRef<Notifications.EventSubscription>();
-  const responseListener = useRef<Notifications.EventSubscription>();
+  const notifListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -32,16 +33,12 @@ export function usePushNotifications() {
     // Listen to notification responses (user tapped)
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data;
-      handleNotificationResponse(data);
+      if (data) handleNotificationResponse(data);
     });
 
     return () => {
-      if (notifListener.current) {
-        Notifications.removeNotificationSubscription(notifListener.current);
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      notifListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, [user?.id]);
 }
@@ -135,6 +132,9 @@ export async function scheduleTaskReminder(
       data: { type: 'reminder', task_id: taskId },
       sound: 'default',
     },
-    trigger: { date: reminderTime },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: reminderTime,
+    },
   });
 }
