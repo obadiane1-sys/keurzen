@@ -143,7 +143,7 @@ export function useUpdateTaskStatus() {
 
       if (status === 'done') {
         updates.completed_at = new Date().toISOString();
-      } else if (status !== 'done') {
+      } else {
         updates.completed_at = null;
       }
 

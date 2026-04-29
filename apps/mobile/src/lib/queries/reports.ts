@@ -31,7 +31,7 @@ export function useWeeklyReport() {
         if (error.code === 'PGRST116') return null; // No rows = no report yet
         throw new Error(error.message);
       }
-      return data as WeeklyReport;
+      return data as unknown as WeeklyReport;
     },
     enabled: !!currentHousehold?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes

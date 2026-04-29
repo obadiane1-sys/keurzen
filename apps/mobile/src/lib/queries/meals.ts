@@ -271,7 +271,7 @@ export function useGenerateGroceryList() {
         );
 
         for (const ri of recipeIngredients) {
-          const ing = (ri as { ingredient: Ingredient }).ingredient;
+          const ing = (ri as unknown as { ingredient: Ingredient }).ingredient;
           if (!ing) continue;
           if (params.excludeBasics && (ri as { optional: boolean }).optional) continue;
 

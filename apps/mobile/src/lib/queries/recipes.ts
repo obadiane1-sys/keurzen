@@ -233,8 +233,8 @@ export function useFavoriteRecipes() {
 
       if (error) throw new Error(error.message);
 
-      return (data ?? []).map((f: { recipe: Recipe }) => ({
-        ...f.recipe,
+      return (data ?? []).map((f) => ({
+        ...(f.recipe as unknown as Recipe),
         is_favorite: true,
       })) as Recipe[];
     },

@@ -13,20 +13,24 @@ export const objectiveKeys = {
 
 async function fetchAndRefreshObjective(householdId: string): Promise<WeeklyObjective | null> {
   // Refresh progress first
+  // @ts-expect-error refresh_objective_progress RPC not in linked types yet (migration 023 pending push)
   await supabase.rpc('refresh_objective_progress');
 
   // Then fetch the updated objective
   const weekStart = dayjs().startOf('isoWeek').format('YYYY-MM-DD');
 
   const { data, error } = await supabase
+    // @ts-expect-error weekly_objectives table not in linked types yet (migration 023 pending push)
     .from('weekly_objectives')
     .select('*')
+    // @ts-expect-error weekly_objectives column types unavailable (migration 023 pending push)
     .eq('household_id', householdId)
+    // @ts-expect-error weekly_objectives column types unavailable (migration 023 pending push)
     .eq('week_start', weekStart)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data as WeeklyObjective | null;
+  return data as unknown as WeeklyObjective | null;
 }
 
 export function useWeeklyObjective() {

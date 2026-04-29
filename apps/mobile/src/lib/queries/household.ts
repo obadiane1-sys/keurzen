@@ -429,7 +429,7 @@ export function useInvitePreview(token: string | null) {
         p_token: token!,
       });
       if (error) throw new Error(error.message);
-      return data as InvitePreview;
+      return data as unknown as InvitePreview;
     },
     enabled: !!token,
     staleTime: 1000 * 60 * 5,
