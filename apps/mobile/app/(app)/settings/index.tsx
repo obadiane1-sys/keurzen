@@ -169,6 +169,16 @@ export default function SettingsScreen() {
             danger
           />
         </View>
+
+        <View style={[styles.section, styles.dangerSection]}>
+          <SettingsRow
+            icon="trash-outline"
+            label="Supprimer mon compte"
+            onPress={() => router.push('/(app)/settings/delete-account')}
+            color={Colors.error}
+            danger
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,5 +235,9 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     flex: 1,
+  },
+  dangerSection: {
+    borderColor: Colors.error,
+    marginTop: Spacing.md,
   },
 });

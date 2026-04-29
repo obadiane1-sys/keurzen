@@ -1,4 +1,4 @@
-import { supabase } from './client';
+import { supabase, supabaseUrl } from './client';
 import type { Profile } from '../../types';
 
 // ─── Send OTP ─────────────────────────────────────────────────────────────────
@@ -120,4 +120,48 @@ export async function markOnboardingSeen(userId: string): Promise<void> {
     .from('profiles')
     .update({ has_seen_onboarding: true, updated_at: new Date().toISOString() })
     .eq('id', userId);
+}
+
+// ─── Account deletion ─────────────────────────────────────────────────────────
+
+/**
+ * Supprime definitivement le compte courant via l'Edge Function delete-account.
+ * Refuse si l'utilisateur est owner d'un foyer avec d'autres membres.
+ */
+export async function deleteAccount(): Promise<{
+  error: string | null;
+  code?: 'has_co_members';
+}> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Session expiree. Reconnectez-vous.' };
+
+  let res: Response;
+  try {
+    res = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch {
+    return { error: 'Erreur reseau. Reessayez.' };
+  }
+
+  let body: { error?: string; message?: string; success?: boolean } = {};
+  try {
+    body = await res.json();
+  } catch {
+    // body intentionnellement vide
+  }
+
+  if (res.status === 409 && body.error === 'has_co_members') {
+    return { error: body.message ?? 'Foyer non vide.', code: 'has_co_members' };
+  }
+
+  if (!res.ok || !body.success) {
+    return { error: body.message ?? body.error ?? 'Suppression impossible.' };
+  }
+
+  return { error: null };
 }
