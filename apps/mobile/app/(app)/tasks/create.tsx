@@ -70,7 +70,10 @@ function formatTimeDisplay(date: Date): string {
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-function OptionSheet<T extends string>({
+function OptionSheet<
+  T extends string,
+  O extends { value: T; label: string } = { value: T; label: string }
+>({
   visible,
   title,
   options,
@@ -81,11 +84,11 @@ function OptionSheet<T extends string>({
 }: {
   visible: boolean;
   title: string;
-  options: { value: T; label: string }[];
+  options: O[];
   selected: T;
   onSelect: (value: T) => void;
   onClose: () => void;
-  renderLabel?: (opt: { value: T; label: string }) => string;
+  renderLabel?: (opt: O) => string;
 }) {
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>

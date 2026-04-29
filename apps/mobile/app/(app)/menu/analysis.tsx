@@ -146,7 +146,7 @@ export default function AnalysisScreen() {
     {
       label: 'TLX',
       value: tlxDelta
-        ? `${Math.round(tlxDelta.score)}${tlxDelta.hasComparison ? (tlxDelta.delta >= 0 ? ' ↑' : ' ↓') : ''}`
+        ? `${Math.round(tlxDelta.score)}${tlxDelta.hasComparison && tlxDelta.delta != null ? (tlxDelta.delta >= 0 ? ' ↑' : ' ↓') : ''}`
         : '—',
       icon: 'pulse-outline' as const,
       color: Colors.primary,
@@ -161,12 +161,12 @@ export default function AnalysisScreen() {
 
   // Top tasks by estimated_minutes
   const topTasks = [...allTasks]
-    .filter((t) => (t.status === 'done' || t.status === 'in_progress') && t.estimated_minutes > 0)
-    .sort((a, b) => b.estimated_minutes - a.estimated_minutes)
+    .filter((t) => (t.status === 'done' || t.status === 'in_progress') && (t.estimated_minutes ?? 0) > 0)
+    .sort((a, b) => (b.estimated_minutes ?? 0) - (a.estimated_minutes ?? 0))
     .slice(0, 5)
     .map((t) => ({
       title: t.title,
-      estimatedMinutes: t.estimated_minutes,
+      estimatedMinutes: t.estimated_minutes ?? 0,
       priority: t.priority as 'low' | 'medium' | 'high' | 'urgent',
       assigneeName: t.assigned_profile?.full_name?.split(' ')[0] ?? 'Non assigné',
       assigneeColor: Colors.success,
