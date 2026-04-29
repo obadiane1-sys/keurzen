@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       alerts: {
@@ -711,6 +686,39 @@ export type Database = {
           },
         ]
       }
+      onboarding_preferences: {
+        Row: {
+          created_at: string
+          current_split: string | null
+          household_type: string | null
+          id: string
+          main_goal: string | null
+          pain_point: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_split?: string | null
+          household_type?: string | null
+          id?: string
+          main_goal?: string | null
+          pain_point?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_split?: string | null
+          household_type?: string | null
+          id?: string
+          main_goal?: string | null
+          pain_point?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1323,6 +1331,56 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_objectives: {
+        Row: {
+          achieved: boolean
+          achieved_at: string | null
+          baseline_value: number
+          created_at: string
+          current_value: number
+          household_id: string
+          id: string
+          label: string
+          target_value: number
+          type: string
+          week_start: string
+        }
+        Insert: {
+          achieved?: boolean
+          achieved_at?: string | null
+          baseline_value: number
+          created_at?: string
+          current_value?: number
+          household_id: string
+          id?: string
+          label: string
+          target_value: number
+          type: string
+          week_start: string
+        }
+        Update: {
+          achieved?: boolean
+          achieved_at?: string | null
+          baseline_value?: number
+          created_at?: string
+          current_value?: number
+          household_id?: string
+          id?: string
+          label?: string
+          target_value?: number
+          type?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_objectives_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_reports: {
         Row: {
           attention_points: Json
@@ -1484,6 +1542,7 @@ export type Database = {
       is_household_member: { Args: { h_id: string }; Returns: boolean }
       join_household_by_token: { Args: { p_token: string }; Returns: Json }
       redeem_invitation_code: { Args: { p_code: string }; Returns: Json }
+      refresh_objective_progress: { Args: never; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
@@ -1614,9 +1673,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
