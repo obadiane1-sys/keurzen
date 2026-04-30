@@ -1,192 +1,56 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
-import type { Session } from '@supabase/supabase-js';
-import { useAuthStore } from '../../src/stores/auth.store';
+import { useRouter } from 'expo-router';
 import { useUiStore } from '../../src/stores/ui.store';
-import { useJoinByToken } from '../../src/lib/queries/household';
-import { supabase } from '../../src/lib/supabase/client';
 import { Colors, Spacing } from '../../src/constants/tokens';
 import { Text } from '../../src/components/ui/Text';
 import { Button } from '../../src/components/ui/Button';
-import { Loader } from '../../src/components/ui/Loader';
 import { Mascot } from '../../src/components/ui/Mascot';
 
 /**
- * Join screen — Magic Link invitation flow.
+ * Fallback screen for any old magic-link URL.
  *
- * Sequence :
- * 1. Extraire la session depuis le hash du deep link (access_token + refresh_token)
- * 2. Appeler join_household_by_token RPC
- * 3. Naviguer vers le dashboard
+ * Plan B hybride routes invitations through 6-digit codes detected
+ * post-login on the dashboard (InvitationBanner). If a user clicks an
+ * outdated /join/{token} URL we surface a calm "expired" message and
+ * point them to signup or login — the banner will pick up their
+ * pending invitation as soon as their email matches.
  */
 export default function JoinScreen() {
-  const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
-  const { session, isInitialized } = useAuthStore();
-  const { showToast, setPendingInviteToken } = useUiStore();
-  const joinByToken = useJoinByToken();
+  const setPendingInviteToken = useUiStore((s) => s.setPendingInviteToken);
 
-  const [status, setStatus] = useState<'waiting' | 'joining' | 'error' | 'already_member'>('waiting');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [householdName, setHouseholdName] = useState('');
-  const hasAttempted = useRef(false);
-  const [linkChecked, setLinkChecked] = useState(false);
-  const [linkSession, setLinkSession] = useState<Session | null>(null);
-
-  // -- Extraction de session depuis le magic link deep link --
   useEffect(() => {
-    let cancelled = false;
-
-    async function handleUrl(url: string) {
-      if (cancelled) return;
-      const hash = url.split('#')[1];
-      if (hash) {
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        if (accessToken && refreshToken) {
-          const { data } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (!cancelled && data.session) setLinkSession(data.session);
-          // Sur web, le hash contient les tokens d'auth — on le nettoie de l'URL
-          // pour éviter qu'ils traînent dans l'historique du navigateur ou les
-          // referers envoyés à des scripts tiers.
-          if (Platform.OS === 'web' && typeof window !== 'undefined') {
-            window.history.replaceState(
-              null,
-              '',
-              window.location.pathname + window.location.search,
-            );
-          }
-        }
-      }
-      if (!cancelled) setLinkChecked(true);
-    }
-
-    const subscription = Linking.addEventListener('url', ({ url }) => {
-      handleUrl(url).catch(() => {
-        if (!cancelled) setLinkChecked(true);
-      });
-    });
-
-    Linking.getInitialURL()
-      .then(async (url) => {
-        if (!cancelled && url) {
-          await handleUrl(url);
-        } else if (!cancelled) {
-          setLinkChecked(true);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLinkChecked(true);
-      });
-
-    return () => {
-      cancelled = true;
-      subscription.remove();
-    };
-  }, []);
-
-  // -- Logique principale --
-  useEffect(() => {
-    if (!linkChecked || !isInitialized || !token) return;
-
-    const activeSession = session || linkSession;
-
-    if (!activeSession) {
-      // Pas de session → fallback vers signup
-      setPendingInviteToken(token);
-      router.replace(`/(auth)/signup?invite=${token}`);
-      return;
-    }
-
-    if (hasAttempted.current) return;
-    hasAttempted.current = true;
-
-    // Session disponible → rejoindre le foyer
-    setStatus('joining');
-    joinByToken
-      .mutateAsync(token)
-      .then(({ alreadyMember, household }) => {
-        setPendingInviteToken(null);
-        if (alreadyMember) {
-          setStatus('already_member');
-          setHouseholdName(household?.name ?? 'ce foyer');
-        } else {
-          const { completedJoinOnboardingForHouseholds } = useUiStore.getState();
-          if (household && completedJoinOnboardingForHouseholds.includes(household.id)) {
-            showToast('Bienvenue dans le foyer !', 'success');
-            router.replace('/(app)/dashboard');
-          } else {
-            router.replace('/(app)/onboarding/post-join');
-          }
-        }
-      })
-      .catch((err) => {
-        // Clear pending token to avoid circular redirect:
-        // error → auth/login → (auth)/_layout detects token → /join/TOKEN → error
-        setPendingInviteToken(null);
-        setStatus('error');
-        setErrorMsg((err as Error).message);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkChecked, isInitialized, session, linkSession, token]);
-
-  // -- Render --
-
-  if (status === 'waiting' || status === 'joining') {
-    return (
-      <Loader
-        fullScreen
-        label={status === 'joining' ? 'Rejoindre le foyer...' : "Traitement de l'invitation..."}
-      />
-    );
-  }
-
-  if (status === 'already_member') {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.centered}>
-          <Mascot size={100} expression="thinking" />
-          <Text variant="h3" style={styles.title}>Deja membre</Text>
-          <Text variant="body" color="secondary" style={styles.subtitle}>
-            Vous faites deja partie de {householdName}.
-          </Text>
-          <Button
-            label="Aller au dashboard"
-            variant="primary"
-            onPress={() => router.replace('/(app)/dashboard')}
-            style={styles.btn}
-          />
-          <Button
-            label="Retour a l'accueil"
-            variant="ghost"
-            onPress={() => router.replace('/(auth)/login')}
-            style={{ width: '100%' }}
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
+    // Defensive: clear any leftover token from previous flows so the
+    // (auth)/_layout doesn't bounce the user back here in a loop.
+    setPendingInviteToken(null);
+  }, [setPendingInviteToken]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.centered}>
         <Mascot size={100} expression="thinking" />
-        <Text variant="h3" style={styles.title}>Invitation invalide</Text>
+
+        <Text variant="h3" style={styles.title}>Lien expiré</Text>
+
         <Text variant="body" color="secondary" style={styles.subtitle}>
-          {errorMsg}
+          Ce lien d&apos;invitation a expiré. Créez votre compte normalement
+          et l&apos;invitation s&apos;affichera dans votre tableau de bord.
         </Text>
+
         <Button
-          label="Retour a l'accueil"
+          label="Créer mon compte"
           variant="primary"
+          onPress={() => router.replace('/(auth)/signup')}
+          style={styles.primaryBtn}
+        />
+
+        <Button
+          label="J'ai déjà un compte"
+          variant="ghost"
           onPress={() => router.replace('/(auth)/login')}
-          style={styles.btn}
+          style={styles.secondaryBtn}
         />
       </View>
     </SafeAreaView>
@@ -213,8 +77,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  btn: {
+  primaryBtn: {
     marginTop: Spacing.lg,
+    width: '100%',
+  },
+  secondaryBtn: {
     width: '100%',
   },
 });
