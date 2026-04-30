@@ -163,9 +163,14 @@ export function useMyPendingInvitations() {
   return useQuery({
     queryKey: inviteCodeKeys.myPending(email),
     queryFn: async (): Promise<PendingInvitation[]> => {
-      const { data, error } = await supabase.rpc('get_my_pending_invitations');
+      // The generated Supabase types haven't been regenerated since the
+      // get_my_pending_invitations RPC was added (migration
+      // 20260430231015). Cast through never on the function name and
+      // through unknown on the result so we keep PendingInvitation as
+      // the contract without disabling type checking.
+      const { data, error } = await supabase.rpc('get_my_pending_invitations' as never);
       if (error) throw new Error(error.message);
-      return (data as PendingInvitation[]) ?? [];
+      return ((data as unknown) as PendingInvitation[] | null) ?? [];
     },
     enabled: !!email,
     staleTime: 30_000,
