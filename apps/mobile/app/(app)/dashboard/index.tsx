@@ -17,6 +17,7 @@ import { HouseholdScoreCard } from '../../../src/components/dashboard/HouseholdS
 import { TaskEquityBar } from '../../../src/components/dashboard/TaskEquityBar';
 import { AlertCard } from '../../../src/components/dashboard/AlertCard';
 import { UpcomingTasksList } from '../../../src/components/dashboard/UpcomingTasksList';
+import { InvitationBanner } from '../../../src/components/dashboard/InvitationBanner';
 import { MOCK_ALERTS } from '../../../src/components/dashboard/constants';
 import { AnimatedScreen, StaggerItem } from '../../../src/components/ui/AnimatedScreen';
 import { DashboardSkeleton } from '../../../src/components/ui/Skeleton';
@@ -85,6 +86,9 @@ export default function DashboardScreen() {
           <Text style={styles.welcomeText}>Bienvenue</Text>
           <Mascot size={44} expression="calm" />
         </View>
+        <View style={styles.emptyBannerSlot}>
+          <InvitationBanner />
+        </View>
         <EmptyState
           variant="household"
           expression="normal"
@@ -122,6 +126,8 @@ export default function DashboardScreen() {
         <StaggerItem index={0}>
           <DreamHeader firstName={firstName} avatarUrl={profile?.avatar_url ?? null} />
         </StaggerItem>
+
+        <InvitationBanner />
 
         <View style={styles.gap} />
         <StaggerItem index={1}>
@@ -198,5 +204,9 @@ const styles = StyleSheet.create({
   },
   alertHalf: {
     flex: 1,
+  },
+  emptyBannerSlot: {
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
 });
