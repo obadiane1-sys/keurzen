@@ -12,7 +12,6 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { verifyOtp, sendOtp, sendOtpForLogin } from '../../src/lib/supabase/auth';
-import { supabase } from '../../src/lib/supabase/client';
 import { useUiStore } from '../../src/stores/ui.store';
 import type { RelativePathString } from 'expo-router';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/tokens';
@@ -25,10 +24,9 @@ const RESEND_COOLDOWN = 30;
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const { email, mode, full_name, invite } = useLocalSearchParams<{
+  const { email, mode, invite } = useLocalSearchParams<{
     email?: string;
     mode?: string;
-    full_name?: string;
     invite?: string;
   }>();
   const { showToast, pendingInviteToken, pendingInviteCode } = useUiStore();
@@ -89,20 +87,12 @@ export default function VerifyEmailScreen() {
 
     showToast('Connexion réussie !', 'success');
 
-    // Bug 2 fix: ghost user may have profile with full_name=null.
-    // After signup OTP, upsert profile to ensure full_name is set so
-    // check_email_registered returns true on next login.
-    if (mode === 'signup' && full_name) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('profiles').upsert(
-          { id: user.id, email: user.email ?? resolvedEmail, full_name },
-          { onConflict: 'id' },
-        );
-      }
-    }
+    // Profile.full_name backfill is now handled centrally in useAuthInit
+    // (src/hooks/useAuth.ts) — the onAuthStateChange listener detects
+    // profile.full_name === null + user.user_metadata.full_name set, and
+    // upserts. This covers signup OTP, join-code, and legacy users.
 
-    // Bug 1 fix: prefer URL param (survives app backgrounding) over in-memory store.
+    // Prefer URL param (survives app backgrounding) over in-memory store.
     const effectiveInviteToken = invite || pendingInviteToken;
     if (effectiveInviteToken) {
       router.replace(`/join/${effectiveInviteToken}` as RelativePathString);
@@ -111,7 +101,7 @@ export default function VerifyEmailScreen() {
     } else {
       router.replace('/(app)/dashboard');
     }
-  }, [code, resolvedEmail, showToast, router, pendingInviteToken, pendingInviteCode, mode, full_name, invite]);
+  }, [code, resolvedEmail, showToast, router, pendingInviteToken, pendingInviteCode, invite]);
 
   const handleResend = useCallback(async () => {
     if (!resolvedEmail || cooldown > 0) return;

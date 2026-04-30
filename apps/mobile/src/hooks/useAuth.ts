@@ -1,12 +1,51 @@
 import { useEffect, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/client';
 import { fetchProfile } from '../lib/supabase/auth';
 import { useAuthStore } from '../stores/auth.store';
+import type { Profile } from '../types';
 
 /** Timeout global sur l'init auth (ms) */
 const AUTH_INIT_TIMEOUT = 8000;
 /** Timeout sur le chargement du profil (ms) */
 const FETCH_PROFILE_TIMEOUT = 5000;
+
+/**
+ * Backfill profile.full_name when it's null but auth.user metadata has a
+ * full_name. Without this, sendOtpForLogin's check_email_registered RPC
+ * (which requires full_name IS NOT NULL) returns false → "Aucun compte"
+ * even though the auth user exists. Affects users created via paths that
+ * don't reliably propagate metadata to the profiles trigger.
+ *
+ * Returns the upserted profile if a backfill happened, otherwise null.
+ */
+async function backfillProfileFullName(
+  user: User,
+  profile: Profile | null,
+): Promise<Profile | null> {
+  if (profile?.full_name) return null;
+  const metaName = (user.user_metadata?.full_name as string | undefined)?.trim();
+  if (!metaName) return null;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? profile?.email ?? '',
+        full_name: metaName,
+      },
+      { onConflict: 'id' },
+    )
+    .select('*')
+    .single();
+
+  if (error) {
+    console.warn('[Keurzen] backfillProfileFullName failed:', error.message);
+    return null;
+  }
+  return (data as Profile) ?? null;
+}
 
 /**
  * Initialise et maintient la session Supabase.
@@ -61,7 +100,9 @@ export function useAuthInit() {
         if (session?.user) {
           try {
             const profile = await fetchProfileWithTimeout(session.user.id);
-            if (!isCancelled) setProfile(profile);
+            if (isCancelled) return;
+            const backfilled = await backfillProfileFullName(session.user, profile);
+            setProfile(backfilled ?? profile);
           } catch (e) {
             console.warn('[Keurzen] fetchProfile error:', e);
           }
@@ -87,7 +128,9 @@ export function useAuthInit() {
         if (session?.user) {
           try {
             const profile = await fetchProfileWithTimeout(session.user.id);
-            if (!isCancelled) setProfile(profile);
+            if (isCancelled) return;
+            const backfilled = await backfillProfileFullName(session.user, profile);
+            setProfile(backfilled ?? profile);
           } catch (e) {
             console.warn('[Keurzen] fetchProfile error:', e);
           }
