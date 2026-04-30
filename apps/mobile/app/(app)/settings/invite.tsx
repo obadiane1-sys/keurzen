@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useGenerateInviteCode, useRecentCodes } from '../../../src/lib/queries/invitation-codes';
+import {
+  usePendingInvitations,
+  useSendEmailInvitation,
+} from '../../../src/lib/queries/household';
 import { useHouseholdStore } from '../../../src/stores/household.store';
 import { useUiStore } from '../../../src/stores/ui.store';
 import {
@@ -25,7 +27,7 @@ import {
 import { Text } from '../../../src/components/ui/Text';
 import { Avatar } from '../../../src/components/ui/Avatar';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
-import type { InvitationCode } from '../../../src/types';
+import type { Invitation } from '../../../src/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,21 +35,16 @@ export default function InviteScreen() {
   const router = useRouter();
   const { currentHousehold, members } = useHouseholdStore();
   const { showToast } = useUiStore();
-  const generateCode = useGenerateInviteCode();
-  const { data: recentCodes } = useRecentCodes(currentHousehold?.id);
+  const sendInvite = useSendEmailInvitation();
+  const { data: pendingInvitations } = usePendingInvitations(currentHousehold?.id);
 
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
-  // Success state
-  const [sentResult, setSentResult] = useState<{
-    email: string;
-    code: string;
-    emailSent: boolean;
-  } | null>(null);
+  // Success state — magic-link email envoyé
+  const [sentResult, setSentResult] = useState<{ email: string } | null>(null);
 
   const validateEmail = (value: string): boolean => {
     if (!value.trim()) { setEmailError(null); return false; }
@@ -63,15 +60,17 @@ export default function InviteScreen() {
     EMAIL_REGEX.test(email.trim());
 
   const checkDuplicate = (): boolean => {
-    if (!recentCodes) return false;
+    if (!pendingInvitations) return false;
     const trimmedEmail = email.trim().toLowerCase();
-    return recentCodes.some(
-      (c) => c.email?.toLowerCase() === trimmedEmail && !c.used && new Date(c.expires_at) > new Date(),
+    return pendingInvitations.some(
+      (i) =>
+        i.email?.toLowerCase() === trimmedEmail &&
+        new Date(i.expires_at) > new Date(),
     );
   };
 
   const doSend = async () => {
-    if (generateCode.isPending) return;
+    if (sendInvite.isPending) return;
 
     const trimmedFirstName = firstName.trim();
     const trimmedEmail = email.trim().toLowerCase();
@@ -81,9 +80,8 @@ export default function InviteScreen() {
 
     setError(null);
     try {
-      const result = await generateCode.mutateAsync({ email: trimmedEmail, firstName: trimmedFirstName });
-      setSentResult({ email: trimmedEmail, code: result.code, emailSent: result.email_sent });
-      setCopied(false);
+      await sendInvite.mutateAsync({ email: trimmedEmail, firstName: trimmedFirstName });
+      setSentResult({ email: trimmedEmail });
       setFirstName('');
       setEmail('');
     } catch (e) {
@@ -95,13 +93,13 @@ export default function InviteScreen() {
     if (checkDuplicate()) {
       const trimmedEmail = email.trim().toLowerCase();
       if (Platform.OS === 'web') {
-        if (window.confirm(`Un code actif existe deja pour ${trimmedEmail}. L'ancien code sera annule. Continuer ?`)) {
+        if (window.confirm(`Une invitation est déjà en attente pour ${trimmedEmail}. Renvoyer un nouveau lien ?`)) {
           await doSend();
         }
       } else {
         Alert.alert(
-          'Code existant',
-          `Un code actif existe deja pour ${trimmedEmail}. L'ancien code sera annule. Continuer ?`,
+          'Invitation en attente',
+          `Une invitation est déjà en attente pour ${trimmedEmail}. Renvoyer un nouveau lien ?`,
           [
             { text: 'Annuler', style: 'cancel' },
             { text: 'Renvoyer', onPress: doSend },
@@ -113,15 +111,13 @@ export default function InviteScreen() {
     await doSend();
   };
 
-  const handleCopyCode = async () => {
-    if (!sentResult) return;
-    await Share.share({ message: `Rejoins mon foyer sur Keurzen ! Mon code d'invitation : ${sentResult.code}\nhttps://app.keurzen.app/join-code?code=${sentResult.code}` });
-  };
-
-  const getCodeStatus = (code: InvitationCode): { label: string; color: string } => {
-    if (code.used) return { label: 'Utilise', color: Colors.joy };
-    if (new Date(code.expires_at) < new Date()) return { label: 'Expire', color: Colors.textMuted };
-    return { label: 'Actif', color: Colors.success };
+  const getInvitationStatus = (i: Invitation): { label: string; color: string } => {
+    if (i.status === 'accepted') return { label: 'Accepté', color: Colors.joy };
+    if (i.status === 'revoked') return { label: 'Révoqué', color: Colors.textMuted };
+    if (new Date(i.expires_at) < new Date() || i.status === 'expired') {
+      return { label: 'Expiré', color: Colors.textMuted };
+    }
+    return { label: 'En attente', color: Colors.success };
   };
 
   if (!currentHousehold) {
@@ -149,7 +145,7 @@ export default function InviteScreen() {
           <Ionicons name="people" size={28} color={Colors.primary} />
           <Text style={styles.heroTitle}>Inviter un proche</Text>
         </View>
-        <Text style={styles.heroSubtitle}>Ajoutez un membre à votre foyer. Il recevra un code par email pour rejoindre l'espace.</Text>
+        <Text style={styles.heroSubtitle}>Ajoutez un membre à votre foyer. Il recevra un lien d'invitation par email pour rejoindre l'espace.</Text>
 
         {/* Hero card */}
         <View style={styles.heroCard}>
@@ -167,34 +163,20 @@ export default function InviteScreen() {
         {sentResult ? (
           <View style={styles.successCard}>
             <View style={styles.successIcon}>
-              <Ionicons
-                name={sentResult.emailSent ? 'checkmark-circle' : 'alert-circle'}
-                size={48}
-                color={sentResult.emailSent ? Colors.success : Colors.accent}
-              />
+              <Ionicons name="checkmark-circle" size={48} color={Colors.success} />
             </View>
 
-            <Text style={styles.successTitle}>
-              {sentResult.emailSent ? 'Invitation envoyée !' : 'Code généré'}
-            </Text>
+            <Text style={styles.successTitle}>Invitation envoyée !</Text>
 
             <Text style={styles.successSubtitle}>
-              {sentResult.emailSent
-                ? 'Un code à 6 chiffres a été envoyé à '
-                : "L'email n'a pas pu être envoyé à "}
-              <Text style={styles.successEmail}>{sentResult.email}</Text>
-              {!sentResult.emailSent && '\nPartagez ce code manuellement :'}
+              Un lien d'invitation a été envoyé à{' '}
+              <Text style={styles.successEmail}>{sentResult.email}</Text>.
+              {'\n'}Il pourra rejoindre le foyer en un clic.
             </Text>
 
-            {/* Code display */}
-            <View style={styles.codeDisplay}>
-              <Text style={styles.codeText}>{sentResult.code}</Text>
-            </View>
-
-            <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode} activeOpacity={0.7}>
-              <Ionicons name="share-outline" size={16} color={Colors.textPrimary} />
-              <Text style={styles.copyBtnText}>Partager le code</Text>
-            </TouchableOpacity>
+            <Text style={styles.successHint}>
+              Le lien est valable 7 jours.
+            </Text>
 
             <TouchableOpacity style={styles.sendAnotherBtn} onPress={() => { setSentResult(null); }}>
               <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
@@ -252,15 +234,15 @@ export default function InviteScreen() {
               </View>
             )}
 
-            <Text style={styles.helperText}>Un code à 6 chiffres lui sera envoyé par email (valide 24h).</Text>
+            <Text style={styles.helperText}>Un lien d'invitation lui sera envoyé par email (valide 7 jours).</Text>
 
             <TouchableOpacity
-              style={[styles.ctaButton, (!canSend || generateCode.isPending) && styles.ctaButtonDisabled]}
+              style={[styles.ctaButton, (!canSend || sendInvite.isPending) && styles.ctaButtonDisabled]}
               onPress={handleSend}
-              disabled={!canSend || generateCode.isPending}
+              disabled={!canSend || sendInvite.isPending}
               activeOpacity={0.85}
             >
-              {generateCode.isPending ? (
+              {sendInvite.isPending ? (
                 <ActivityIndicator color={Colors.textInverse} size="small" />
               ) : (
                 <Text style={styles.ctaText}>Envoyer l'invitation</Text>
@@ -269,15 +251,15 @@ export default function InviteScreen() {
           </>
         )}
 
-        {/* Recent codes — always visible */}
-        {recentCodes && recentCodes.length > 0 && (
+        {/* Pending invitations — always visible */}
+        {pendingInvitations && pendingInvitations.length > 0 && (
           <View style={styles.recentSection}>
-            <Text style={styles.recentTitle}>Codes recents</Text>
-            {recentCodes.slice(0, 5).map((c) => {
-              const status = getCodeStatus(c);
+            <Text style={styles.recentTitle}>Invitations en cours</Text>
+            {pendingInvitations.slice(0, 5).map((invitation) => {
+              const status = getInvitationStatus(invitation);
               return (
-                <View key={c.id} style={styles.recentRow}>
-                  <Text style={styles.recentEmail}>{c.email ?? 'Sans email'}</Text>
+                <View key={invitation.id} style={styles.recentRow}>
+                  <Text style={styles.recentEmail}>{invitation.email ?? 'Sans email'}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
                     <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
                   </View>
@@ -311,10 +293,7 @@ const styles = StyleSheet.create({
   successTitle: { fontSize: Typography.fontSize.xl, fontWeight: '700', color: Colors.textPrimary },
   successSubtitle: { fontSize: Typography.fontSize.base, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
   successEmail: { fontWeight: '700', color: Colors.textPrimary },
-  codeDisplay: { backgroundColor: Colors.backgroundSubtle, borderWidth: 2, borderColor: Colors.success, borderRadius: BorderRadius.lg, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['2xl'], marginTop: Spacing.sm },
-  codeText: { fontSize: Typography.fontSize['4xl'], fontWeight: Typography.fontWeight.extrabold, color: Colors.textPrimary, letterSpacing: 8, textAlign: 'center' },
-  copyBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base, marginTop: Spacing.xs },
-  copyBtnText: { fontSize: Typography.fontSize.sm, fontWeight: '600', color: Colors.textPrimary },
+  successHint: { fontSize: Typography.fontSize.sm, color: Colors.textMuted, textAlign: 'center', marginTop: Spacing.xs },
   sendAnotherBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.base, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.base },
   sendAnotherText: { fontSize: Typography.fontSize.base, fontWeight: '600', color: Colors.primary },
 
