@@ -134,13 +134,11 @@ Ouvre une interface web (`http://localhost:9999`) qui montre l'arbre d'élément
 |---|---|---|---|---|
 | `01-app-launches.yaml` | L'app se lance et affiche l'écran login | Smoke test | ✅ | ✅ |
 | `02-login-unknown-email.yaml` | Email inconnu → message "Aucun compte trouvé" | Cas erreur signup | ✅ | ✅ |
-| `03-invitation-code-invalid.yaml` | Code 6 chiffres invalide → reste sur l'écran | Cas erreur invitation | ✅ | ✅ |
-| `04-invitation-code-partial.yaml` | Code partiel → bouton désactivé, pas de validation | Validation UI invitation | ✅ | ✅ |
 
 ### Ce qui n'est PAS couvert (volontairement)
 
 - **Login OTP complet** : nécessite un mailbox de test automatisé ou un bypass dev-only. Reporté post-launch.
-- **Code d'invitation valide** : nécessite une infrastructure de test isolée (création de user via Edge Function, reset state). Le happy path est validé manuellement à chaque release.
+- **Magic link d'invitation** : flow déclenché par email Supabase + Universal Link, nécessite mailbox de test + universal links activés. Happy path validé manuellement à chaque release.
 - **Création de compte complète** : même problématique OTP.
 
 ## Conventions d'écriture
