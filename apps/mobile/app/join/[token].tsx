@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
@@ -53,6 +53,16 @@ export default function JoinScreen() {
             refresh_token: refreshToken,
           });
           if (!cancelled && data.session) setLinkSession(data.session);
+          // Sur web, le hash contient les tokens d'auth — on le nettoie de l'URL
+          // pour éviter qu'ils traînent dans l'historique du navigateur ou les
+          // referers envoyés à des scripts tiers.
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.history.replaceState(
+              null,
+              '',
+              window.location.pathname + window.location.search,
+            );
+          }
         }
       }
       if (!cancelled) setLinkChecked(true);
