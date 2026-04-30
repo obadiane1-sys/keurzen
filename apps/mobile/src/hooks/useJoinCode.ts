@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
 import { useHouseholdStore } from '../stores/household.store';
 import { supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabase/client';
+import { fetchProfile } from '../lib/supabase/auth';
 
 const CODE_LENGTH = 6;
 
@@ -189,6 +190,21 @@ export function useJoinCode() {
           setIsJoining(false);
           return;
         }
+
+        // Push session into zustand BEFORE navigating \u2014 onAuthStateChange may
+        // not have propagated yet, and (app)/_layout reads session from zustand
+        // to gate access. Without this, the layout sees null session and
+        // bounces back to /(auth)/login during the cross-group navigation.
+        const { data: { session: freshSession } } = await supabase.auth.getSession();
+        if (freshSession) {
+          useAuthStore.getState().setSession(freshSession);
+          // Hydrate profile too, since useAuthInit's listener may still be
+          // racing against router.replace below.
+          if (freshSession.user) {
+            const profile = await fetchProfile(freshSession.user.id);
+            if (profile) useAuthStore.getState().setProfile(profile);
+          }
+        }
       }
 
       if (payload.already_member) {
@@ -213,6 +229,9 @@ export function useJoinCode() {
       }
 
       setPendingInviteCode(null);
+
+      // Reset digits so the auto-submit effect doesn't re-fire on remount.
+      setDigits(Array(CODE_LENGTH).fill(''));
 
       // Navigate to post-join onboarding (or dashboard if already completed)
       const householdId = payload.household?.id;
