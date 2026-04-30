@@ -9,6 +9,7 @@ import { householdKeys } from './household';
 
 export const inviteCodeKeys = {
   recent: (householdId: string) => ['invitation-codes', 'recent', householdId] as const,
+  myPending: (email: string) => ['invitation-codes', 'my-pending', email] as const,
 };
 
 // ─── Generate & send invite code ─────────────────────────────────────────────
@@ -133,8 +134,41 @@ export function useRedeemInviteCode() {
         queryClient.invalidateQueries({
           queryKey: householdKeys.myHousehold(user.id),
         });
+
+        // Le banner doit disparaître après redemption
+        if (user.email) {
+          queryClient.invalidateQueries({
+            queryKey: inviteCodeKeys.myPending(user.email),
+          });
+        }
       }
     },
+  });
+}
+
+// ─── Pending invitations for current user (powers dashboard banner) ──────────
+
+export interface PendingInvitation {
+  code: string;
+  household_id: string;
+  household_name: string;
+  inviter_name: string;
+  expires_at: string;
+}
+
+export function useMyPendingInvitations() {
+  const user = useAuthStore((s) => s.user);
+  const email = user?.email ?? '';
+
+  return useQuery({
+    queryKey: inviteCodeKeys.myPending(email),
+    queryFn: async (): Promise<PendingInvitation[]> => {
+      const { data, error } = await supabase.rpc('get_my_pending_invitations');
+      if (error) throw new Error(error.message);
+      return (data as PendingInvitation[]) ?? [];
+    },
+    enabled: !!email,
+    staleTime: 30_000,
   });
 }
 
