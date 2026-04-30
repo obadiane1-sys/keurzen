@@ -286,17 +286,6 @@ export default function SignupScreen() {
 
           {/* Footer */}
           <Animated.View style={{ opacity: fadeAnim4 }}>
-            <TouchableOpacity
-              onPress={() => router.push('/(auth)/join-code')}
-              style={styles.joinCodeLink}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="key-outline" size={14} color={Colors.primary} />
-              <Text variant="bodySmall" color="terracotta" weight="semibold">
-                J'ai un code d'invitation
-              </Text>
-            </TouchableOpacity>
-
             <Text variant="caption" color="muted" style={styles.legal}>
               {"En créant un compte, vous acceptez nos "}
               <Text variant="caption" color="terracotta">
@@ -385,14 +374,6 @@ const styles = StyleSheet.create({
   emailExistsBannerContent: {
     flex: 1,
     gap: Spacing.xs,
-  },
-  joinCodeLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.lg,
-    paddingVertical: Spacing.sm,
   },
   // Decorative blobs
   blobMint: {

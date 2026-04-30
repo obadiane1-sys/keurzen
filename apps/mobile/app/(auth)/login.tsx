@@ -152,18 +152,6 @@ export default function LoginScreen() {
 
           {/* Footer */}
           <Animated.View style={{ opacity: fadeAnim4 }}>
-            {/* Join code */}
-            <TouchableOpacity
-              onPress={() => router.push('/(auth)/join-code')}
-              style={styles.joinCodeLink}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="key-outline" size={14} color={Colors.primary} />
-              <Text variant="bodySmall" color="terracotta" weight="semibold">
-                J'ai un code d'invitation
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={() => router.push('/(auth)/signup')}
               style={styles.signupLink}
@@ -216,14 +204,6 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.base,
   },
-  joinCodeLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.xl,
-    paddingVertical: Spacing.sm,
-  },
   notFoundBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -240,7 +220,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     alignItems: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.xl,
     paddingVertical: Spacing.sm,
   },
   // Decorative blobs
